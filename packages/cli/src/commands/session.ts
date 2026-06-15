@@ -10,7 +10,7 @@ import {
   loadConfig,
   SessionNotRestorableError,
   WorkspaceMissingError,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { DEFAULT_PORT } from "../lib/constants.js";
 import { git, getTmuxActivity, tmux } from "../lib/shell.js";
 import { formatAge } from "../lib/format.js";

@@ -10,7 +10,7 @@ import {
   type PluginSlot,
   type InstalledPluginConfig,
   type OrchestratorConfig,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { parseDocument } from "yaml";
 import {
   buildPluginDescriptor,

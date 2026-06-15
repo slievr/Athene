@@ -7,7 +7,7 @@ import {
   getDashboardNotificationStorePath,
   readDashboardNotifications,
   type OrchestratorEvent,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { create, manifest } from "./index.js";
 
 let tempDir: string | null = null;

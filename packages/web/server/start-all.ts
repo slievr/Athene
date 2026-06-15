@@ -14,7 +14,7 @@ import {
   killProcessTree,
   markDaemonShutdownHandlerInstalled,
   spawnManagedDaemonChild,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

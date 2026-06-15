@@ -9,7 +9,7 @@ import {
   type EventPriority,
   type NotificationDataV3,
   CI_STATUS,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 export const manifest = {
   name: "slack",

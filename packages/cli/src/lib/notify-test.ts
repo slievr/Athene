@@ -18,7 +18,7 @@ import {
   type OrchestratorConfig,
   type OrchestratorEvent,
   type PluginRegistry,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 export const NOTIFY_TEST_TEMPLATE_NAMES = [
   "basic",

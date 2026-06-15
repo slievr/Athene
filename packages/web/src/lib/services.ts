@@ -30,21 +30,21 @@ import {
   type Session,
   isOrchestratorSession,
   TERMINAL_STATUSES,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 // Static plugin imports — webpack needs these to be string literals
-import pluginRuntimeTmux from "@made-by-moonlight/plugin-runtime-tmux";
-import pluginRuntimeProcess from "@made-by-moonlight/plugin-runtime-process";
-import pluginAgentClaudeCode from "@made-by-moonlight/plugin-agent-claude-code";
-import pluginAgentCodex from "@made-by-moonlight/plugin-agent-codex";
-import pluginAgentCursor from "@made-by-moonlight/plugin-agent-cursor";
-import pluginAgentKimicode from "@made-by-moonlight/plugin-agent-kimicode";
-import pluginAgentGrok from "@made-by-moonlight/plugin-agent-grok";
-import pluginAgentOpencode from "@made-by-moonlight/plugin-agent-opencode";
-import pluginWorkspaceWorktree from "@made-by-moonlight/plugin-workspace-worktree";
-import pluginScmGithub from "@made-by-moonlight/plugin-scm-github";
-import pluginTrackerGithub from "@made-by-moonlight/plugin-tracker-github";
-import pluginTrackerLinear from "@made-by-moonlight/plugin-tracker-linear";
+import pluginRuntimeTmux from "@made-by-moonlight/athene-plugin-runtime-tmux";
+import pluginRuntimeProcess from "@made-by-moonlight/athene-plugin-runtime-process";
+import pluginAgentClaudeCode from "@made-by-moonlight/athene-plugin-agent-claude-code";
+import pluginAgentCodex from "@made-by-moonlight/athene-plugin-agent-codex";
+import pluginAgentCursor from "@made-by-moonlight/athene-plugin-agent-cursor";
+import pluginAgentKimicode from "@made-by-moonlight/athene-plugin-agent-kimicode";
+import pluginAgentGrok from "@made-by-moonlight/athene-plugin-agent-grok";
+import pluginAgentOpencode from "@made-by-moonlight/athene-plugin-agent-opencode";
+import pluginWorkspaceWorktree from "@made-by-moonlight/athene-plugin-workspace-worktree";
+import pluginScmGithub from "@made-by-moonlight/athene-plugin-scm-github";
+import pluginTrackerGithub from "@made-by-moonlight/athene-plugin-tracker-github";
+import pluginTrackerLinear from "@made-by-moonlight/athene-plugin-tracker-linear";
 
 export interface Services {
   config: LoadedConfig;

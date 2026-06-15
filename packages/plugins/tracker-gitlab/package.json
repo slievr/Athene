@@ -1,5 +1,5 @@
 {
-  "name": "@made-by-moonlight/plugin-tracker-gitlab",
+  "name": "@made-by-moonlight/athene-plugin-tracker-gitlab",
   "version": "0.9.1",
   "description": "Tracker plugin: GitLab Issues",
   "license": "MIT",
@@ -34,8 +34,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@made-by-moonlight/core": "workspace:*",
-    "@made-by-moonlight/plugin-scm-gitlab": "workspace:*"
+    "@made-by-moonlight/athene-core": "workspace:*",
+    "@made-by-moonlight/athene-plugin-scm-gitlab": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.2.3",

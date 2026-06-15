@@ -5,7 +5,7 @@ import { maybeShowUpdateNotice, scheduleBackgroundRefresh } from "./lib/update-c
 // Synchronous cache read — no network call on startup.
 maybeShowUpdateNotice();
 
-import { ConfigNotFoundError } from "@made-by-moonlight/core";
+import { ConfigNotFoundError } from "@made-by-moonlight/athene-core";
 import { createProgram } from "./program.js";
 
 createProgram()

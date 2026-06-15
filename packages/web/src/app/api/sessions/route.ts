@@ -1,4 +1,4 @@
-import { isOrchestratorSession, isTerminalSession } from "@made-by-moonlight/core";
+import { isOrchestratorSession, isTerminalSession } from "@made-by-moonlight/athene-core";
 import { getServices } from "@/lib/services";
 import {
   sessionToDashboard,

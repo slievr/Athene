@@ -46,7 +46,7 @@ import {
   reapAoOrphans,
   type DaemonChildSweepResult,
   type AoOrphanProcess,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { parse as yamlParse, stringify as yamlStringify } from "yaml";
 import { exec, execSilent, git } from "../lib/shell.js";
 import { getSessionManager } from "../lib/create-session-manager.js";
@@ -1899,7 +1899,7 @@ function isLocalPath(arg: string): boolean {
 async function sweepWindowsPtyHostsBeforeParentKill(): Promise<void> {
   if (!isWindows()) return;
   try {
-    const mod = (await import("@made-by-moonlight/plugin-runtime-process")) as {
+    const mod = (await import("@made-by-moonlight/athene-plugin-runtime-process")) as {
       sweepWindowsPtyHosts?: () => Promise<{
         attempted: number;
         gracefullyExited: number;

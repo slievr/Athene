@@ -12,7 +12,7 @@ import {
   type ProcessProbeResult,
   type RuntimeHandle,
   type Session,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { execFile } from "node:child_process";
 import { readdir, realpath, stat } from "node:fs/promises";
 import { homedir } from "node:os";

@@ -16,9 +16,9 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import type { ActivityDetection, AgentSessionInfo } from "@made-by-moonlight/core";
+import type { ActivityDetection, AgentSessionInfo } from "@made-by-moonlight/athene-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import opencodePlugin from "@made-by-moonlight/plugin-agent-opencode";
+import opencodePlugin from "@made-by-moonlight/athene-plugin-agent-opencode";
 import {
   isTmuxAvailable,
   killSessionsByPrefix,

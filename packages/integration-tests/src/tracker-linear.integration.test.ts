@@ -19,9 +19,9 @@
  */
 
 import { request } from "node:https";
-import type { ProjectConfig } from "@made-by-moonlight/core";
+import type { ProjectConfig } from "@made-by-moonlight/athene-core";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import trackerLinear from "@made-by-moonlight/plugin-tracker-linear";
+import trackerLinear from "@made-by-moonlight/athene-plugin-tracker-linear";
 import { pollUntil, pollUntilEqual } from "./helpers/polling.js";
 
 // ---------------------------------------------------------------------------

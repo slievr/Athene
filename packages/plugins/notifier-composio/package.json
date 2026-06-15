@@ -1,5 +1,5 @@
 {
-  "name": "@made-by-moonlight/plugin-notifier-composio",
+  "name": "@made-by-moonlight/athene-plugin-notifier-composio",
   "version": "0.9.1",
   "description": "Notifier plugin: Composio unified notifications (Slack, Discord, email)",
   "license": "MIT",
@@ -34,7 +34,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@made-by-moonlight/core": "workspace:*",
+    "@made-by-moonlight/athene-core": "workspace:*",
     "@composio/core": "^0.9.0",
     "zod": "^3.25.76"
   },

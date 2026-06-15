@@ -39,7 +39,7 @@ vi.mock("../../src/lib/script-runner.js", () => ({
   runRepoScript: (...args: unknown[]) => mockRunRepoScript(...args),
 }));
 
-vi.mock("@made-by-moonlight/core", () => ({
+vi.mock("@made-by-moonlight/athene-core", () => ({
   buildCIFailureNotificationData: () => ({ schemaVersion: 3 }),
   buildPRStateNotificationData: () => ({ schemaVersion: 3 }),
   buildReactionNotificationData: () => ({ schemaVersion: 3 }),

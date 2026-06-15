@@ -13,7 +13,7 @@ import {
   savePreferences,
   loadLocalProjectConfig,
   loadConfig,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import {
   formatPortfolioDegradedReason,
   formatPortfolioProjectName,

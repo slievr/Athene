@@ -62,12 +62,12 @@ pnpm dev                                    # Web dashboard (Next.js + 2 WS serv
 
 # Type checking
 pnpm typecheck                              # All packages
-pnpm --filter @made-by-moonlight/web typecheck    # Web only
+pnpm --filter @made-by-moonlight/athene-web typecheck    # Web only
 
 # Testing
 pnpm test                                   # All packages (excludes web)
-pnpm --filter @made-by-moonlight/web test         # Web tests
-pnpm --filter @made-by-moonlight/web test:watch   # Web watch mode
+pnpm --filter @made-by-moonlight/athene-web test         # Web tests
+pnpm --filter @made-by-moonlight/athene-web test:watch   # Web watch mode
 pnpm test:integration                       # Integration tests
 
 # Lint & format
@@ -239,7 +239,7 @@ AO ships on macOS, Linux, **and Windows**. All three are first-class.
 
 ### The Golden Rule
 
-> **Never write `process.platform === "win32"` in new code. Use `isWindows()` from `@made-by-moonlight/core`. If you need branching the helpers don't cover, add it to `packages/core/src/platform.ts` (or one of the targeted helper modules below) — never inline at the call site.**
+> **Never write `process.platform === "win32"` in new code. Use `isWindows()` from `@made-by-moonlight/athene-core`. If you need branching the helpers don't cover, add it to `packages/core/src/platform.ts` (or one of the targeted helper modules below) — never inline at the call site.**
 
 The codebase has a deliberate set of cross-platform abstractions. Every platform helper is centrally tested by mocking `process.platform`; inline checks bypass those tests and become silent regressions. Whenever you'd type `process.platform`, stop and check the helper inventory in `docs/CROSS_PLATFORM.md` first.
 
@@ -257,7 +257,7 @@ The codebase has a deliberate set of cross-platform abstractions. Every platform
 
 ### Quick reference: helpers to use instead of raw platform checks
 
-All importable from `@made-by-moonlight/core` unless noted:
+All importable from `@made-by-moonlight/athene-core` unless noted:
 
 | Need | Use |
 |------|-----|
@@ -274,8 +274,8 @@ All importable from `@made-by-moonlight/core` unless noted:
 | Tail JSONL | `readLastJsonlEntry` / `readLastActivityEntry` |
 | Activity-state contract helpers | `checkActivityLogState`, `getActivityFallbackState`, `classifyTerminalActivity`, `recordTerminalActivity`, `appendActivityEntry` |
 | Windows pty-host registry (used by `athene stop`) | `registerWindowsPtyHost`, `getWindowsPtyHosts`, `unregisterWindowsPtyHost`, `clearWindowsPtyHostRegistry` |
-| Reap orphan pty-hosts on `athene stop` | `sweepWindowsPtyHosts()` from `@made-by-moonlight/plugin-runtime-process` |
-| Talk to a Windows pty-host over its named pipe | `getPipePath`, `connectPtyHost`, `ptyHostSendMessage`, `ptyHostGetOutput`, `ptyHostIsAlive`, `ptyHostKill` from `@made-by-moonlight/plugin-runtime-process` |
+| Reap orphan pty-hosts on `athene stop` | `sweepWindowsPtyHosts()` from `@made-by-moonlight/athene-plugin-runtime-process` |
+| Talk to a Windows pty-host over its named pipe | `getPipePath`, `connectPtyHost`, `ptyHostSendMessage`, `ptyHostGetOutput`, `ptyHostIsAlive`, `ptyHostKill` from `@made-by-moonlight/athene-plugin-runtime-process` |
 | Validate user-supplied session ID before pipe/shell use | `validateSessionId()` from `@/server/tmux-utils` |
 | Resolve a session's Windows pipe path | `resolvePipePath()` from `@/server/tmux-utils` |
 | POSIX-only Ctrl+C signal forwarding | `forwardSignalsToChild()` from `cli/src/lib/shell.ts` (guard with `!isWindows()`) |
@@ -316,7 +316,7 @@ All importable from `@made-by-moonlight/core` unless noted:
 ### Imports
 
 - `@/` alias -> `packages/web/src/`
-- `@made-by-moonlight/core` for core imports
+- `@made-by-moonlight/athene-core` for core imports
 - `workspace:*` for cross-package
 
 ### Web / Styling
@@ -387,7 +387,7 @@ See [`skills/README.md`](skills/README.md) for how to install skills into other 
 
 ```
 packages/plugins/{slot}-{name}/
-├── package.json          # @made-by-moonlight/plugin-{slot}-{name}
+├── package.json          # @made-by-moonlight/athene-plugin-{slot}-{name}
 ├── tsconfig.json         # extends ../../../tsconfig.base.json
 ├── src/
 │   ├── index.ts          # manifest + create + detect (default export)
@@ -396,7 +396,7 @@ packages/plugins/{slot}-{name}/
 
 ### Naming
 
-- Package: `@made-by-moonlight/plugin-{slot}-{name}` (lowercase, hyphenated)
+- Package: `@made-by-moonlight/athene-plugin-{slot}-{name}` (lowercase, hyphenated)
 - `manifest.name` must match the `{name}` suffix (e.g. package `...-runtime-tmux` -> name: `"tmux"`)
 - `manifest.slot` must use `as const` to preserve the literal type
 
@@ -405,7 +405,7 @@ packages/plugins/{slot}-{name}/
 Every plugin default-exports a `PluginModule<T>`:
 
 ```typescript
-import type { PluginModule, Runtime } from "@made-by-moonlight/core";
+import type { PluginModule, Runtime } from "@made-by-moonlight/athene-core";
 
 export const manifest = {
   name: "tmux",
@@ -469,7 +469,7 @@ import {
   PREFERRED_GH_PATH,            // /usr/local/bin/gh
   CI_STATUS, ACTIVITY_STATE, SESSION_STATUS,  // Constants
   type Session, type ProjectConfig, type RuntimeHandle,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 ```
 
 ### Testing
@@ -517,7 +517,7 @@ All agent plugins (claude-code, codex, aider, opencode, etc.) must implement the
 **Environment requirements:**
 - All agents must set `AO_SESSION_ID` and optionally `AO_ISSUE_ID`
 - All agents using PATH wrappers must prepend `~/.ao/bin` to PATH
-- Use `normalizeAgentPermissionMode` from `@made-by-moonlight/core` (not a local duplicate)
+- Use `normalizeAgentPermissionMode` from `@made-by-moonlight/athene-core` (not a local duplicate)
 
 **Activity detection architecture:**
 

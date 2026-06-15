@@ -4,7 +4,7 @@ import {
   resolveProjectIdForSessionId,
   type OrchestratorConfig,
   type ProjectObserver,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 export function createObserverContext(surface: string): {
   config: OrchestratorConfig | undefined;

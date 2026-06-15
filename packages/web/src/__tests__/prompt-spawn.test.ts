@@ -22,7 +22,7 @@ import {
   type OrchestratorConfig,
   type PluginRegistry,
   type SCM,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { sessionToDashboard } from "@/lib/serialize";
 
 // ── Shared test fixtures ──────────────────────────────────────────────

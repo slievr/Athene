@@ -37,7 +37,7 @@ import {
   type OrchestratorConfig,
   type ParsedRepoUrl,
   type ProjectConfig,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import chalk from "chalk";
 import ora from "ora";
 import { findFreePort } from "./web-dir.js";

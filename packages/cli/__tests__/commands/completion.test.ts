@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Command } from "commander";
-import type * as CoreModule from "@made-by-moonlight/core";
-import type { Session } from "@made-by-moonlight/core";
+import type * as CoreModule from "@made-by-moonlight/athene-core";
+import type { Session } from "@made-by-moonlight/athene-core";
 
 const { mockConfigRef, mockSessionManager } = vi.hoisted(() => ({
   mockConfigRef: { current: null as Record<string, unknown> | null },
@@ -10,7 +10,7 @@ const { mockConfigRef, mockSessionManager } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@made-by-moonlight/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
   const actual = (await importOriginal()) as typeof CoreModule;
   return {
     ...actual,

@@ -17,7 +17,7 @@ import {
   loadGlobalConfig,
   readUpdateCheckCacheRaw,
   type UpdateChannel,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 export const dynamic = "force-dynamic";
 

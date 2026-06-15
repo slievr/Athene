@@ -15,7 +15,7 @@ import {
   type OpenCodeSessionManager,
   type PluginRegistry,
   type LifecycleManager,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { importPluginModuleFromSource } from "./plugin-store.js";
 
 const registryPromises = new Map<string, Promise<PluginRegistry>>();

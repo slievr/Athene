@@ -25,7 +25,7 @@ describe("direct-terminal-ws.ts", () => {
     expect(source).toMatch(/from\s+["']\.\/tmux-utils/);
   });
 
-  it("does not import loadConfig from @made-by-moonlight/core", () => {
+  it("does not import loadConfig from @made-by-moonlight/athene-core", () => {
     expect(source).not.toMatch(/import\s.*loadConfig.*from\s+["']@made-by-moonlight\/core["']/);
   });
 

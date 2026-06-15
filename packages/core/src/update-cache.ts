@@ -71,7 +71,7 @@ export function readUpdateCheckCacheRaw(): UpdateCheckCacheRaw | null {
  * The currently-installed `@made-by-moonlight/athene` version.
  *
  * Tries the wrapper package first (the canonical version users see). Falls
- * back to the CLI package, then `@made-by-moonlight/web` for dev mode where the
+ * back to the CLI package, then `@made-by-moonlight/athene-web` for dev mode where the
  * wrapper isn't always in `node_modules` — these packages ship in lockstep
  * with `@made-by-moonlight/athene` (the changeset linked group), so either is a safe proxy.
  *
@@ -82,8 +82,8 @@ export function getInstalledAoVersion(): string {
   const require = createRequire(fileURLToPath(import.meta.url));
   const candidates = [
     "@made-by-moonlight/athene/package.json",
-    "@made-by-moonlight/cli/package.json",
-    "@made-by-moonlight/web/package.json",
+    "@made-by-moonlight/athene-cli/package.json",
+    "@made-by-moonlight/athene-web/package.json",
   ];
   for (const candidate of candidates) {
     try {

@@ -2,7 +2,7 @@
  * Returns the complete AO config schema as formatted text.
  * Used by `athene config-help` and injected into orchestrator system prompts.
  */
-import { CONFIG_SCHEMA_URL } from "@made-by-moonlight/core";
+import { CONFIG_SCHEMA_URL } from "@made-by-moonlight/athene-core";
 
 export function getConfigInstruction(): string {
   return `

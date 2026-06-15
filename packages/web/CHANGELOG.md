@@ -1,4 +1,4 @@
-# @made-by-moonlight/web
+# @made-by-moonlight/athene-web
 
 ## 0.9.2
 
@@ -6,7 +6,7 @@
 
 - 2f9717f: Load agent-grok package metadata through JSON import attributes so packaged web and CLI runtimes do not keep a publish-host package.json lookup. This also raises the Node.js engine floor to 20.18.3+, where JSON modules with import attributes are non-experimental.
 - Updated dependencies [2f9717f]
-  - @made-by-moonlight/plugin-agent-grok@0.1.3
+  - @made-by-moonlight/athene-plugin-agent-grok@0.1.3
 
 ## 0.9.1
 
@@ -14,19 +14,19 @@
 
 - 2d4c457: Fix canary nightly to include all publishable packages and fix Next.js import.meta.url build path issue
 - Updated dependencies [2d4c457]
-  - @made-by-moonlight/core@0.9.1
-  - @made-by-moonlight/plugin-agent-claude-code@0.9.1
-  - @made-by-moonlight/plugin-agent-codex@0.9.1
-  - @made-by-moonlight/plugin-agent-cursor@0.9.1
-  - @made-by-moonlight/plugin-agent-grok@0.1.2
-  - @made-by-moonlight/plugin-agent-kimicode@0.9.1
-  - @made-by-moonlight/plugin-agent-opencode@0.9.1
-  - @made-by-moonlight/plugin-runtime-process@0.9.1
-  - @made-by-moonlight/plugin-runtime-tmux@0.9.1
-  - @made-by-moonlight/plugin-scm-github@0.9.1
-  - @made-by-moonlight/plugin-tracker-github@0.9.1
-  - @made-by-moonlight/plugin-tracker-linear@0.9.1
-  - @made-by-moonlight/plugin-workspace-worktree@0.9.1
+  - @made-by-moonlight/athene-core@0.9.1
+  - @made-by-moonlight/athene-plugin-agent-claude-code@0.9.1
+  - @made-by-moonlight/athene-plugin-agent-codex@0.9.1
+  - @made-by-moonlight/athene-plugin-agent-cursor@0.9.1
+  - @made-by-moonlight/athene-plugin-agent-grok@0.1.2
+  - @made-by-moonlight/athene-plugin-agent-kimicode@0.9.1
+  - @made-by-moonlight/athene-plugin-agent-opencode@0.9.1
+  - @made-by-moonlight/athene-plugin-runtime-process@0.9.1
+  - @made-by-moonlight/athene-plugin-runtime-tmux@0.9.1
+  - @made-by-moonlight/athene-plugin-scm-github@0.9.1
+  - @made-by-moonlight/athene-plugin-tracker-github@0.9.1
+  - @made-by-moonlight/athene-plugin-tracker-linear@0.9.1
+  - @made-by-moonlight/athene-plugin-workspace-worktree@0.9.1
 
 ## 0.9.0
 
@@ -78,37 +78,37 @@
 - Updated dependencies [6d48022]
 - Updated dependencies [2980570]
 - Updated dependencies [d5d0f07]
-  - @made-by-moonlight/core@0.9.0
-  - @made-by-moonlight/plugin-agent-claude-code@0.9.0
-  - @made-by-moonlight/plugin-tracker-linear@0.9.0
-  - @made-by-moonlight/plugin-agent-codex@0.9.0
-  - @made-by-moonlight/plugin-agent-cursor@0.9.0
-  - @made-by-moonlight/plugin-agent-grok@0.1.1
-  - @made-by-moonlight/plugin-agent-kimicode@0.9.0
-  - @made-by-moonlight/plugin-agent-opencode@0.9.0
-  - @made-by-moonlight/plugin-runtime-process@0.9.0
-  - @made-by-moonlight/plugin-runtime-tmux@0.9.0
-  - @made-by-moonlight/plugin-scm-github@0.9.0
-  - @made-by-moonlight/plugin-tracker-github@0.9.0
-  - @made-by-moonlight/plugin-workspace-worktree@0.9.0
+  - @made-by-moonlight/athene-core@0.9.0
+  - @made-by-moonlight/athene-plugin-agent-claude-code@0.9.0
+  - @made-by-moonlight/athene-plugin-tracker-linear@0.9.0
+  - @made-by-moonlight/athene-plugin-agent-codex@0.9.0
+  - @made-by-moonlight/athene-plugin-agent-cursor@0.9.0
+  - @made-by-moonlight/athene-plugin-agent-grok@0.1.1
+  - @made-by-moonlight/athene-plugin-agent-kimicode@0.9.0
+  - @made-by-moonlight/athene-plugin-agent-opencode@0.9.0
+  - @made-by-moonlight/athene-plugin-runtime-process@0.9.0
+  - @made-by-moonlight/athene-plugin-runtime-tmux@0.9.0
+  - @made-by-moonlight/athene-plugin-scm-github@0.9.0
+  - @made-by-moonlight/athene-plugin-tracker-github@0.9.0
+  - @made-by-moonlight/athene-plugin-workspace-worktree@0.9.0
 
 ## 0.8.0
 
 ### Patch Changes
 
 - Updated dependencies
-  - @made-by-moonlight/core@0.8.0
-  - @made-by-moonlight/plugin-agent-claude-code@0.8.0
-  - @made-by-moonlight/plugin-agent-codex@0.8.0
-  - @made-by-moonlight/plugin-agent-opencode@0.8.0
-  - @made-by-moonlight/plugin-agent-cursor@0.8.0
-  - @made-by-moonlight/plugin-agent-kimicode@0.8.0
-  - @made-by-moonlight/plugin-runtime-process@0.8.0
-  - @made-by-moonlight/plugin-runtime-tmux@0.8.0
-  - @made-by-moonlight/plugin-scm-github@0.8.0
-  - @made-by-moonlight/plugin-tracker-github@0.8.0
-  - @made-by-moonlight/plugin-tracker-linear@0.8.0
-  - @made-by-moonlight/plugin-workspace-worktree@0.8.0
+  - @made-by-moonlight/athene-core@0.8.0
+  - @made-by-moonlight/athene-plugin-agent-claude-code@0.8.0
+  - @made-by-moonlight/athene-plugin-agent-codex@0.8.0
+  - @made-by-moonlight/athene-plugin-agent-opencode@0.8.0
+  - @made-by-moonlight/athene-plugin-agent-cursor@0.8.0
+  - @made-by-moonlight/athene-plugin-agent-kimicode@0.8.0
+  - @made-by-moonlight/athene-plugin-runtime-process@0.8.0
+  - @made-by-moonlight/athene-plugin-runtime-tmux@0.8.0
+  - @made-by-moonlight/athene-plugin-scm-github@0.8.0
+  - @made-by-moonlight/athene-plugin-tracker-github@0.8.0
+  - @made-by-moonlight/athene-plugin-tracker-linear@0.8.0
+  - @made-by-moonlight/athene-plugin-workspace-worktree@0.8.0
 
 ## 0.7.0
 
@@ -153,8 +153,8 @@
     Bake window (Wed–Thu) pauses scheduled nightlies; the captain re-cuts via
     workflow*dispatch when a fix lands. Stable `release.yml` publishes via
     `changesets/action`. `.changeset/config.json` adds the snapshot template
-    (`{tag}-{commit}`). `@made-by-moonlight/web` stays in the linked group and ships
-    alongside `@made-by-moonlight/cli` (it's a workspace:* runtime dep, so marking it
+    (`{tag}-{commit}`). `@made-by-moonlight/athene-web` stays in the linked group and ships
+    alongside `@made-by-moonlight/athene-cli` (it's a workspace:* runtime dep, so marking it
     private would 404 every `npm install -g @made-by-moonlight/athene` after publish).
     `scripts/check-publishable-deps.mjs` runs in both release.yml and canary.yml
     before the publish step and fails CI if a publishable package depends on a
@@ -198,18 +198,18 @@ in `POST /api/update` so the dashboard returns a structured 409.
 - Updated dependencies [fe33bb7]
 - Updated dependencies [7c46dc9]
 - Updated dependencies [a33b2ba]
-  - @made-by-moonlight/plugin-runtime-tmux@0.7.0
-  - @made-by-moonlight/core@0.7.0
-  - @made-by-moonlight/plugin-runtime-process@0.7.0
-  - @made-by-moonlight/plugin-agent-claude-code@0.7.0
-  - @made-by-moonlight/plugin-agent-codex@0.7.0
-  - @made-by-moonlight/plugin-agent-opencode@0.7.0
-  - @made-by-moonlight/plugin-workspace-worktree@0.7.0
-  - @made-by-moonlight/plugin-tracker-github@0.7.0
-  - @made-by-moonlight/plugin-tracker-linear@0.7.0
-  - @made-by-moonlight/plugin-scm-github@0.7.0
-  - @made-by-moonlight/plugin-agent-cursor@0.7.0
-  - @made-by-moonlight/plugin-agent-kimicode@0.7.0
+  - @made-by-moonlight/athene-plugin-runtime-tmux@0.7.0
+  - @made-by-moonlight/athene-core@0.7.0
+  - @made-by-moonlight/athene-plugin-runtime-process@0.7.0
+  - @made-by-moonlight/athene-plugin-agent-claude-code@0.7.0
+  - @made-by-moonlight/athene-plugin-agent-codex@0.7.0
+  - @made-by-moonlight/athene-plugin-agent-opencode@0.7.0
+  - @made-by-moonlight/athene-plugin-workspace-worktree@0.7.0
+  - @made-by-moonlight/athene-plugin-tracker-github@0.7.0
+  - @made-by-moonlight/athene-plugin-tracker-linear@0.7.0
+  - @made-by-moonlight/athene-plugin-scm-github@0.7.0
+  - @made-by-moonlight/athene-plugin-agent-cursor@0.7.0
+  - @made-by-moonlight/athene-plugin-agent-kimicode@0.7.0
 
 ## 0.6.0
 
@@ -222,17 +222,17 @@ in `POST /api/update` so the dashboard returns a structured 409.
 - Updated dependencies [40aeb78]
 - Updated dependencies
 - Updated dependencies
-  - @made-by-moonlight/core@0.6.0
-  - @made-by-moonlight/plugin-runtime-tmux@0.6.0
-  - @made-by-moonlight/plugin-agent-claude-code@0.6.0
-  - @made-by-moonlight/plugin-agent-codex@0.6.0
-  - @made-by-moonlight/plugin-agent-cursor@0.1.4
-  - @made-by-moonlight/plugin-agent-kimicode@0.1.3
-  - @made-by-moonlight/plugin-agent-opencode@0.6.0
-  - @made-by-moonlight/plugin-scm-github@0.6.0
-  - @made-by-moonlight/plugin-tracker-github@0.6.0
-  - @made-by-moonlight/plugin-tracker-linear@0.6.0
-  - @made-by-moonlight/plugin-workspace-worktree@0.6.0
+  - @made-by-moonlight/athene-core@0.6.0
+  - @made-by-moonlight/athene-plugin-runtime-tmux@0.6.0
+  - @made-by-moonlight/athene-plugin-agent-claude-code@0.6.0
+  - @made-by-moonlight/athene-plugin-agent-codex@0.6.0
+  - @made-by-moonlight/athene-plugin-agent-cursor@0.1.4
+  - @made-by-moonlight/athene-plugin-agent-kimicode@0.1.3
+  - @made-by-moonlight/athene-plugin-agent-opencode@0.6.0
+  - @made-by-moonlight/athene-plugin-scm-github@0.6.0
+  - @made-by-moonlight/athene-plugin-tracker-github@0.6.0
+  - @made-by-moonlight/athene-plugin-tracker-linear@0.6.0
+  - @made-by-moonlight/athene-plugin-workspace-worktree@0.6.0
 
 ## 0.5.0
 
@@ -241,17 +241,17 @@ in `POST /api/update` so the dashboard returns a structured 409.
 - dd07b6b: Fix direct terminal attach and keep mux routing project-scoped. Switches `resolveExactTmuxName` from `execFileSync` to a promisified `execFile` so slow tmux calls no longer stall the WebSocket message handler, and propagates async through `TerminalManager.open` / `subscribe` and the pty `onExit` reattach path. Also drops a duplicate `.kanban-board` grid rule in `globals.css`.
 - dd07b6b: Render an empty-state in the project sidebar when no projects are configured. Fresh-install users previously saw a blank sidebar with no way to open the Add Project modal; the sidebar now shows a small empty-state with the `+` button wired up.
 - Updated dependencies [dd07b6b]
-  - @made-by-moonlight/core@0.5.0
-  - @made-by-moonlight/plugin-agent-claude-code@0.5.0
-  - @made-by-moonlight/plugin-agent-codex@0.5.0
-  - @made-by-moonlight/plugin-agent-cursor@0.1.3
-  - @made-by-moonlight/plugin-agent-kimicode@0.1.2
-  - @made-by-moonlight/plugin-agent-opencode@0.5.0
-  - @made-by-moonlight/plugin-runtime-tmux@0.5.0
-  - @made-by-moonlight/plugin-scm-github@0.5.0
-  - @made-by-moonlight/plugin-tracker-github@0.5.0
-  - @made-by-moonlight/plugin-tracker-linear@0.5.0
-  - @made-by-moonlight/plugin-workspace-worktree@0.5.0
+  - @made-by-moonlight/athene-core@0.5.0
+  - @made-by-moonlight/athene-plugin-agent-claude-code@0.5.0
+  - @made-by-moonlight/athene-plugin-agent-codex@0.5.0
+  - @made-by-moonlight/athene-plugin-agent-cursor@0.1.3
+  - @made-by-moonlight/athene-plugin-agent-kimicode@0.1.2
+  - @made-by-moonlight/athene-plugin-agent-opencode@0.5.0
+  - @made-by-moonlight/athene-plugin-runtime-tmux@0.5.0
+  - @made-by-moonlight/athene-plugin-scm-github@0.5.0
+  - @made-by-moonlight/athene-plugin-tracker-github@0.5.0
+  - @made-by-moonlight/athene-plugin-tracker-linear@0.5.0
+  - @made-by-moonlight/athene-plugin-workspace-worktree@0.5.0
 
 ## 0.4.0
 
@@ -315,17 +315,17 @@ in `POST /api/update` so the dashboard returns a structured 409.
 - Updated dependencies [7072143]
 - Updated dependencies [a8bc746]
 - Updated dependencies [ed2dcea]
-  - @made-by-moonlight/core@0.4.0
-  - @made-by-moonlight/plugin-agent-codex@0.4.0
-  - @made-by-moonlight/plugin-agent-claude-code@0.4.0
-  - @made-by-moonlight/plugin-agent-opencode@0.4.0
-  - @made-by-moonlight/plugin-scm-github@0.4.0
-  - @made-by-moonlight/plugin-tracker-github@0.4.0
-  - @made-by-moonlight/plugin-agent-cursor@0.1.2
-  - @made-by-moonlight/plugin-agent-kimicode@0.1.1
-  - @made-by-moonlight/plugin-runtime-tmux@0.4.0
-  - @made-by-moonlight/plugin-tracker-linear@0.4.0
-  - @made-by-moonlight/plugin-workspace-worktree@0.4.0
+  - @made-by-moonlight/athene-core@0.4.0
+  - @made-by-moonlight/athene-plugin-agent-codex@0.4.0
+  - @made-by-moonlight/athene-plugin-agent-claude-code@0.4.0
+  - @made-by-moonlight/athene-plugin-agent-opencode@0.4.0
+  - @made-by-moonlight/athene-plugin-scm-github@0.4.0
+  - @made-by-moonlight/athene-plugin-tracker-github@0.4.0
+  - @made-by-moonlight/athene-plugin-agent-cursor@0.1.2
+  - @made-by-moonlight/athene-plugin-agent-kimicode@0.1.1
+  - @made-by-moonlight/athene-plugin-runtime-tmux@0.4.0
+  - @made-by-moonlight/athene-plugin-tracker-linear@0.4.0
+  - @made-by-moonlight/athene-plugin-workspace-worktree@0.4.0
 
 ## 0.2.2
 

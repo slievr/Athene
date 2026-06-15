@@ -91,7 +91,7 @@ AO runs on **Windows, macOS, Linux** as first-class targets. If env info indicat
 
 - **Path separators** — hardcoded `/` or `\` breaks cross-platform
 - **Shell syntax** — PowerShell lacks `&&`, `$VAR`, `$(cat ...)`, `/dev/null`, here-docs
-- **`process.platform === "win32"` inline** — must use `isWindows()` from `@made-by-moonlight/core`
+- **`process.platform === "win32"` inline** — must use `isWindows()` from `@made-by-moonlight/athene-core`
 - **`process.kill(-pid)`** — POSIX-only; use `killProcessTree()`
 - **Named pipes vs Unix sockets** — Windows uses `\\.\pipe\ao-pty-<id>`
 - **`localhost`** — Windows resolves to `::1` first, causing ~21s stalls on IPv4-only servers

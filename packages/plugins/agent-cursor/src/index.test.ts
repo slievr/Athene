@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createActivitySignal, type Session, type RuntimeHandle, type AgentLaunchConfig } from "@made-by-moonlight/core";
+import { createActivitySignal, type Session, type RuntimeHandle, type AgentLaunchConfig } from "@made-by-moonlight/athene-core";
 
 // Mock fs/promises for getSessionInfo tests
 vi.mock("node:fs/promises", async (importOriginal) => {
@@ -34,7 +34,7 @@ const { mockAppendActivityEntry, mockReadLastActivityEntry, mockRecordTerminalAc
     mockRecordTerminalActivity: vi.fn().mockResolvedValue(undefined),
   }));
 
-vi.mock("@made-by-moonlight/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,

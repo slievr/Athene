@@ -20,7 +20,7 @@ import {
   type RuntimeHandle,
   type Session,
   type WorkspaceHooksConfig,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { execFile, execFileSync } from "node:child_process";
 import { promisify } from "node:util";
 import { createReadStream, readFileSync } from "node:fs";

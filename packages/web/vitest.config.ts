@@ -31,41 +31,41 @@ export default defineConfig({
   },
   resolve: {
     alias: [
-      { find: "@made-by-moonlight/core/types", replacement: resolve(__dirname, "../core/src/types.ts") },
+      { find: "@made-by-moonlight/athene-core/types", replacement: resolve(__dirname, "../core/src/types.ts") },
       {
-        find: "@made-by-moonlight/core",
+        find: "@made-by-moonlight/athene-core",
         replacement: resolve(__dirname, "../core/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-runtime-tmux",
+        find: "@made-by-moonlight/athene-plugin-runtime-tmux",
         replacement: resolve(__dirname, "../plugins/runtime-tmux/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-agent-claude-code",
+        find: "@made-by-moonlight/athene-plugin-agent-claude-code",
         replacement: resolve(__dirname, "../plugins/agent-claude-code/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-agent-codex",
+        find: "@made-by-moonlight/athene-plugin-agent-codex",
         replacement: resolve(__dirname, "../plugins/agent-codex/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-agent-opencode",
+        find: "@made-by-moonlight/athene-plugin-agent-opencode",
         replacement: resolve(__dirname, "../plugins/agent-opencode/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-workspace-worktree",
+        find: "@made-by-moonlight/athene-plugin-workspace-worktree",
         replacement: resolve(__dirname, "../plugins/workspace-worktree/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-scm-github",
+        find: "@made-by-moonlight/athene-plugin-scm-github",
         replacement: resolve(__dirname, "../plugins/scm-github/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-tracker-github",
+        find: "@made-by-moonlight/athene-plugin-tracker-github",
         replacement: resolve(__dirname, "../plugins/tracker-github/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-tracker-linear",
+        find: "@made-by-moonlight/athene-plugin-tracker-linear",
         replacement: resolve(__dirname, "../plugins/tracker-linear/src/index.ts"),
       },
       { find: "server-only", replacement: resolve(__dirname, "./src/__tests__/server-only-mock.ts") },

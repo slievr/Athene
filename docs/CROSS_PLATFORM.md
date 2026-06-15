@@ -8,7 +8,7 @@
 
 ## The Golden Rule
 
-> **Never write `process.platform === "win32"` in new code. Use `isWindows()` from `@made-by-moonlight/core`. If you need branching the helper doesn't cover, add it to `packages/core/src/platform.ts` (or one of the targeted helpers in [the inventory](#helper-inventory)) — never inline at the call site.**
+> **Never write `process.platform === "win32"` in new code. Use `isWindows()` from `@made-by-moonlight/athene-core`. If you need branching the helper doesn't cover, add it to `packages/core/src/platform.ts` (or one of the targeted helpers in [the inventory](#helper-inventory)) — never inline at the call site.**
 
 This isn't stylistic. The branching in `platform.ts` is centrally tested with `Object.defineProperty(process, "platform", …)` so both Windows and POSIX paths are exercised on every CI runner. Inline `process.platform` checks are invisible to that test pattern, drift out of sync, and produce the bugs that took weeks to track down on the way to shipping the Windows port.
 
@@ -54,7 +54,7 @@ import {
   killProcessTree,
   findPidByPort,
   getEnvDefaults,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 ```
 
 | Symbol | Purpose | Notes |
@@ -82,7 +82,7 @@ import { pathsEqual, canonicalCompareKey } from "../../src/lib/path-equality.js"
 
 ### Windows pty-host registry — `packages/core/src/windows-pty-registry.ts`
 
-Only used by Windows runtime code, but exported from `@made-by-moonlight/core` so the CLI's `athene stop` can find detached pty-hosts that `taskkill /T` cannot reach.
+Only used by Windows runtime code, but exported from `@made-by-moonlight/athene-core` so the CLI's `athene stop` can find detached pty-hosts that `taskkill /T` cannot reach.
 
 ```ts
 import {
@@ -90,7 +90,7 @@ import {
   unregisterWindowsPtyHost,
   getWindowsPtyHosts,
   clearWindowsPtyHostRegistry,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 ```
 
 | Symbol | Purpose |
@@ -114,7 +114,7 @@ import {
   ptyHostKill,
   MessageParser,
   encodeMessage,
-} from "@made-by-moonlight/plugin-runtime-process";
+} from "@made-by-moonlight/athene-plugin-runtime-process";
 ```
 
 | Symbol | Purpose |
@@ -130,7 +130,7 @@ import {
 ### Pty-host sweep — `packages/plugins/runtime-process/src/index.ts`
 
 ```ts
-import { sweepWindowsPtyHosts } from "@made-by-moonlight/plugin-runtime-process";
+import { sweepWindowsPtyHosts } from "@made-by-moonlight/athene-plugin-runtime-process";
 ```
 
 `sweepWindowsPtyHosts(): Promise<{ attempted, gracefullyExited, forceKilled, failed }>` — iterates the registry, sends graceful `MSG_KILL_REQ`, polls up to 500 ms, then `killProcessTree` for stragglers. Called by `athene stop`. **No-op on non-Windows.**
@@ -172,7 +172,7 @@ import { stopStaleWindowsPtyHosts } from "@/lib/windows-pty-cleanup";
 ### Agent plugin helpers — `packages/core/src/agent-workspace-hooks.ts`
 
 ```ts
-import { setupPathWrapperWorkspace, buildAgentPath } from "@made-by-moonlight/core";
+import { setupPathWrapperWorkspace, buildAgentPath } from "@made-by-moonlight/athene-core";
 ```
 
 | Symbol | Purpose |
@@ -191,7 +191,7 @@ import {
   classifyTerminalActivity,
   recordTerminalActivity,
   readLastJsonlEntry,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 ```
 
 `getActivityFallbackState` is **mandatory** for new agent plugins. See [the agent-plugin section in the root CLAUDE.md](../CLAUDE.md#agent-plugin-implementation-standards) for the full contract — but the relevant cross-platform note is: AO activity JSONL works the same on all platforms, so write your activity-detection logic against it, not against tmux capture-pane / ps output.
@@ -199,7 +199,7 @@ import {
 ### Shell escaping — `packages/core/src/utils.ts`
 
 ```ts
-import { shellEscape } from "@made-by-moonlight/core";
+import { shellEscape } from "@made-by-moonlight/athene-core";
 ```
 
 `shellEscape(arg)` produces a safely-quoted argument. Always use it when interpolating any value into a shell command line, even on Windows. Windows quoting rules are messier than POSIX and the helper handles them.
@@ -332,7 +332,7 @@ function setPlatform(p: NodeJS.Platform) {
 
 Before saying "done" on any feature, verify each of these (or mark N/A with reasoning):
 
-1. **No raw `process.platform` checks** — used `isWindows()` from `@made-by-moonlight/core`?
+1. **No raw `process.platform` checks** — used `isWindows()` from `@made-by-moonlight/athene-core`?
 2. **Process spawning** — used `runtime-process` (Windows) or `runtime-tmux` (POSIX) abstractions? Shell-out used `shellEscape` + `getShell` or `execFile`? `windowsHide: true` and `shell: isWindows()` for `.cmd`/`.bat` resolution?
 3. **Process killing** — distinguished `EPERM` from `ESRCH`? No negative PIDs? Used `killProcessTree`? Guarded `pid > 0`? Cooperative kill before force-kill on Windows?
 4. **Paths** — used `pathsEqual` for comparison? `path.join` for construction? No `===`, no hardcoded `/` or `\`?
@@ -362,7 +362,7 @@ import {
   checkActivityLogState, getActivityFallbackState,
   classifyTerminalActivity, recordTerminalActivity,
   readLastJsonlEntry,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 // Path comparison (CLI package)
 import { pathsEqual, canonicalCompareKey }
@@ -374,7 +374,7 @@ import {
   ptyHostGetOutput, ptyHostIsAlive, ptyHostKill,
   MessageParser, encodeMessage,
   sweepWindowsPtyHosts,
-} from "@made-by-moonlight/plugin-runtime-process";
+} from "@made-by-moonlight/athene-plugin-runtime-process";
 
 // Web-side helpers
 import { validateSessionId, resolvePipePath }

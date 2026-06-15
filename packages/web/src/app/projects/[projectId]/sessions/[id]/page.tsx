@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { isOrchestratorSession } from "@made-by-moonlight/core/types";
+import { isOrchestratorSession } from "@made-by-moonlight/athene-core/types";
 import { SessionDetail } from "@/components/SessionDetail";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import {

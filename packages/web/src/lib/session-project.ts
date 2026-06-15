@@ -1,4 +1,4 @@
-import type { OrchestratorConfig } from "@made-by-moonlight/core";
+import type { OrchestratorConfig } from "@made-by-moonlight/athene-core";
 
 export function resolveProjectIdForSessionId(
   config: OrchestratorConfig,

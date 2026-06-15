@@ -17,7 +17,7 @@ import {
   type ActivityState,
   type Session,
   type RuntimeHandle,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 // Mock homedir() so getActivityState looks in our temp dir
 vi.mock("node:os", async (importOriginal) => {

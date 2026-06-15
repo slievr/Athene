@@ -11,8 +11,8 @@ import {
   type NotificationDataV3,
   type NotificationCICheck,
   CI_STATUS,
-} from "@made-by-moonlight/core";
-import { isRetryableHttpStatus, normalizeRetryConfig } from "@made-by-moonlight/core/utils";
+} from "@made-by-moonlight/athene-core";
+import { isRetryableHttpStatus, normalizeRetryConfig } from "@made-by-moonlight/athene-core/utils";
 
 export const manifest = {
   name: "discord",

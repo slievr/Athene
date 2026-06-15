@@ -1,5 +1,5 @@
 {
-  "name": "@made-by-moonlight/core",
+  "name": "@made-by-moonlight/athene-core",
   "version": "0.9.1",
   "description": "Core library — types, config, session manager, lifecycle manager, event bus",
   "license": "MIT",

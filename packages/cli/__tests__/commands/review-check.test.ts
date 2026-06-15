@@ -15,7 +15,7 @@ import {
   type SessionManager,
   getSessionsDir,
   sessionFromMetadata,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 const { mockTmux, mockExec, mockGh, mockConfigRef, mockSessionManager, sessionsDirRef } =
   vi.hoisted(() => ({
@@ -60,9 +60,9 @@ vi.mock("ora", () => ({
   }),
 }));
 
-vi.mock("@made-by-moonlight/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-  const actual = await importOriginal<typeof import("@made-by-moonlight/core")>();
+  const actual = await importOriginal<typeof import("@made-by-moonlight/athene-core")>();
   return {
     ...actual,
     loadConfig: () => mockConfigRef.current,

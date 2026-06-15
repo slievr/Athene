@@ -21,7 +21,7 @@ import {
   deleteMetadata,
   listMetadata,
   validateAndStoreOrigin,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 describe("config → metadata service integration (real filesystem)", () => {
   const storageKeyA = "111111111111";

@@ -38,8 +38,8 @@ import { closeDb } from "../events-db.js";
 import { createLifecycleManager } from "../lifecycle-manager.js";
 import { writeMetadata } from "../metadata.js";
 import { getProjectSessionsDir, getProjectDir } from "../paths.js";
-import trackerGithub from "@made-by-moonlight/plugin-tracker-github";
-import scmGithub from "@made-by-moonlight/plugin-scm-github";
+import trackerGithub from "@made-by-moonlight/athene-plugin-tracker-github";
+import scmGithub from "@made-by-moonlight/athene-plugin-scm-github";
 import { createMockPlugins, makeHandle, makeSession as makeSessionBase, makePR, type TestEnvironment } from "./test-utils.js";
 import type {
   OrchestratorConfig,

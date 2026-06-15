@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { existsSync, realpathSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { ConfigNotFoundError, getGlobalConfigPath, loadConfig } from "@made-by-moonlight/core";
+import { ConfigNotFoundError, getGlobalConfigPath, loadConfig } from "@made-by-moonlight/athene-core";
 
 export interface ProjectInfo {
   id: string;

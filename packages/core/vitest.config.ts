@@ -35,11 +35,11 @@ export default defineConfig({
       // Integration tests import real plugins. These aliases resolve
       // package names to source files so we don't need circular devDeps
       // (plugins depend on core, core can't depend on plugins).
-      "@made-by-moonlight/plugin-tracker-github": resolve(
+      "@made-by-moonlight/athene-plugin-tracker-github": resolve(
         __dirname,
         "../plugins/tracker-github/src/index.ts",
       ),
-      "@made-by-moonlight/plugin-scm-github": resolve(__dirname, "../plugins/scm-github/src/index.ts"),
+      "@made-by-moonlight/athene-plugin-scm-github": resolve(__dirname, "../plugins/scm-github/src/index.ts"),
     },
     coverage: {
       provider: "v8",

@@ -6,14 +6,14 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { OrchestratorEvent } from "@made-by-moonlight/core";
+import type { OrchestratorEvent } from "@made-by-moonlight/athene-core";
 
 const { recordActivityEventMock } = vi.hoisted(() => ({
   recordActivityEventMock: vi.fn(),
 }));
 
-vi.mock("@made-by-moonlight/core", async () => {
-  const actual = (await vi.importActual("@made-by-moonlight/core")) as Record<string, unknown>;
+vi.mock("@made-by-moonlight/athene-core", async () => {
+  const actual = (await vi.importActual("@made-by-moonlight/athene-core")) as Record<string, unknown>;
   return {
     ...actual,
     recordActivityEvent: recordActivityEventMock,

@@ -10,7 +10,7 @@ import {
   triggerCodeReviewForSession,
   type CodeReviewRunStatus,
   type CodeReviewRunSummary,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { getSessionManager } from "../lib/create-session-manager.js";
 
 const RUN_STATUSES: ReadonlySet<CodeReviewRunStatus> = new Set([

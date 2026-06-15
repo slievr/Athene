@@ -13,7 +13,7 @@
 
 import { spawn } from "node:child_process";
 import { NextResponse, type NextRequest } from "next/server";
-import { isWindows } from "@made-by-moonlight/core";
+import { isWindows } from "@made-by-moonlight/athene-core";
 import { getServices } from "@/lib/services";
 
 export const dynamic = "force-dynamic";

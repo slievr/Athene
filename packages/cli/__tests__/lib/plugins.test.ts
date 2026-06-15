@@ -5,7 +5,7 @@ import {
   getAgentByNameFromRegistry,
   getSCMFromRegistry,
 } from "../../src/lib/plugins.js";
-import type { Agent, OrchestratorConfig, PluginRegistry, SCM } from "@made-by-moonlight/core";
+import type { Agent, OrchestratorConfig, PluginRegistry, SCM } from "@made-by-moonlight/athene-core";
 
 function makeConfig(
   defaultAgent: string,

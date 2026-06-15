@@ -5,7 +5,7 @@ import {
   type ProjectConfig,
   type SCMWebhookEvent,
   type Session,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { eventMatchesProject, findAffectedSessions } from "./scm-webhooks";
 
 const project: ProjectConfig = {

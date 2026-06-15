@@ -23,7 +23,7 @@ const {
     },
   }));
 
-vi.mock("@made-by-moonlight/core", () => {
+vi.mock("@made-by-moonlight/athene-core", () => {
   function buildSubject(input: {
     sessionId: string;
     projectId: string;

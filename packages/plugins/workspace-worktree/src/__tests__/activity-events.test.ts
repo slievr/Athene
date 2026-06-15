@@ -15,8 +15,8 @@ const { recordActivityEventMock } = vi.hoisted(() => ({
   recordActivityEventMock: vi.fn(),
 }));
 
-vi.mock("@made-by-moonlight/core", async () => {
-  const actual = (await vi.importActual("@made-by-moonlight/core")) as Record<string, unknown>;
+vi.mock("@made-by-moonlight/athene-core", async () => {
+  const actual = (await vi.importActual("@made-by-moonlight/athene-core")) as Record<string, unknown>;
   return {
     ...actual,
     recordActivityEvent: recordActivityEventMock,
@@ -46,7 +46,7 @@ vi.mock("node:os", () => ({ homedir: () => "/mock-home" }));
 
 import * as childProcess from "node:child_process";
 import { create } from "../index.js";
-import type { ProjectConfig, WorkspaceCreateConfig, WorkspaceInfo } from "@made-by-moonlight/core/types";
+import type { ProjectConfig, WorkspaceCreateConfig, WorkspaceInfo } from "@made-by-moonlight/athene-core/types";
 
 const mockExecFileAsync = (childProcess.execFile as unknown as Record<symbol, unknown>)[
   Symbol.for("nodejs.util.promisify.custom")

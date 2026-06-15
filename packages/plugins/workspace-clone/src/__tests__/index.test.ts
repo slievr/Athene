@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as childProcess from "node:child_process";
 import * as fs from "node:fs";
-import type { ProjectConfig } from "@made-by-moonlight/core";
+import type { ProjectConfig } from "@made-by-moonlight/athene-core";
 
 const { getShellMock, recordActivityEventMock } = vi.hoisted(() => ({
   getShellMock: vi.fn(() => ({ cmd: "sh", args: (c: string) => ["-c", c] })),
   recordActivityEventMock: vi.fn(),
 }));
 
-vi.mock("@made-by-moonlight/core", async () => {
-  const actual = (await vi.importActual("@made-by-moonlight/core")) as Record<string, unknown>;
+vi.mock("@made-by-moonlight/athene-core", async () => {
+  const actual = (await vi.importActual("@made-by-moonlight/athene-core")) as Record<string, unknown>;
   return {
     ...actual,
     getShell: getShellMock,
@@ -73,7 +73,7 @@ function makeProject(overrides?: Partial<ProjectConfig>): ProjectConfig {
 
 // Import after mocks are set up
 import clonePlugin, { manifest, create } from "../index.js";
-import * as core from "@made-by-moonlight/core";
+import * as core from "@made-by-moonlight/athene-core";
 
 const mockGetShell = core.getShell as ReturnType<typeof vi.fn>;
 

@@ -66,11 +66,11 @@ describe("script-runner", () => {
     "uses the package root for packaged installs inside node_modules",
     () => {
       const modulePath =
-        "/usr/local/lib/node_modules/@made-by-moonlight/cli/dist/lib/script-runner.js";
+        "/usr/local/lib/node_modules/@made-by-moonlight/athene-cli/dist/lib/script-runner.js";
 
       expect(resolveScriptLayoutFromPath(modulePath)).toBe("package-install");
       expect(resolveDefaultRepoRootFromPath(modulePath)).toBe(
-        "/usr/local/lib/node_modules/@made-by-moonlight/cli",
+        "/usr/local/lib/node_modules/@made-by-moonlight/athene-cli",
       );
     },
   );

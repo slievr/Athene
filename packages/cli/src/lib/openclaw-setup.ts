@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import chalk from "chalk";
 import { parseDocument } from "yaml";
-import { CONFIG_SCHEMA_URL, findConfigFile, isCanonicalGlobalConfigPath } from "@made-by-moonlight/core";
+import { CONFIG_SCHEMA_URL, findConfigFile, isCanonicalGlobalConfigPath } from "@made-by-moonlight/athene-core";
 import {
   applyNotifierRoutingPreset,
   ensureNotifierDefault,

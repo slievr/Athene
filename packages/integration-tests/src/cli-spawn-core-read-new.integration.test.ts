@@ -24,7 +24,7 @@ import {
   type OrchestratorConfig,
   getProjectSessionsDir,
   generateSessionName,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { isTmuxAvailable, killSessionsByPrefix, killSession } from "./helpers/tmux.js";
 
 const tmuxOk = await isTmuxAvailable();

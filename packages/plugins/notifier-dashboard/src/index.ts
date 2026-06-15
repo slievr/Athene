@@ -5,7 +5,7 @@ import {
   type NotifyAction,
   type OrchestratorEvent,
   type PluginModule,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 export const manifest = {
   name: "dashboard",

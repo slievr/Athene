@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
-import type { OrchestratorEvent, NotifyAction } from "@made-by-moonlight/core";
+import type { OrchestratorEvent, NotifyAction } from "@made-by-moonlight/athene-core";
 
 // Mock node:child_process
 vi.mock("node:child_process", () => ({

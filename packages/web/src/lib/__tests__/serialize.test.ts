@@ -12,7 +12,7 @@ import {
   type ProjectConfig,
   type OrchestratorConfig,
   type PluginRegistry,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import {
   sessionToDashboard,
   resolveProject,

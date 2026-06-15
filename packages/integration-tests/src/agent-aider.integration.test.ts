@@ -14,9 +14,9 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import type { ActivityDetection, AgentSessionInfo } from "@made-by-moonlight/core";
+import type { ActivityDetection, AgentSessionInfo } from "@made-by-moonlight/athene-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import aiderPlugin from "@made-by-moonlight/plugin-agent-aider";
+import aiderPlugin from "@made-by-moonlight/athene-plugin-agent-aider";
 import {
   isTmuxAvailable,
   killSessionsByPrefix,

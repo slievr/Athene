@@ -47,14 +47,14 @@ Published plugins should:
 
 - ship built JavaScript, not raw TypeScript-only entrypoints
 - export an ESM entrypoint through `exports` or `main`
-- declare a semver dependency on `@made-by-moonlight/core`
+- declare a semver dependency on `@made-by-moonlight/athene-core`
 - keep side effects out of module top-level code where possible
 
 Recommended package shape:
 
 ```json
 {
-  "name": "@made-by-moonlight/plugin-example",
+  "name": "@made-by-moonlight/athene-plugin-example",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
@@ -76,7 +76,7 @@ Project config enables plugins through `plugins:` entries:
 plugins:
   - name: openclaw
     source: registry
-    package: "@made-by-moonlight/plugin-notifier-openclaw"
+    package: "@made-by-moonlight/athene-plugin-notifier-openclaw"
     version: "0.1.1"
 ```
 

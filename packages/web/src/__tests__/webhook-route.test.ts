@@ -8,12 +8,12 @@ import {
   type PluginRegistry,
   type SCM,
   type LifecycleManager,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 // Activity event recording is mocked so we can assert what fires without
 // touching the real SQLite layer.
 const recordActivityEvent = vi.fn();
-vi.mock("@made-by-moonlight/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,

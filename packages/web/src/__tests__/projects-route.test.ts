@@ -15,7 +15,7 @@ import {
   generateExternalId,
   loadGlobalConfig,
   registerProjectInGlobalConfig,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 const invalidatePortfolioServicesCache = vi.fn();
 

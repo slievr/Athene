@@ -6,7 +6,7 @@
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { normalize, resolve } from "node:path";
 import ora from "ora";
-import { findPidByPort, isWindows, killProcessTree } from "@made-by-moonlight/core";
+import { findPidByPort, isWindows, killProcessTree } from "@made-by-moonlight/athene-core";
 import { exec, execSilent } from "./shell.js";
 
 /**

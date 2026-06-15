@@ -9,7 +9,7 @@ import {
   type NotificationDataV3,
   type OrchestratorEvent,
   type PluginModule,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 // Module-level guard so we only emit notifier.dep_missing once per process.
 let depMissingEmitted = false;

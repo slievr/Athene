@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type * as AoCore from "@made-by-moonlight/core";
+import type * as AoCore from "@made-by-moonlight/athene-core";
 
 const { mockUnregister, mockWaitForExit, mockKillProcessTree, mockSweepDaemonChildren } =
   vi.hoisted(() => ({
@@ -14,8 +14,8 @@ vi.mock("../../src/lib/running-state.js", () => ({
   waitForExit: mockWaitForExit,
 }));
 
-vi.mock("@made-by-moonlight/core", async () => {
-  const actual = await vi.importActual<typeof AoCore>("@made-by-moonlight/core");
+vi.mock("@made-by-moonlight/athene-core", async () => {
+  const actual = await vi.importActual<typeof AoCore>("@made-by-moonlight/athene-core");
   return {
     ...actual,
     killProcessTree: mockKillProcessTree,

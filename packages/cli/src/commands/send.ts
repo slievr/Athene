@@ -8,7 +8,7 @@ import {
   type OpenCodeSessionManager,
   type Session,
   loadConfig,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { exec, tmux } from "../lib/shell.js";
 import { getAgentByName, getAgentByNameFromRegistry } from "../lib/plugins.js";
 import { getPluginRegistry, getSessionManager } from "../lib/create-session-manager.js";

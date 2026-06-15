@@ -17,7 +17,7 @@
 
 import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
-import { isWindows } from "@made-by-moonlight/core";
+import { isWindows } from "@made-by-moonlight/athene-core";
 
 /**
  * Resolve symlinks. Falls back to the input on any filesystem error so

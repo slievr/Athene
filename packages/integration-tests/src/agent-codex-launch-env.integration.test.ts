@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { AgentLaunchConfig } from "@made-by-moonlight/core";
-import codexPlugin from "@made-by-moonlight/plugin-agent-codex";
+import type { AgentLaunchConfig } from "@made-by-moonlight/athene-core";
+import codexPlugin from "@made-by-moonlight/athene-plugin-agent-codex";
 
 function makeLaunchConfig(overrides: Partial<AgentLaunchConfig> = {}): AgentLaunchConfig {
   return {

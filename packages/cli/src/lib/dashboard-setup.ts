@@ -9,7 +9,7 @@ import {
   findConfigFile,
   normalizeDashboardNotificationLimit,
   readDashboardNotificationsFromFile,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import {
   applyNotifierRoutingPreset,
   getNotifierRoutingState,

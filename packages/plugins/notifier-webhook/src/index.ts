@@ -4,12 +4,12 @@ import {
   type OrchestratorEvent,
   type NotifyAction,
   type NotifyContext,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import {
   isRetryableHttpStatus,
   normalizeRetryConfig,
   validateUrl,
-} from "@made-by-moonlight/core/utils";
+} from "@made-by-moonlight/athene-core/utils";
 
 export const manifest = {
   name: "webhook",

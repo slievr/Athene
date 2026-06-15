@@ -3,14 +3,14 @@ import { mkdtempSync, writeFileSync, existsSync, statSync, utimesSync } from "no
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import type * as AoCore from "@made-by-moonlight/core";
+import type * as AoCore from "@made-by-moonlight/athene-core";
 
 // We point the shared module at a fresh temp dir per test by mocking the
 // AO base path resolver. The janitor pulls the dir from
-// @made-by-moonlight/core's getOpenCodeTmpDir.
+// @made-by-moonlight/athene-core's getOpenCodeTmpDir.
 let mockedDir = "";
-vi.mock("@made-by-moonlight/core", async () => {
-  const actual = await vi.importActual<typeof AoCore>("@made-by-moonlight/core");
+vi.mock("@made-by-moonlight/athene-core", async () => {
+  const actual = await vi.importActual<typeof AoCore>("@made-by-moonlight/athene-core");
   return {
     ...actual,
     getOpenCodeTmpDir: () => mockedDir,

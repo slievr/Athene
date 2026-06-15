@@ -54,7 +54,7 @@ const {
   };
 });
 
-vi.mock("@made-by-moonlight/core", () => ({
+vi.mock("@made-by-moonlight/athene-core", () => ({
   loadConfig: mockLoadConfig,
   getGlobalConfigPath: mockGetGlobalConfigPath,
   ConfigNotFoundError: MockConfigNotFoundError,
@@ -69,15 +69,15 @@ vi.mock("@made-by-moonlight/core", () => ({
   TERMINAL_STATUSES: new Set(["merged", "killed"]) as ReadonlySet<string>,
 }));
 
-vi.mock("@made-by-moonlight/plugin-runtime-tmux", () => ({ default: tmuxPlugin }));
-vi.mock("@made-by-moonlight/plugin-agent-claude-code", () => ({ default: claudePlugin }));
-vi.mock("@made-by-moonlight/plugin-agent-codex", () => ({ default: codexPlugin }));
-vi.mock("@made-by-moonlight/plugin-agent-grok", () => ({ default: grokPlugin }));
-vi.mock("@made-by-moonlight/plugin-agent-opencode", () => ({ default: opencodePlugin }));
-vi.mock("@made-by-moonlight/plugin-workspace-worktree", () => ({ default: worktreePlugin }));
-vi.mock("@made-by-moonlight/plugin-scm-github", () => ({ default: scmPlugin }));
-vi.mock("@made-by-moonlight/plugin-tracker-github", () => ({ default: trackerGithubPlugin }));
-vi.mock("@made-by-moonlight/plugin-tracker-linear", () => ({ default: trackerLinearPlugin }));
+vi.mock("@made-by-moonlight/athene-plugin-runtime-tmux", () => ({ default: tmuxPlugin }));
+vi.mock("@made-by-moonlight/athene-plugin-agent-claude-code", () => ({ default: claudePlugin }));
+vi.mock("@made-by-moonlight/athene-plugin-agent-codex", () => ({ default: codexPlugin }));
+vi.mock("@made-by-moonlight/athene-plugin-agent-grok", () => ({ default: grokPlugin }));
+vi.mock("@made-by-moonlight/athene-plugin-agent-opencode", () => ({ default: opencodePlugin }));
+vi.mock("@made-by-moonlight/athene-plugin-workspace-worktree", () => ({ default: worktreePlugin }));
+vi.mock("@made-by-moonlight/athene-plugin-scm-github", () => ({ default: scmPlugin }));
+vi.mock("@made-by-moonlight/athene-plugin-tracker-github", () => ({ default: trackerGithubPlugin }));
+vi.mock("@made-by-moonlight/athene-plugin-tracker-linear", () => ({ default: trackerLinearPlugin }));
 
 describe("services", () => {
   beforeEach(() => {

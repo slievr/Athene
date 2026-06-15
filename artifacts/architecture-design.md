@@ -670,7 +670,7 @@ agent-orchestrator/
 ├── agent-orchestrator.yaml.example
 │
 ├── packages/
-│   ├── core/                          # @made-by-moonlight/core
+│   ├── core/                          # @made-by-moonlight/athene-core
 │   │   └── src/
 │   │       ├── types.ts               # All interfaces + types
 │   │       ├── config.ts              # YAML config loader + Zod validation
@@ -681,7 +681,7 @@ agent-orchestrator/
 │   │       ├── metadata.ts            # Flat-file read/write
 │   │       └── index.ts
 │   │
-│   ├── cli/                           # @made-by-moonlight/cli → `ao` binary
+│   ├── cli/                           # @made-by-moonlight/athene-cli → `ao` binary
 │   │   └── src/
 │   │       ├── index.ts               # Commander.js setup
 │   │       └── commands/
@@ -695,7 +695,7 @@ agent-orchestrator/
 │   │           ├── dashboard.ts       # athene dashboard (starts web)
 │   │           └── open.ts            # athene open [session|all]
 │   │
-│   ├── web/                           # @made-by-moonlight/web
+│   ├── web/                           # @made-by-moonlight/athene-web
 │   │   ├── next.config.ts
 │   │   └── src/
 │   │       ├── app/

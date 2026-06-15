@@ -1,5 +1,5 @@
 import { type NextRequest } from "next/server";
-import { recordActivityEvent } from "@made-by-moonlight/core";
+import { recordActivityEvent } from "@made-by-moonlight/athene-core";
 import { validateIdentifier, validateString, validateConfiguredProject } from "@/lib/validation";
 import { getServices } from "@/lib/services";
 import { sessionToDashboard } from "@/lib/serialize";

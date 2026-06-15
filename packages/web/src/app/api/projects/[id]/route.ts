@@ -16,7 +16,7 @@ import {
   type OpenCodeSessionManager,
   type PluginRegistry,
   type LocalProjectConfig,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { revalidatePath } from "next/cache";
 import { getServices, invalidatePortfolioServicesCache } from "@/lib/services";
 import { stopStaleWindowsPtyHosts } from "@/lib/windows-pty-cleanup";

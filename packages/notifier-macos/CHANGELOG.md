@@ -1,4 +1,4 @@
-# @made-by-moonlight/notifier-macos
+# @made-by-moonlight/athene-notifier-macos
 
 ## 0.9.1
 

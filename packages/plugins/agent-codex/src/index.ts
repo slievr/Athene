@@ -22,7 +22,7 @@ import {
   type RuntimeHandle,
   type Session,
   type WorkspaceHooksConfig,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { execFile, execFileSync } from "node:child_process";
 import { createReadStream } from "node:fs";
 import { readdir, stat, lstat, open } from "node:fs/promises";
@@ -47,7 +47,7 @@ export const manifest = {
 };
 
 // =============================================================================
-// Workspace Setup (delegates to shared PATH-wrapper hooks from @made-by-moonlight/core)
+// Workspace Setup (delegates to shared PATH-wrapper hooks from @made-by-moonlight/athene-core)
 // =============================================================================
 
 // =============================================================================

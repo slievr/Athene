@@ -9,7 +9,7 @@ const { mockQueryActivityEvents, mockSearchActivityEvents, mockGetActivityEventS
   }),
 );
 
-vi.mock("@made-by-moonlight/core", () => ({
+vi.mock("@made-by-moonlight/athene-core", () => ({
   queryActivityEvents: (...args: unknown[]) => mockQueryActivityEvents(...args),
   searchActivityEvents: (...args: unknown[]) => mockSearchActivityEvents(...args),
   getActivityEventStats: (...args: unknown[]) => mockGetActivityEventStats(...args),

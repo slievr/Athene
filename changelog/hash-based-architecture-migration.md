@@ -203,7 +203,7 @@ import {
   generateConfigHash,
   generateInstanceId,
   validateAndStoreOrigin,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 // Calculate paths dynamically
 const sessionsDir = getSessionsDir(configPath, projectPath);

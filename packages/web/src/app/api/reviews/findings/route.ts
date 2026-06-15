@@ -1,4 +1,4 @@
-import { createCodeReviewStore } from "@made-by-moonlight/core";
+import { createCodeReviewStore } from "@made-by-moonlight/athene-core";
 import { getCorrelationId, jsonWithCorrelation } from "@/lib/observability";
 import { getServices } from "@/lib/services";
 import { validateConfiguredProject, validateIdentifier } from "@/lib/validation";

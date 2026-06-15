@@ -59,10 +59,10 @@ const { mockGetInstalledAoVersion } = vi.hoisted(() => ({
   mockGetInstalledAoVersion: vi.fn(() => "0.0.0"),
 }));
 
-import type * as AoCoreType from "@made-by-moonlight/core";
+import type * as AoCoreType from "@made-by-moonlight/athene-core";
 
-vi.mock("@made-by-moonlight/core", async () => {
-  const actual = (await vi.importActual("@made-by-moonlight/core")) as typeof AoCoreType;
+vi.mock("@made-by-moonlight/athene-core", async () => {
+  const actual = (await vi.importActual("@made-by-moonlight/athene-core")) as typeof AoCoreType;
   return {
     ...actual,
     loadGlobalConfig: () => mockGlobalConfig.value,
@@ -238,7 +238,7 @@ describe("update-check", () => {
     it("returns 'npm-global' for /usr/local/lib/node_modules path", () => {
       expect(
         classifyInstallPath(
-          "/usr/local/lib/node_modules/@made-by-moonlight/cli/dist/lib/update-check.js",
+          "/usr/local/lib/node_modules/@made-by-moonlight/athene-cli/dist/lib/update-check.js",
         ),
       ).toBe("npm-global");
     });
@@ -246,7 +246,7 @@ describe("update-check", () => {
     it("returns 'npm-global' for nvm global path", () => {
       expect(
         classifyInstallPath(
-          "/home/user/.nvm/versions/node/v20.0.0/lib/node_modules/@made-by-moonlight/cli/dist/lib/update-check.js",
+          "/home/user/.nvm/versions/node/v20.0.0/lib/node_modules/@made-by-moonlight/athene-cli/dist/lib/update-check.js",
         ),
       ).toBe("npm-global");
     });
@@ -262,7 +262,7 @@ describe("update-check", () => {
     it("returns 'pnpm-global' for pnpm global store path", () => {
       expect(
         classifyInstallPath(
-          "/home/user/.local/share/pnpm/global/5/node_modules/.pnpm/@aoagents+ao-cli@0.2.2/node_modules/@made-by-moonlight/cli/dist/lib/update-check.js",
+          "/home/user/.local/share/pnpm/global/5/node_modules/.pnpm/@aoagents+ao-cli@0.2.2/node_modules/@made-by-moonlight/athene-cli/dist/lib/update-check.js",
         ),
       ).toBe("pnpm-global");
     });
@@ -271,7 +271,7 @@ describe("update-check", () => {
       mockExistsSync.mockReturnValue(false);
       expect(
         classifyInstallPath(
-          "/home/user/my-project/node_modules/.pnpm/@aoagents+ao-cli@0.2.2/node_modules/@made-by-moonlight/cli/dist/lib/update-check.js",
+          "/home/user/my-project/node_modules/.pnpm/@aoagents+ao-cli@0.2.2/node_modules/@made-by-moonlight/athene-cli/dist/lib/update-check.js",
         ),
       ).toBe("unknown");
     });
@@ -280,7 +280,7 @@ describe("update-check", () => {
       mockExistsSync.mockReturnValue(false);
       expect(
         classifyInstallPath(
-          "/home/user/my-project/node_modules/@made-by-moonlight/cli/dist/lib/update-check.js",
+          "/home/user/my-project/node_modules/@made-by-moonlight/athene-cli/dist/lib/update-check.js",
         ),
       ).toBe("unknown");
     });
@@ -1263,7 +1263,7 @@ describe("update-check", () => {
     it("returns 'bun-global' for ~/.bun/install/global/ paths", () => {
       expect(
         classifyInstallPath(
-          "/home/user/.bun/install/global/node_modules/@made-by-moonlight/cli/dist/lib/update-check.js",
+          "/home/user/.bun/install/global/node_modules/@made-by-moonlight/athene-cli/dist/lib/update-check.js",
         ),
       ).toBe("bun-global");
     });
@@ -1282,7 +1282,7 @@ describe("update-check", () => {
       // FIRST or we'd misclassify brew installs as npm-global.
       expect(
         classifyInstallPath(
-          "/usr/local/Cellar/ao/0.5.0/libexec/lib/node_modules/@made-by-moonlight/cli/dist/lib/update-check.js",
+          "/usr/local/Cellar/ao/0.5.0/libexec/lib/node_modules/@made-by-moonlight/athene-cli/dist/lib/update-check.js",
         ),
       ).toBe("homebrew");
     });

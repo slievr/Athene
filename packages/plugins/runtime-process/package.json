@@ -1,5 +1,5 @@
 {
-  "name": "@made-by-moonlight/plugin-runtime-process",
+  "name": "@made-by-moonlight/athene-plugin-runtime-process",
   "version": "0.9.1",
   "description": "Runtime plugin: child processes",
   "license": "MIT",
@@ -35,7 +35,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@made-by-moonlight/core": "workspace:*",
+    "@made-by-moonlight/athene-core": "workspace:*",
     "node-pty": "^1.0.0"
   },
   "devDependencies": {

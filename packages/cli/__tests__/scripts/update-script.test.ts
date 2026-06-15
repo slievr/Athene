@@ -84,8 +84,8 @@ esac\nexit 0`,
     expect(commands).toContain("pnpm install");
     expect(commands).toContain("pnpm -r --if-present clean");
     expect(commands).toContain("pnpm build");
-    expect(commands).not.toContain("pnpm --filter @made-by-moonlight/core clean");
-    expect(commands).not.toContain("pnpm --filter @made-by-moonlight/cli build");
+    expect(commands).not.toContain("pnpm --filter @made-by-moonlight/athene-core clean");
+    expect(commands).not.toContain("pnpm --filter @made-by-moonlight/athene-cli build");
     expect(commands).toContain("npm link --force");
   });
 
@@ -414,7 +414,7 @@ exit 0`,
     // Rebuild commands should NOT have run
     expect(commands).not.toContain("pnpm install");
     expect(commands).not.toContain("pnpm build");
-    expect(commands).not.toContain("pnpm --filter @made-by-moonlight/core build");
+    expect(commands).not.toContain("pnpm --filter @made-by-moonlight/athene-core build");
     expect(commands).not.toContain("npm link");
     expect(commands).not.toContain("git pull --ff-only origin main");
     // Smoke tests SHOULD still have run

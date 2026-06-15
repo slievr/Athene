@@ -1,7 +1,7 @@
 [
   {
     "id": "agent-codex",
-    "package": "@made-by-moonlight/plugin-agent-codex",
+    "package": "@made-by-moonlight/athene-plugin-agent-codex",
     "slot": "agent",
     "description": "Agent plugin: OpenAI Codex CLI",
     "source": "registry",
@@ -9,7 +9,7 @@
   },
   {
     "id": "agent-aider",
-    "package": "@made-by-moonlight/plugin-agent-aider",
+    "package": "@made-by-moonlight/athene-plugin-agent-aider",
     "slot": "agent",
     "description": "Agent plugin: Aider CLI",
     "source": "registry",
@@ -17,7 +17,7 @@
   },
   {
     "id": "agent-opencode",
-    "package": "@made-by-moonlight/plugin-agent-opencode",
+    "package": "@made-by-moonlight/athene-plugin-agent-opencode",
     "slot": "agent",
     "description": "Agent plugin: OpenCode CLI",
     "source": "registry",
@@ -25,7 +25,7 @@
   },
   {
     "id": "agent-kimicode",
-    "package": "@made-by-moonlight/plugin-agent-kimicode",
+    "package": "@made-by-moonlight/athene-plugin-agent-kimicode",
     "slot": "agent",
     "description": "Agent plugin: Kimi Code CLI (MoonshotAI)",
     "source": "registry",
@@ -33,7 +33,7 @@
   },
   {
     "id": "notifier-openclaw",
-    "package": "@made-by-moonlight/plugin-notifier-openclaw",
+    "package": "@made-by-moonlight/athene-plugin-notifier-openclaw",
     "slot": "notifier",
     "description": "Notifier plugin: OpenClaw webhook notifications",
     "source": "registry",
@@ -42,7 +42,7 @@
   },
   {
     "id": "notifier-discord",
-    "package": "@made-by-moonlight/plugin-notifier-discord",
+    "package": "@made-by-moonlight/athene-plugin-notifier-discord",
     "slot": "notifier",
     "description": "Notifier plugin: Discord notifications",
     "source": "registry",
@@ -50,7 +50,7 @@
   },
   {
     "id": "tracker-gitlab",
-    "package": "@made-by-moonlight/plugin-tracker-gitlab",
+    "package": "@made-by-moonlight/athene-plugin-tracker-gitlab",
     "slot": "tracker",
     "description": "Tracker plugin: GitLab issues",
     "source": "registry",
@@ -58,7 +58,7 @@
   },
   {
     "id": "scm-gitlab",
-    "package": "@made-by-moonlight/plugin-scm-gitlab",
+    "package": "@made-by-moonlight/athene-plugin-scm-gitlab",
     "slot": "scm",
     "description": "SCM plugin: GitLab pull/merge requests",
     "source": "registry",

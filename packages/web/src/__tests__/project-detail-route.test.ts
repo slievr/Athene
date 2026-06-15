@@ -7,7 +7,7 @@ import {
   getProjectDir,
   loadGlobalConfig,
   registerProjectInGlobalConfig,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 const invalidatePortfolioServicesCache = vi.fn();
 const getServices = vi.fn();

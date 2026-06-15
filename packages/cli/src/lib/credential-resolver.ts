@@ -12,7 +12,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { recordActivityEvent } from "@made-by-moonlight/core";
+import { recordActivityEvent } from "@made-by-moonlight/athene-core";
 
 /** Keys that AO agents commonly need and OpenClaw may already store. */
 const RESOLVABLE_KEYS = [

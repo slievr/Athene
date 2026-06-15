@@ -10,7 +10,7 @@ import {
   type ActivityEventLevel,
   type ActivityEventKind,
   type ActivityEventSource,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 interface JsonEnvelope {
   version: number;

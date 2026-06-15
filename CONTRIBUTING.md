@@ -39,14 +39,14 @@ pnpm install
 pnpm build
 ```
 
-Build order matters — `@made-by-moonlight/core` must be built before the CLI, web, or plugins can run. `pnpm build` at the root handles this automatically.
+Build order matters — `@made-by-moonlight/athene-core` must be built before the CLI, web, or plugins can run. `pnpm build` at the root handles this automatically.
 
 ### Running tests
 
 ```bash
 pnpm test                                         # all packages
-pnpm --filter @made-by-moonlight/core test              # core only
-pnpm --filter @made-by-moonlight/core test -- --watch   # watch mode
+pnpm --filter @made-by-moonlight/athene-core test              # core only
+pnpm --filter @made-by-moonlight/athene-core test -- --watch   # watch mode
 pnpm test:integration                             # integration tests
 ```
 
@@ -55,7 +55,7 @@ pnpm test:integration                             # integration tests
 ```bash
 cp agent-orchestrator.yaml.example agent-orchestrator.yaml
 # edit agent-orchestrator.yaml for your setup
-pnpm --filter @made-by-moonlight/web dev
+pnpm --filter @made-by-moonlight/athene-web dev
 ```
 
 ### Refreshing a local AO install
@@ -68,7 +68,7 @@ git status --short --branch   # confirm the install repo is clean
 athene update
 ```
 
-`athene update` fast-forwards the local install repo, reinstalls dependencies, clean-rebuilds `@made-by-moonlight/core`, `@made-by-moonlight/cli`, and `@made-by-moonlight/web`, refreshes the global launcher with `npm link`, and finishes with CLI smoke tests. Use `athene update --skip-smoke` when you only need the rebuild step, or `athene update --smoke-only` when validating an existing install.
+`athene update` fast-forwards the local install repo, reinstalls dependencies, clean-rebuilds `@made-by-moonlight/athene-core`, `@made-by-moonlight/athene-cli`, and `@made-by-moonlight/athene-web`, refreshes the global launcher with `npm link`, and finishes with CLI smoke tests. Use `athene update --skip-smoke` when you only need the rebuild step, or `athene update --smoke-only` when validating an existing install.
 
 ## Release Architecture (maintainers only)
 
@@ -174,7 +174,7 @@ cd packages/plugins/runtime-myplugin
     "test": "vitest"
   },
   "dependencies": {
-    "@made-by-moonlight/core": "workspace:*"
+    "@made-by-moonlight/athene-core": "workspace:*"
   }
 }
 ```
@@ -185,7 +185,7 @@ cd packages/plugins/runtime-myplugin
 
 ```typescript
 // src/index.ts
-import type { PluginModule, Runtime } from "@made-by-moonlight/core";
+import type { PluginModule, Runtime } from "@made-by-moonlight/athene-core";
 
 export const manifest = {
   name: "myplugin",

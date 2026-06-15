@@ -21,7 +21,7 @@ import {
   inventoryHashDirs,
   isWindows,
   type OrchestratorConfig,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { execSilent } from "./shell.js";
 import { detectOpenClawInstallation } from "./openclaw-probe.js";
 import { applyOpenClawCredentials } from "./credential-resolver.js";

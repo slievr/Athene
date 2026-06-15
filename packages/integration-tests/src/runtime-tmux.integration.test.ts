@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import tmuxPlugin from "@made-by-moonlight/plugin-runtime-tmux";
-import type { RuntimeHandle } from "@made-by-moonlight/core";
+import tmuxPlugin from "@made-by-moonlight/athene-plugin-runtime-tmux";
+import type { RuntimeHandle } from "@made-by-moonlight/athene-core";
 import { isTmuxAvailable, killSessionsByPrefix } from "./helpers/tmux.js";
 import { sleep } from "./helpers/polling.js";
 

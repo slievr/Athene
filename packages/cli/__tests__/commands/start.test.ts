@@ -24,7 +24,7 @@ import {
   getDefaultRuntime,
   recordActivityEvent,
   type SessionManager,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks
@@ -135,9 +135,9 @@ vi.mock("ora", () => ({
   }),
 }));
 
-vi.mock("@made-by-moonlight/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-  const actual = await importOriginal<typeof import("@made-by-moonlight/core")>();
+  const actual = await importOriginal<typeof import("@made-by-moonlight/athene-core")>();
   const normalizeOrchestratorSessionStrategy =
     actual.normalizeOrchestratorSessionStrategy ??
     ((strategy: string | undefined) => {

@@ -10,7 +10,7 @@ import {
   loadGlobalConfig,
   recordActivityEvent,
   type Session,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { runRepoScript } from "../lib/script-runner.js";
 import {
   checkForUpdate,
@@ -381,7 +381,7 @@ async function handleGitUpdate(opts: {
       console.error(
         chalk.red(
           "athene-update.sh is missing from the bundled assets. " +
-            "If you're running from a source checkout, rebuild with `pnpm --filter @made-by-moonlight/cli build`. " +
+            "If you're running from a source checkout, rebuild with `pnpm --filter @made-by-moonlight/athene-cli build`. " +
             "If you're on a package install, reinstall the package.",
         ),
       );

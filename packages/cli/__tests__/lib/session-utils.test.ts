@@ -6,7 +6,7 @@ import {
   findProjectForSession,
   isOrchestratorSessionName,
 } from "../../src/lib/session-utils.js";
-import type { OrchestratorConfig } from "@made-by-moonlight/core";
+import type { OrchestratorConfig } from "@made-by-moonlight/athene-core";
 
 describe("escapeRegex", () => {
   it("escapes dots, asterisks, plus, question marks", () => {

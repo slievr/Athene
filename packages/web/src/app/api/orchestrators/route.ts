@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { generateOrchestratorPrompt, recordActivityEvent } from "@made-by-moonlight/core";
+import { generateOrchestratorPrompt, recordActivityEvent } from "@made-by-moonlight/athene-core";
 import { getServices } from "@/lib/services";
 import { validateIdentifier, validateConfiguredProject } from "@/lib/validation";
 

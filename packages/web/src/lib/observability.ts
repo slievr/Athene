@@ -7,7 +7,7 @@ import {
   resolveProjectIdForSessionId,
   type OrchestratorConfig,
   type ObservabilitySummary,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { NextResponse } from "next/server";
 
 let webApiObserver: ReturnType<typeof createProjectObserver> | null | undefined;

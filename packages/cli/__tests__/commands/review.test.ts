@@ -10,8 +10,8 @@ import {
   type OrchestratorConfig,
   type Session,
   type SessionManager,
-} from "@made-by-moonlight/core";
-import type * as AoCore from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
+import type * as AoCore from "@made-by-moonlight/athene-core";
 
 const { mockConfigRef, mockSessionManager, reviewStoreRootRef } = vi.hoisted(() => ({
   mockConfigRef: { current: null as OrchestratorConfig | null },
@@ -30,7 +30,7 @@ const { mockConfigRef, mockSessionManager, reviewStoreRootRef } = vi.hoisted(() 
   reviewStoreRootRef: { current: "" },
 }));
 
-vi.mock("@made-by-moonlight/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
   const actual = await importOriginal<typeof AoCore>();
   const createIsolatedStore = (projectId: string, options: AoCore.CodeReviewStoreOptions = {}) =>
     actual.createCodeReviewStore(projectId, {

@@ -17,10 +17,10 @@ reusing the same on-disk state.
 ## Locked decisions
 
 - **Scope + leaves:** `@aoagents/ao` → `@made-by-moonlight/athene` (umbrella); `@aoagents/ao-cli` →
-  `@made-by-moonlight/cli`; `@aoagents/ao-core` → `@made-by-moonlight/core`; `@aoagents/ao-web` → `@made-by-moonlight/web`;
-  `@aoagents/ao-notifier-macos` → `@made-by-moonlight/notifier-macos`; `@aoagents/ao-integration-tests`
-  → `@made-by-moonlight/integration-tests`; `@aoagents/ao-website` → `@made-by-moonlight/website`;
-  `@aoagents/ao-plugin-*` → `@made-by-moonlight/plugin-*` (25 plugins).
+  `@made-by-moonlight/athene-cli`; `@aoagents/ao-core` → `@made-by-moonlight/athene-core`; `@aoagents/ao-web` → `@made-by-moonlight/athene-web`;
+  `@aoagents/ao-notifier-macos` → `@made-by-moonlight/athene-notifier-macos`; `@aoagents/ao-integration-tests`
+  → `@made-by-moonlight/athene-integration-tests`; `@aoagents/ao-website` → `@made-by-moonlight/athene-website`;
+  `@aoagents/ao-plugin-*` → `@made-by-moonlight/athene-plugin-*` (25 plugins).
 - **Binary:** `ao` → `athene`.
 - **Publish:** GitHub Actions in `slievr/Athene` using a `@slievr` npm org + `NPM_TOKEN`.
 - **DO NOT CHANGE (data/compat):** `~/.agent-orchestrator/`, per-repo `agent-orchestrator.yaml`
@@ -37,18 +37,18 @@ reusing the same on-disk state.
 ### 1. Mechanical scope+leaf rename (bulk, ordered)
 Run ordered string replacements across the repo (exclude `.git`, `node_modules`, `dist`,
 `.next`, `pnpm-lock.yaml`), **longest-match first** to avoid partial collisions:
-1. `@aoagents/ao-plugin-` → `@made-by-moonlight/plugin-`
-2. `@aoagents/ao-cli` → `@made-by-moonlight/cli`
-3. `@aoagents/ao-core` → `@made-by-moonlight/core`
-4. `@aoagents/ao-web` → `@made-by-moonlight/web`
-5. `@aoagents/ao-notifier-macos` → `@made-by-moonlight/notifier-macos`
-6. `@aoagents/ao-integration-tests` → `@made-by-moonlight/integration-tests`
-7. `@aoagents/ao-website` → `@made-by-moonlight/website`
+1. `@aoagents/ao-plugin-` → `@made-by-moonlight/athene-plugin-`
+2. `@aoagents/ao-cli` → `@made-by-moonlight/athene-cli`
+3. `@aoagents/ao-core` → `@made-by-moonlight/athene-core`
+4. `@aoagents/ao-web` → `@made-by-moonlight/athene-web`
+5. `@aoagents/ao-notifier-macos` → `@made-by-moonlight/athene-notifier-macos`
+6. `@aoagents/ao-integration-tests` → `@made-by-moonlight/athene-integration-tests`
+7. `@aoagents/ao-website` → `@made-by-moonlight/athene-website`
 8. `@aoagents/ao` → `@made-by-moonlight/athene`  (umbrella; safe only after the above)
 9. Sweep for any residual `@aoagents/` → fail the run if found.
 
 This covers: all `package.json` `name` + `workspace:*` deps (32 files), 283 TS imports
-(incl. subpath exports like `@made-by-moonlight/core/types`, `/utils`, `/scm-webhook-utils`), vitest
+(incl. subpath exports like `@made-by-moonlight/athene-core/types`, `/utils`, `/scm-webhook-utils`), vitest
 aliases (`packages/web/vitest.config.ts`, `packages/core/vitest.config.ts`),
 `.changeset/config.json` `linked`/`ignore` arrays, root `package.json` scripts, and docs.
 
@@ -58,20 +58,20 @@ Package **directory** names already lack the `ao-` prefix (`packages/cli`, `pack
 
 ### 2. Split scope/leaf references (NOT caught by step 1 — must be done explicitly)
 These pass scope and leaf as separate args or hardcode a leaf string:
-- `packages/core/src/plugin-registry.ts` — `BUILTIN_PLUGINS` (25 entries `pkg: "@aoagents/ao-plugin-*"` → `"@made-by-moonlight/plugin-*"`). Caught by step 1 (full strings), but verify.
+- `packages/core/src/plugin-registry.ts` — `BUILTIN_PLUGINS` (25 entries `pkg: "@aoagents/ao-plugin-*"` → `"@made-by-moonlight/athene-plugin-*"`). Caught by step 1 (full strings), but verify.
 - `packages/cli/src/lib/preflight.ts:37` — `findPackageUp(webDir, "@aoagents", "ao-core")` → `("@slievr", "core")`.
 - `packages/cli/src/assets/scripts/athene-doctor.sh:450-484` — `findPackageUp/resolveNodeModulesPackage(repoRoot, "@aoagents", "ao-core"|"ao-web")` → `"@slievr","core"|"web"`.
 - `packages/core/src/daemon-children.ts:417` — returns literal `"ao-web"` → `"web"`.
-- `packages/core/src/update-cache.ts` — `getInstalledAoVersion()` candidates `@aoagents/ao/package.json`, `@aoagents/ao-cli`, `@aoagents/ao-web` → `@made-by-moonlight/athene`, `@made-by-moonlight/cli`, `@made-by-moonlight/web`. Keep cache path `~/.cache/ao/` (compat).
-- `packages/athene/bin/postinstall.js` — `findPackageUp(__dirname, "@aoagents", "ao-web"|"ao-cli")` and better-sqlite3/`@made-by-moonlight/core` lookups → update scope + leaf.
-- `scripts/rebuild-node-pty.js` — `@aoagents/ao-web`, `@aoagents/ao-cli` lookups → `@made-by-moonlight/web`, `@made-by-moonlight/cli`.
+- `packages/core/src/update-cache.ts` — `getInstalledAoVersion()` candidates `@aoagents/ao/package.json`, `@aoagents/ao-cli`, `@aoagents/ao-web` → `@made-by-moonlight/athene`, `@made-by-moonlight/athene-cli`, `@made-by-moonlight/athene-web`. Keep cache path `~/.cache/ao/` (compat).
+- `packages/athene/bin/postinstall.js` — `findPackageUp(__dirname, "@aoagents", "ao-web"|"ao-cli")` and better-sqlite3/`@made-by-moonlight/athene-core` lookups → update scope + leaf.
+- `scripts/rebuild-node-pty.js` — `@aoagents/ao-web`, `@aoagents/ao-cli` lookups → `@made-by-moonlight/athene-web`, `@made-by-moonlight/athene-cli`.
 
 ### 3. External-plugin name regex
-- `packages/core/src/config.ts:427` regex `^ao-plugin-(?:runtime|agent|workspace|tracker|scm|notifier|terminal)-(.+)$` derives a plugin's short name from its package name. Built-ins are unaffected (hardcoded list), but to support future `@made-by-moonlight/plugin-*` plugins, broaden to `^(?:ao-)?plugin-(?:runtime|agent|workspace|tracker|scm|notifier|terminal)-(.+)$` (accept both old and new prefixes). Update the adjacent comments/examples.
+- `packages/core/src/config.ts:427` regex `^ao-plugin-(?:runtime|agent|workspace|tracker|scm|notifier|terminal)-(.+)$` derives a plugin's short name from its package name. Built-ins are unaffected (hardcoded list), but to support future `@made-by-moonlight/athene-plugin-*` plugins, broaden to `^(?:ao-)?plugin-(?:runtime|agent|workspace|tracker|scm|notifier|terminal)-(.+)$` (accept both old and new prefixes). Update the adjacent comments/examples.
 
 ### 4. Binary rename `ao` → `athene`
 - `bin` field in `packages/athene/package.json` and `packages/cli/package.json`: `"ao"` → `"athene"`.
-- Rename shim `packages/athene/bin/ao.js` → `bin/athene.js` (content: `import "@made-by-moonlight/cli"`); update the `bin` path.
+- Rename shim `packages/athene/bin/ao.js` → `bin/athene.js` (content: `import "@made-by-moonlight/athene-cli"`); update the `bin` path.
 - `completions/_ao` → `completions/_athene`; update `#compdef ao` → `#compdef athene` and `ao completion zsh` → `athene completion zsh`.
 - **Embedded agent command strings (~48):** replace `ao <subcommand>` → `athene <subcommand>`
   in `packages/core/src/prompt-builder.ts` (primary, ~18) and across core
@@ -85,7 +85,7 @@ These pass scope and leaf as separate args or hardcode a leaf string:
 
 ### 5. CI + publish workflow (GitHub Actions in the fork)
 - Update scope filters in `.github/workflows/*.yml` (`ci.yml`, `release.yml`, `canary.yml`):
-  `@aoagents/ao-web` → `@made-by-moonlight/web`; version-source path `packages/athene/package.json` stays
+  `@aoagents/ao-web` → `@made-by-moonlight/athene-web`; version-source path `packages/athene/package.json` stays
   (dir unchanged) but the package name it reads is now `@made-by-moonlight/athene`.
 - Replace upstream's two-stage private-server publish with a self-contained release job:
   use `changesets/action@v1` with `publish: pnpm release` (root `release` script already does
@@ -96,7 +96,7 @@ These pass scope and leaf as separate args or hardcode a leaf string:
 
 ### 6. Rebuild + validate
 - `pnpm install` (regenerates `pnpm-lock.yaml` with new names), `pnpm -r build`,
-  `pnpm typecheck`, `pnpm -r --filter '!@made-by-moonlight/web' test`.
+  `pnpm typecheck`, `pnpm -r --filter '!@made-by-moonlight/athene-web' test`.
 
 ## Critical files
 - All 32 `package.json` (names + `workspace:*` deps) and `.changeset/config.json`.
@@ -109,7 +109,7 @@ These pass scope and leaf as separate args or hardcode a leaf string:
 
 ## Verification (end-to-end)
 1. `grep -rn "@aoagents" --include='*.ts' --include='*.json' --include='*.sh' .` (excl. node_modules/dist) returns **0**.
-2. `pnpm install && pnpm -r build && pnpm typecheck && pnpm -r --filter '!@made-by-moonlight/web' test` all pass.
+2. `pnpm install && pnpm -r build && pnpm typecheck && pnpm -r --filter '!@made-by-moonlight/athene-web' test` all pass.
 3. Local CLI smoke test: from a global link of the built umbrella, `athene --version` prints
    the version; `athene status` reads the existing `~/.agent-orchestrator/` state (proves
    data-path compatibility / coexistence with `ao`).

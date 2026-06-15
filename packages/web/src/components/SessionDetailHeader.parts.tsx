@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CI_STATUS } from "@made-by-moonlight/core/types";
+import { CI_STATUS } from "@made-by-moonlight/athene-core/types";
 import { cn } from "@/lib/cn";
 import { type DashboardSession, type DashboardPR, isPRMergeReady } from "@/lib/types";
 import { SessionDetailPRCard } from "./SessionDetailPRCard";

@@ -10,7 +10,7 @@ import {
   type OrchestratorConfig,
   type Session,
   type SessionManager,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 const { mockConfig, mockSessionManager } = vi.hoisted(() => ({
   mockConfig: {

@@ -4,7 +4,7 @@
  * No hardcoded binary paths — relies entirely on each plugin's detect() export.
  */
 
-import type { PluginModule } from "@made-by-moonlight/core";
+import type { PluginModule } from "@made-by-moonlight/athene-core";
 import { isHumanCaller } from "./caller-context.js";
 import { promptSelect } from "./prompts.js";
 
@@ -15,13 +15,13 @@ export interface DetectedAgent {
 
 /** Known agent plugins — package name mapping. */
 const AGENT_PLUGINS: Array<{ name: string; pkg: string }> = [
-  { name: "claude-code", pkg: "@made-by-moonlight/plugin-agent-claude-code" },
-  { name: "aider", pkg: "@made-by-moonlight/plugin-agent-aider" },
-  { name: "codex", pkg: "@made-by-moonlight/plugin-agent-codex" },
-  { name: "cursor", pkg: "@made-by-moonlight/plugin-agent-cursor" },
-  { name: "kimicode", pkg: "@made-by-moonlight/plugin-agent-kimicode" },
-  { name: "grok", pkg: "@made-by-moonlight/plugin-agent-grok" },
-  { name: "opencode", pkg: "@made-by-moonlight/plugin-agent-opencode" },
+  { name: "claude-code", pkg: "@made-by-moonlight/athene-plugin-agent-claude-code" },
+  { name: "aider", pkg: "@made-by-moonlight/athene-plugin-agent-aider" },
+  { name: "codex", pkg: "@made-by-moonlight/athene-plugin-agent-codex" },
+  { name: "cursor", pkg: "@made-by-moonlight/athene-plugin-agent-cursor" },
+  { name: "kimicode", pkg: "@made-by-moonlight/athene-plugin-agent-kimicode" },
+  { name: "grok", pkg: "@made-by-moonlight/athene-plugin-agent-grok" },
+  { name: "opencode", pkg: "@made-by-moonlight/athene-plugin-agent-opencode" },
 ];
 
 /**

@@ -54,9 +54,9 @@ describe("preflight.checkBuilt", () => {
   });
 
   it("finds ao-core when hoisted one level up (npm global install layout)", async () => {
-    // /web/node_modules/@made-by-moonlight/core     — miss
-    // /node_modules/@made-by-moonlight/core         — hit
-    // /node_modules/@made-by-moonlight/core/dist/index.js — exists
+    // /web/node_modules/@made-by-moonlight/athene-core     — miss
+    // /node_modules/@made-by-moonlight/athene-core         — hit
+    // /node_modules/@made-by-moonlight/athene-core/dist/index.js — exists
     // /web/.next/BUILD_ID and /web/dist-server/start-all.js — exist
     mockExistsSync
       .mockReturnValueOnce(false)
@@ -70,7 +70,7 @@ describe("preflight.checkBuilt", () => {
   it("throws npm hint when ao-core not found in global install", async () => {
     mockExistsSync.mockReturnValue(false);
     await expect(
-      preflight.checkBuilt("/usr/local/lib/node_modules/@made-by-moonlight/web"),
+      preflight.checkBuilt("/usr/local/lib/node_modules/@made-by-moonlight/athene-web"),
     ).rejects.toThrow("npm install -g @made-by-moonlight/athene@latest");
   });
 
@@ -109,7 +109,7 @@ describe("preflight.checkBuilt", () => {
       .mockReturnValueOnce(true)
       .mockReturnValueOnce(false);
     await expect(
-      preflight.checkBuilt("/usr/local/lib/node_modules/@made-by-moonlight/web"),
+      preflight.checkBuilt("/usr/local/lib/node_modules/@made-by-moonlight/athene-web"),
     ).rejects.toThrow("npm install -g @made-by-moonlight/athene@latest");
   });
 
@@ -119,7 +119,7 @@ describe("preflight.checkBuilt", () => {
       .mockReturnValueOnce(true)
       .mockReturnValueOnce(false);
     await expect(
-      preflight.checkBuilt("/usr/local/lib/node_modules/@made-by-moonlight/web"),
+      preflight.checkBuilt("/usr/local/lib/node_modules/@made-by-moonlight/athene-web"),
     ).rejects.toThrow("npm install -g @made-by-moonlight/athene@latest");
   });
 });

@@ -5,8 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import clonePlugin from "@made-by-moonlight/plugin-workspace-clone";
-import type { ProjectConfig, WorkspaceInfo } from "@made-by-moonlight/core";
+import clonePlugin from "@made-by-moonlight/athene-plugin-workspace-clone";
+import type { ProjectConfig, WorkspaceInfo } from "@made-by-moonlight/athene-core";
 
 const execFileAsync = promisify(execFile);
 

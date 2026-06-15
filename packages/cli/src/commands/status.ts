@@ -22,7 +22,7 @@ import {
   createCodeReviewStore,
   type CodeReviewRunStatus,
   type CodeReviewRunSummary,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { git, getTmuxSessions, getTmuxActivity } from "../lib/shell.js";
 import {
   banner,

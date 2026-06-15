@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { recordActivityEvent } from "@made-by-moonlight/core";
+import { recordActivityEvent } from "@made-by-moonlight/athene-core";
 import {
   DesktopSetupError,
   runDesktopSetupAction,

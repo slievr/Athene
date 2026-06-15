@@ -34,39 +34,39 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: "@made-by-moonlight/core/scm-webhook-utils",
+        find: "@made-by-moonlight/athene-core/scm-webhook-utils",
         replacement: resolve(__dirname, "../core/src/scm-webhook-utils.ts"),
       },
       {
-        find: "@made-by-moonlight/core/types",
+        find: "@made-by-moonlight/athene-core/types",
         replacement: resolve(__dirname, "../core/src/types.ts"),
       },
       {
-        find: "@made-by-moonlight/core",
+        find: "@made-by-moonlight/athene-core",
         replacement: resolve(__dirname, "../core/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-agent-claude-code",
+        find: "@made-by-moonlight/athene-plugin-agent-claude-code",
         replacement: resolve(__dirname, "../plugins/agent-claude-code/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-agent-codex",
+        find: "@made-by-moonlight/athene-plugin-agent-codex",
         replacement: resolve(__dirname, "../plugins/agent-codex/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-agent-aider",
+        find: "@made-by-moonlight/athene-plugin-agent-aider",
         replacement: resolve(__dirname, "../plugins/agent-aider/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-agent-opencode",
+        find: "@made-by-moonlight/athene-plugin-agent-opencode",
         replacement: resolve(__dirname, "../plugins/agent-opencode/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-agent-cursor",
+        find: "@made-by-moonlight/athene-plugin-agent-cursor",
         replacement: resolve(__dirname, "../plugins/agent-cursor/src/index.ts"),
       },
       {
-        find: "@made-by-moonlight/plugin-scm-github",
+        find: "@made-by-moonlight/athene-plugin-scm-github",
         replacement: resolve(__dirname, "../plugins/scm-github/src/index.ts"),
       },
     ],

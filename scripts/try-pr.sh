@@ -55,15 +55,15 @@ cd "$WORKTREE"
 # ── build CLI/core/plugins ─────────────────────────────────────────────────────
 echo -e "\n${BOLD}Building $SESSION${RESET} (branch: ${CYAN}$BRANCH${RESET})\n"
 
-pnpm --filter @made-by-moonlight/core \
-     --filter @made-by-moonlight/cli \
-     --filter '@made-by-moonlight/plugin-*' \
+pnpm --filter @made-by-moonlight/athene-core \
+     --filter @made-by-moonlight/athene-cli \
+     --filter '@made-by-moonlight/athene-plugin-*' \
      build
 
 # ── build web if requested ─────────────────────────────────────────────────────
 if [ "$WITH_WEB" = true ]; then
   echo -e "\n${BOLD}Building dashboard...${RESET}\n"
-  pnpm --filter @made-by-moonlight/web build
+  pnpm --filter @made-by-moonlight/athene-web build
 fi
 
 # ── link ao ───────────────────────────────────────────────────────────────────

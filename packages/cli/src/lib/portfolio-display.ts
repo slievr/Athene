@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import type { PortfolioProject } from "@made-by-moonlight/core";
+import type { PortfolioProject } from "@made-by-moonlight/athene-core";
 
 type PortfolioSessionCount = {
   total: number;

@@ -4,7 +4,7 @@ import {
   getGlobalConfigPath,
   loadConfig,
   recordActivityEvent,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { invalidatePortfolioServicesCache } from "@/lib/services";
 
 export const dynamic = "force-dynamic";

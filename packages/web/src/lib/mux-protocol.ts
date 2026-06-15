@@ -2,7 +2,7 @@ import type {
   DashboardNotificationRecord,
   SerializedDashboardAction as DashboardNotificationAction,
   SerializedDashboardEvent as DashboardNotificationEvent,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import type { AttentionLevel } from "./types";
 
 export type {

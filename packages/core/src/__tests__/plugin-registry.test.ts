@@ -155,10 +155,10 @@ describe("loadBuiltins", () => {
     const fakeOpenCode = makePlugin("agent", "opencode");
 
     await registry.loadBuiltins(undefined, async (pkg: string) => {
-      if (pkg === "@made-by-moonlight/plugin-agent-claude-code") return fakeClaudeCode;
-      if (pkg === "@made-by-moonlight/plugin-agent-codex") return fakeCodex;
-      if (pkg === "@made-by-moonlight/plugin-agent-grok") return fakeGrok;
-      if (pkg === "@made-by-moonlight/plugin-agent-opencode") return fakeOpenCode;
+      if (pkg === "@made-by-moonlight/athene-plugin-agent-claude-code") return fakeClaudeCode;
+      if (pkg === "@made-by-moonlight/athene-plugin-agent-codex") return fakeCodex;
+      if (pkg === "@made-by-moonlight/athene-plugin-agent-grok") return fakeGrok;
+      if (pkg === "@made-by-moonlight/athene-plugin-agent-opencode") return fakeOpenCode;
       throw new Error(`Not found: ${pkg}`);
     });
 
@@ -181,8 +181,8 @@ describe("loadBuiltins", () => {
     const fakeScm = makePlugin("scm", "gitlab");
 
     await registry.loadBuiltins(undefined, async (pkg: string) => {
-      if (pkg === "@made-by-moonlight/plugin-tracker-gitlab") return fakeTracker;
-      if (pkg === "@made-by-moonlight/plugin-scm-gitlab") return fakeScm;
+      if (pkg === "@made-by-moonlight/athene-plugin-tracker-gitlab") return fakeTracker;
+      if (pkg === "@made-by-moonlight/athene-plugin-scm-gitlab") return fakeScm;
       throw new Error(`Not found: ${pkg}`);
     });
 
@@ -209,7 +209,7 @@ describe("loadBuiltins", () => {
     });
 
     await registry.loadBuiltins(config, async (pkg: string) => {
-      if (pkg === "@made-by-moonlight/plugin-notifier-webhook") return fakeWebhookNotifier;
+      if (pkg === "@made-by-moonlight/athene-plugin-notifier-webhook") return fakeWebhookNotifier;
       throw new Error(`Not found: ${pkg}`);
     });
 
@@ -234,7 +234,7 @@ describe("loadBuiltins", () => {
     });
 
     await registry.loadBuiltins(config, async (pkg: string) => {
-      if (pkg === "@made-by-moonlight/plugin-notifier-webhook") return fakeWebhookNotifier;
+      if (pkg === "@made-by-moonlight/athene-plugin-notifier-webhook") return fakeWebhookNotifier;
       throw new Error(`Not found: ${pkg}`);
     });
 
@@ -264,7 +264,7 @@ describe("loadBuiltins", () => {
     });
 
     await registry.loadBuiltins(config, async (pkg: string) => {
-      if (pkg === "@made-by-moonlight/plugin-notifier-slack") return fakeSlackNotifier;
+      if (pkg === "@made-by-moonlight/athene-plugin-notifier-slack") return fakeSlackNotifier;
       throw new Error(`Not found: ${pkg}`);
     });
 
@@ -308,7 +308,7 @@ describe("loadBuiltins", () => {
     });
 
     await registry.loadBuiltins(config, async (pkg: string) => {
-      if (pkg === "@made-by-moonlight/plugin-notifier-slack") return fakeSlackNotifier;
+      if (pkg === "@made-by-moonlight/athene-plugin-notifier-slack") return fakeSlackNotifier;
       throw new Error(`Not found: ${pkg}`);
     });
 
@@ -342,7 +342,7 @@ describe("loadBuiltins", () => {
     });
 
     await registry.loadBuiltins(cfg, async (pkg: string) => {
-      if (pkg === "@made-by-moonlight/plugin-notifier-openclaw") return fakeOpenClaw;
+      if (pkg === "@made-by-moonlight/athene-plugin-notifier-openclaw") return fakeOpenClaw;
       throw new Error(`Not found: ${pkg}`);
     });
 
@@ -373,7 +373,7 @@ describe("loadBuiltins", () => {
     });
 
     await registry.loadBuiltins(cfg, async (pkg: string) => {
-      if (pkg === "@made-by-moonlight/plugin-notifier-dashboard") return fakeDashboard;
+      if (pkg === "@made-by-moonlight/athene-plugin-notifier-dashboard") return fakeDashboard;
       throw new Error(`Not found: ${pkg}`);
     });
 
@@ -406,7 +406,7 @@ describe("loadBuiltins", () => {
     });
 
     await registry.loadBuiltins(cfg, async (pkg: string) => {
-      if (pkg === "@made-by-moonlight/plugin-notifier-dashboard") return fakeDashboard;
+      if (pkg === "@made-by-moonlight/athene-plugin-notifier-dashboard") return fakeDashboard;
       throw new Error(`Not found: ${pkg}`);
     });
 
@@ -423,7 +423,7 @@ describe("loadBuiltins", () => {
         mywebhook: {
           plugin: "webhook",
           // package field is allowed for resolution but should be stripped:
-          package: "@made-by-moonlight/plugin-notifier-webhook",
+          package: "@made-by-moonlight/athene-plugin-notifier-webhook",
           // These are plugin-specific fields that should be passed through:
           url: "https://webhook.example.com/notify",
           retries: 3,
@@ -432,7 +432,7 @@ describe("loadBuiltins", () => {
     });
 
     await registry.loadBuiltins(cfg, async (pkg: string) => {
-      if (pkg === "@made-by-moonlight/plugin-notifier-webhook") return fakeWebhook;
+      if (pkg === "@made-by-moonlight/athene-plugin-notifier-webhook") return fakeWebhook;
       throw new Error(`Not found: ${pkg}`);
     });
 
@@ -460,7 +460,7 @@ describe("loadBuiltins", () => {
     const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
 
     await registry.loadBuiltins(cfg, async (pkg: string) => {
-      if (pkg === "@made-by-moonlight/plugin-notifier-webhook") return fakeWebhook;
+      if (pkg === "@made-by-moonlight/athene-plugin-notifier-webhook") return fakeWebhook;
       return null;
     });
 
@@ -488,8 +488,8 @@ describe("loadBuiltins", () => {
     });
 
     await registry.loadBuiltins(cfg, async (pkg: string) => {
-      if (pkg === "@made-by-moonlight/plugin-notifier-openclaw") return fakeOpenClaw;
-      if (pkg === "@made-by-moonlight/plugin-notifier-webhook") return fakeWebhook;
+      if (pkg === "@made-by-moonlight/athene-plugin-notifier-openclaw") return fakeOpenClaw;
+      if (pkg === "@made-by-moonlight/athene-plugin-notifier-webhook") return fakeWebhook;
       throw new Error(`Not found: ${pkg}`);
     });
 
@@ -507,7 +507,7 @@ describe("loadBuiltins", () => {
     const fakeImportFn = async (pkg: string): Promise<unknown> => {
       importedPackages.push(pkg);
       // Return a valid plugin module for runtime-tmux
-      if (pkg === "@made-by-moonlight/plugin-runtime-tmux") {
+      if (pkg === "@made-by-moonlight/athene-plugin-runtime-tmux") {
         return {
           manifest: { name: "tmux", slot: "runtime", description: "test", version: "0.0.0" },
           create: () => ({ name: "tmux" }),
@@ -521,7 +521,7 @@ describe("loadBuiltins", () => {
 
     // importFn should have been called for all builtin plugins
     expect(importedPackages.length).toBeGreaterThan(0);
-    expect(importedPackages).toContain("@made-by-moonlight/plugin-runtime-tmux");
+    expect(importedPackages).toContain("@made-by-moonlight/athene-plugin-runtime-tmux");
 
     // The tmux plugin should be registered
     const tmux = registry.get("runtime", "tmux");
@@ -579,7 +579,7 @@ describe("loadFromConfig", () => {
 
     // Should have attempted to import builtin plugins via the provided importFn
     expect(importedPackages.length).toBeGreaterThan(0);
-    expect(importedPackages).toContain("@made-by-moonlight/plugin-runtime-tmux");
+    expect(importedPackages).toContain("@made-by-moonlight/athene-plugin-runtime-tmux");
   });
 
   it("loads external package plugins from config.plugins", async () => {

@@ -20,7 +20,7 @@
  */
 
 import chalk from "chalk";
-import { killProcessTree, sweepDaemonChildren } from "@made-by-moonlight/core";
+import { killProcessTree, sweepDaemonChildren } from "@made-by-moonlight/athene-core";
 import { unregister, waitForExit, type RunningState } from "./running-state.js";
 
 /**

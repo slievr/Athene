@@ -40,7 +40,7 @@ The migration machinery survived a brutal review pass. The PR has explicit handl
 | — | `projectNeedsRestart` false-triggers on path/URL args | `isProjectId` guard: `!isRepoUrl(arg) && !isLocalPath(arg)` |
 | — | Ctrl+C leaves tmux orphans | Signal handler mirrors full `athene stop` cleanup (`b4feda79`) |
 
-Each of these has at least one test. **If you change `migrate-storage/`, run** `pnpm --filter @made-by-moonlight/core test` **and read the failures carefully** — they're load-bearing.
+Each of these has at least one test. **If you change `migrate-storage/`, run** `pnpm --filter @made-by-moonlight/athene-core test` **and read the failures carefully** — they're load-bearing.
 
 ---
 
@@ -104,7 +104,7 @@ pnpm lint
 pnpm format:check
 pnpm typecheck
 pnpm test
-pnpm --filter @made-by-moonlight/web test
+pnpm --filter @made-by-moonlight/athene-web test
 pnpm test:integration   # only if your change touches CLI / lifecycle / migration
 ```
 

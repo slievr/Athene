@@ -18,7 +18,7 @@ import {
   type PluginModule,
   type ProjectConfig,
   type Tracker,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import type { Composio } from "@composio/core";
 
 // Module-level guard so we only emit tracker.dep_missing once per process

@@ -244,12 +244,12 @@ function Check-InstallLayout {
     if (Test-Path (Join-Path $RepoRoot 'packages/core/dist/index.js')) {
         Write-Pass "core package is built"
     } else {
-        Write-Fail "core package is not built. Fix: run pnpm --filter @made-by-moonlight/core build"
+        Write-Fail "core package is not built. Fix: run pnpm --filter @made-by-moonlight/athene-core build"
     }
     if (Test-Path (Join-Path $RepoRoot 'packages/cli/dist/index.js')) {
         Write-Pass "CLI package is built"
     } else {
-        Write-Fail "CLI package is not built. Fix: run pnpm --filter @made-by-moonlight/cli build"
+        Write-Fail "CLI package is not built. Fix: run pnpm --filter @made-by-moonlight/athene-cli build"
     }
 }
 

@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Command } from "commander";
 import { EventEmitter } from "node:events";
-import * as AoCore from "@made-by-moonlight/core";
+import * as AoCore from "@made-by-moonlight/athene-core";
 
 const { mockRunRepoScript } = vi.hoisted(() => ({
   mockRunRepoScript: vi.fn(),
@@ -62,7 +62,7 @@ vi.mock("node:child_process", async () => {
   return { ...actual, spawn: (...args: unknown[]) => mockSpawn(...args) };
 });
 
-vi.mock("@made-by-moonlight/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
   const actual = await importOriginal<typeof AoCore>();
   return {
     ...actual,

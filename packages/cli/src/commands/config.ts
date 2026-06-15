@@ -19,7 +19,7 @@ import {
   type GlobalConfig,
   type UpdateChannel,
   type InstallMethodOverride,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { existsSync } from "node:fs";
 
 const SUPPORTED_KEYS = ["updateChannel", "installMethod"] as const;

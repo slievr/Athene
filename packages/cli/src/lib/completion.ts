@@ -7,7 +7,7 @@ import {
   getGlobalConfigPath,
   type OrchestratorConfig,
   type Session,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { getSessionManager } from "./create-session-manager.js";
 import { isOrchestratorSessionName } from "./session-utils.js";
 

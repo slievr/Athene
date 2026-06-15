@@ -1,12 +1,12 @@
-import type { Agent, OrchestratorConfig, PluginRegistry, SCM } from "@made-by-moonlight/core";
-import claudeCodePlugin from "@made-by-moonlight/plugin-agent-claude-code";
-import codexPlugin from "@made-by-moonlight/plugin-agent-codex";
-import aiderPlugin from "@made-by-moonlight/plugin-agent-aider";
-import cursorPlugin from "@made-by-moonlight/plugin-agent-cursor";
-import kimicodePlugin from "@made-by-moonlight/plugin-agent-kimicode";
-import grokPlugin from "@made-by-moonlight/plugin-agent-grok";
-import opencodePlugin from "@made-by-moonlight/plugin-agent-opencode";
-import githubSCMPlugin from "@made-by-moonlight/plugin-scm-github";
+import type { Agent, OrchestratorConfig, PluginRegistry, SCM } from "@made-by-moonlight/athene-core";
+import claudeCodePlugin from "@made-by-moonlight/athene-plugin-agent-claude-code";
+import codexPlugin from "@made-by-moonlight/athene-plugin-agent-codex";
+import aiderPlugin from "@made-by-moonlight/athene-plugin-agent-aider";
+import cursorPlugin from "@made-by-moonlight/athene-plugin-agent-cursor";
+import kimicodePlugin from "@made-by-moonlight/athene-plugin-agent-kimicode";
+import grokPlugin from "@made-by-moonlight/athene-plugin-agent-grok";
+import opencodePlugin from "@made-by-moonlight/athene-plugin-agent-opencode";
+import githubSCMPlugin from "@made-by-moonlight/athene-plugin-scm-github";
 
 const agentPlugins: Record<string, { create(): Agent }> = {
   "claude-code": claudeCodePlugin,

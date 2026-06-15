@@ -14,9 +14,9 @@ vi.mock("../../src/lib/shell.js", () => ({
   execSilent: mockExecSilent,
 }));
 
-vi.mock("@made-by-moonlight/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-  const actual = await importOriginal<typeof import("@made-by-moonlight/core")>();
+  const actual = await importOriginal<typeof import("@made-by-moonlight/athene-core")>();
   return {
     ...actual,
     findPidByPort: mockFindPidByPort,
@@ -83,7 +83,7 @@ describe("isInstalledUnderNodeModules", () => {
   it("returns true for a Unix node_modules path segment", async () => {
     const { isInstalledUnderNodeModules } = await import("../../src/lib/dashboard-rebuild.js");
 
-    expect(isInstalledUnderNodeModules("/usr/local/lib/node_modules/@made-by-moonlight/web")).toBe(true);
+    expect(isInstalledUnderNodeModules("/usr/local/lib/node_modules/@made-by-moonlight/athene-web")).toBe(true);
   });
 
   it("returns true for a Windows node_modules path segment", async () => {
@@ -116,7 +116,7 @@ describe("assertDashboardRebuildSupported", () => {
     const { assertDashboardRebuildSupported } = await import("../../src/lib/dashboard-rebuild.js");
 
     expect(() =>
-      assertDashboardRebuildSupported("/usr/local/lib/node_modules/@made-by-moonlight/web"),
+      assertDashboardRebuildSupported("/usr/local/lib/node_modules/@made-by-moonlight/athene-web"),
     ).toThrow("Dashboard rebuild is only available from a source checkout");
   });
 });
@@ -159,7 +159,7 @@ describe("rebuildDashboardProductionArtifacts", () => {
       await import("../../src/lib/dashboard-rebuild.js");
 
     await expect(
-      rebuildDashboardProductionArtifacts("/usr/local/lib/node_modules/@made-by-moonlight/web"),
+      rebuildDashboardProductionArtifacts("/usr/local/lib/node_modules/@made-by-moonlight/athene-web"),
     ).rejects.toThrow("Dashboard rebuild is only available from a source checkout");
   });
 });

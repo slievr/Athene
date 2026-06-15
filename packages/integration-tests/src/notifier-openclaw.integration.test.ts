@@ -4,8 +4,8 @@
  * Mocks network boundary only (global fetch + timers).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { NotifyAction } from "@made-by-moonlight/core";
-import openClawPlugin from "@made-by-moonlight/plugin-notifier-openclaw";
+import type { NotifyAction } from "@made-by-moonlight/athene-core";
+import openClawPlugin from "@made-by-moonlight/athene-plugin-notifier-openclaw";
 import { makeEvent } from "./helpers/event-factory.js";
 
 describe("notifier-openclaw integration", () => {

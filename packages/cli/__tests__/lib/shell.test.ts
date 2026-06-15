@@ -11,7 +11,7 @@ vi.mock("node:child_process", () => ({
   execFile: mockExecFile,
 }));
 
-vi.mock("@made-by-moonlight/core", () => ({
+vi.mock("@made-by-moonlight/athene-core", () => ({
   killProcessTree: mockKillProcessTree,
 }));
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { LifecycleManager, OrchestratorConfig } from "@made-by-moonlight/core";
+import type { LifecycleManager, OrchestratorConfig } from "@made-by-moonlight/athene-core";
 
 const mockGetLifecycleManager = vi.fn();
 

@@ -11,7 +11,7 @@
  *    via `TMPDIR`. The cli-side janitor then sweeps only that directory.
  *
  * 2. **Single shared cache for `opencode session list`.**
- *    Both `@made-by-moonlight/core` and the `agent-opencode` plugin previously
+ *    Both `@made-by-moonlight/athene-core` and the `agent-opencode` plugin previously
  *    kept independent module-level caches. Per poll cycle the system
  *    therefore spawned at least two `opencode session list` processes
  *    instead of one. A single cache exported from core collapses them.

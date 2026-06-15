@@ -308,13 +308,13 @@ check_install_layout() {
   if [ -f "$REPO_ROOT/packages/core/dist/index.js" ]; then
     pass "core package is built"
   else
-    fail "core package is not built. Fix: run pnpm --filter @made-by-moonlight/core build"
+    fail "core package is not built. Fix: run pnpm --filter @made-by-moonlight/athene-core build"
   fi
 
   if [ -f "$REPO_ROOT/packages/cli/dist/index.js" ]; then
     pass "CLI package is built"
   else
-    fail "CLI package is not built. Fix: run pnpm --filter @made-by-moonlight/cli build"
+    fail "CLI package is not built. Fix: run pnpm --filter @made-by-moonlight/athene-cli build"
   fi
 }
 

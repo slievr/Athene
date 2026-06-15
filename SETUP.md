@@ -398,7 +398,7 @@ curl -X POST -H 'Content-type: application/json' \
 To add a custom tracker (Jira, Asana, etc.), create a plugin:
 
 1. See plugin examples in `packages/plugins/tracker-*/`
-2. Implement the `Tracker` interface from `@made-by-moonlight/core`
+2. Implement the `Tracker` interface from `@made-by-moonlight/athene-core`
 3. Register your plugin in the config
 
 See [Development Guide](./docs/DEVELOPMENT.md) for plugin development guidelines.

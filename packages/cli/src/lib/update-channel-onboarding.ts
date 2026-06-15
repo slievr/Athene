@@ -18,7 +18,7 @@ import {
   UpdateChannelSchema,
   type GlobalConfig,
   type UpdateChannel,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { promptSelect } from "./prompts.js";
 import { isHumanCaller } from "./caller-context.js";
 

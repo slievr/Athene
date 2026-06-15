@@ -4,7 +4,7 @@ import {
   type Session,
   type RuntimeHandle,
   type AgentLaunchConfig,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 const {
   mockAppendActivityEntry,
@@ -22,7 +22,7 @@ const {
 
 const mockExecFileAsync = vi.fn();
 
-vi.mock("@made-by-moonlight/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,

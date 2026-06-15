@@ -7,7 +7,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { isWindows, killProcessTree } from "@made-by-moonlight/core";
+import { isWindows, killProcessTree } from "@made-by-moonlight/athene-core";
 import { sleep } from "./helpers/polling.js";
 
 const execFileAsync = promisify(execFile);

@@ -21,7 +21,7 @@ import {
   loadGlobalConfig,
   type UpdateChannel,
   type InstallMethodOverride,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { getCliVersion } from "../options/version.js";
 
 // ---------------------------------------------------------------------------
@@ -148,7 +148,7 @@ export function isAoCliPackageRoot(root: string): boolean {
     return false;
   }
 
-  return readPackageName(resolve(root, "package.json")) === "@made-by-moonlight/cli";
+  return readPackageName(resolve(root, "package.json")) === "@made-by-moonlight/athene-cli";
 }
 
 /**
@@ -627,7 +627,7 @@ export function scheduleBackgroundRefresh(): void {
 /**
  * Re-export the core implementation so CLI consumers (and the existing test
  * suite) keep importing from this module while the dashboard imports the same
- * function from `@made-by-moonlight/core` — single source of truth for the prerelease
+ * function from `@made-by-moonlight/athene-core` — single source of truth for the prerelease
  * comparison rules.
  */
 export const isVersionOutdated = coreIsVersionOutdated;

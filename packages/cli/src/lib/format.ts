@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import type { CIStatus, ReviewDecision, ActivityState } from "@made-by-moonlight/core";
+import type { CIStatus, ReviewDecision, ActivityState } from "@made-by-moonlight/athene-core";
 
 export function header(title: string): string {
   const line = "─".repeat(76);

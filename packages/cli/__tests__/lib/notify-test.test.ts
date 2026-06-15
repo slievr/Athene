@@ -10,7 +10,7 @@ import {
   type OrchestratorConfig,
   type OrchestratorEvent,
   type PluginRegistry,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import {
   addSinkNotifierConfig,
   createNotifyTestEvent,

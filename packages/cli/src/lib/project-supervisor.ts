@@ -7,7 +7,7 @@ import {
   ConfigNotFoundError,
   type OrchestratorConfig,
   type ProjectObserver,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { getSessionManager } from "./create-session-manager.js";
 import {
   ensureLifecycleWorker,

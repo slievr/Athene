@@ -4,7 +4,7 @@ import {
   isOpenCodeSessionManager,
   readAgentReportAuditTrailAsync,
   updateMetadata,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { getServices } from "@/lib/services";
 import {
   sessionToDashboard,

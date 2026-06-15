@@ -23,7 +23,7 @@ import {
   loadConfig,
   normalizeAgentReportedState,
   type AgentReportedState,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { getSessionManager } from "../lib/create-session-manager.js";
 
 function resolveSessionId(explicit: string | undefined): string {

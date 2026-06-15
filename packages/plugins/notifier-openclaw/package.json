@@ -1,5 +1,5 @@
 {
-  "name": "@made-by-moonlight/plugin-notifier-openclaw",
+  "name": "@made-by-moonlight/athene-plugin-notifier-openclaw",
   "version": "0.9.1",
   "description": "Notifier plugin: OpenClaw webhook notifications",
   "license": "MIT",
@@ -34,7 +34,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@made-by-moonlight/core": "workspace:*"
+    "@made-by-moonlight/athene-core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.2.3",

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { EventEmitter } from "node:events";
-import type { RuntimeHandle } from "@made-by-moonlight/core";
+import type { RuntimeHandle } from "@made-by-moonlight/athene-core";
 
 // ---------------------------------------------------------------------------
 // Hoisted mock — must be set up before import
@@ -36,9 +36,9 @@ vi.mock("node:child_process", async (importOriginal) => {
   };
 });
 
-vi.mock("@made-by-moonlight/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-  const actual = await importOriginal<typeof import("@made-by-moonlight/core")>();
+  const actual = await importOriginal<typeof import("@made-by-moonlight/athene-core")>();
   return {
     ...actual,
     getShell: mockGetShell,

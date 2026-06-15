@@ -17,7 +17,7 @@ import {
   type ProjectConfig,
   type OrchestratorConfig,
   type PluginRegistry,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import {
   type DashboardSession,
   type DashboardPR,

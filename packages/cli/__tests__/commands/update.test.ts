@@ -65,7 +65,7 @@ vi.mock("../../src/lib/create-session-manager.js", () => ({
   })),
 }));
 
-import type * as AoCoreType from "@made-by-moonlight/core";
+import type * as AoCoreType from "@made-by-moonlight/athene-core";
 import type * as FsType from "node:fs";
 
 const { mockIsWindows, mockLoadConfig, mockLoadGlobalConfig, mockExistsSync } = vi.hoisted(() => ({
@@ -75,8 +75,8 @@ const { mockIsWindows, mockLoadConfig, mockLoadGlobalConfig, mockExistsSync } = 
   mockExistsSync: vi.fn(() => false),
 }));
 
-vi.mock("@made-by-moonlight/core", async () => {
-  const actual = (await vi.importActual("@made-by-moonlight/core")) as typeof AoCoreType;
+vi.mock("@made-by-moonlight/athene-core", async () => {
+  const actual = (await vi.importActual("@made-by-moonlight/athene-core")) as typeof AoCoreType;
   return {
     ...actual,
     loadConfig: (...args: unknown[]) => mockLoadConfig(...args),

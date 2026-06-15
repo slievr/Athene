@@ -28,7 +28,7 @@ async function checkPort(port: number): Promise<void> {
 
 /**
  * Check that workspace packages have been compiled (TypeScript → JavaScript).
- * Locates @made-by-moonlight/core by walking up from webDir, handling both pnpm
+ * Locates @made-by-moonlight/athene-core by walking up from webDir, handling both pnpm
  * workspaces (symlinked deps in webDir/node_modules) and npm/yarn global
  * installs (hoisted to a parent node_modules).
  */

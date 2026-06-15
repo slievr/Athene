@@ -17,7 +17,7 @@ import {
   _clearProcessCacheForTests,
   type PreflightContext,
   type ProjectConfig,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 
 // ---------------------------------------------------------------------------
 // Fixtures

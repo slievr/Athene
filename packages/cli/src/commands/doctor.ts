@@ -11,7 +11,7 @@ import {
   type OrchestratorConfig,
   type PluginRegistry,
   type PluginSlot,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import { runNotifyTest } from "../lib/notify-test.js";
 import { runRepoScript } from "../lib/script-runner.js";
 import { detectOpenClawInstallation, validateToken } from "../lib/openclaw-probe.js";

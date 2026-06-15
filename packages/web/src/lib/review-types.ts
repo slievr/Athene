@@ -1,4 +1,4 @@
-import type { CodeReviewRunSummary } from "@made-by-moonlight/core";
+import type { CodeReviewRunSummary } from "@made-by-moonlight/athene-core";
 
 export type ReviewBoardColumn =
   | "queued"

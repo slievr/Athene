@@ -5,7 +5,7 @@ import {
   type RuntimeHandle,
   type AgentLaunchConfig,
   type ProjectConfig,
-} from "@made-by-moonlight/core";
+} from "@made-by-moonlight/athene-core";
 import {
   mkdtempSync,
   mkdirSync,
@@ -51,7 +51,7 @@ const {
   mockIsWindows: vi.fn(() => false),
 }));
 
-vi.mock("@made-by-moonlight/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,

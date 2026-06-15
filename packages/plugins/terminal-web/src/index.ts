@@ -1,4 +1,4 @@
-import type { PluginModule, Terminal, Session } from "@made-by-moonlight/core";
+import type { PluginModule, Terminal, Session } from "@made-by-moonlight/athene-core";
 
 export const manifest = {
   name: "web",

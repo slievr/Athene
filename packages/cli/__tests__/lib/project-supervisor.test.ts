@@ -8,7 +8,7 @@ const mockRemoveProjectFromRunning = vi.fn();
 const mockSetHealth = vi.fn();
 const activeWorkers = new Set<string>();
 
-vi.mock("@made-by-moonlight/core", () => ({
+vi.mock("@made-by-moonlight/athene-core", () => ({
   ConfigNotFoundError: class ConfigNotFoundError extends Error {
     constructor(message = "No agent-orchestrator.yaml found.") {
       super(message);
@@ -470,7 +470,7 @@ describe("project-supervisor", () => {
   });
 
   it("exits cleanly when neither global nor local config exists", async () => {
-    const { ConfigNotFoundError } = await import("@made-by-moonlight/core");
+    const { ConfigNotFoundError } = await import("@made-by-moonlight/athene-core");
     mockLoadConfig
       .mockImplementationOnce(() => {
         throw Object.assign(new Error("ENOENT"), {

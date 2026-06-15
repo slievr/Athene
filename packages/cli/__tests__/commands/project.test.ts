@@ -19,7 +19,7 @@ const {
   mockLoadLocalProjectConfig: vi.fn(),
 }));
 
-vi.mock("@made-by-moonlight/core", () => ({
+vi.mock("@made-by-moonlight/athene-core", () => ({
   isPortfolioEnabled: () => true,
   getPortfolio: mockGetPortfolio,
   getPortfolioSessionCounts: mockGetPortfolioSessionCounts,

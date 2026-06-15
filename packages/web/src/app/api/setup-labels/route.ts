@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { recordActivityEvent } from "@made-by-moonlight/core";
+import { recordActivityEvent } from "@made-by-moonlight/athene-core";
 import { getServices } from "@/lib/services";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";

@@ -8,8 +8,8 @@
  * version pointing at a package that doesn't exist on npm, and consumers
  * doing `npm install -g @made-by-moonlight/athene` would fail.
  *
- * Concretely: this catches the case where `@made-by-moonlight/cli` has
- * `"@made-by-moonlight/web": "workspace:*"` while `@made-by-moonlight/web` is
+ * Concretely: this catches the case where `@made-by-moonlight/athene-cli` has
+ * `"@made-by-moonlight/athene-web": "workspace:*"` while `@made-by-moonlight/athene-web` is
  * `"private": true` — the dashboard would never reach consumers.
  *
  * Run from CI before `changeset publish`.
