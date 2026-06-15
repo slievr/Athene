@@ -216,35 +216,35 @@ check_launcher() {
   ao_path="$(command -v athene 2>/dev/null || true)"
   if [ -n "$ao_path" ]; then
     if [ -x "$ao_path" ]; then
-      pass "ao launcher resolves to $ao_path"
+      pass "athene launcher resolves to $ao_path"
       return
     fi
-    warn "ao launcher resolves to $ao_path, but its target is missing or not executable"
+    warn "athene launcher resolves to $ao_path, but its target is missing or not executable"
   fi
 
   if [ "$SCRIPT_LAYOUT" = "source-checkout" ] && [ "$FIX_MODE" = true ] && command -v npm >/dev/null 2>&1 && [ -d "$REPO_ROOT/packages/athene" ]; then
     if (cd "$REPO_ROOT/packages/athene" && npm link --force >/dev/null 2>&1) && command -v athene >/dev/null 2>&1; then
-      fixed "ao launcher refreshed with npm link --force"
+      fixed "athene launcher refreshed with npm link --force"
       return
     fi
     if [ -t 0 ]; then
       printf '  Launcher refresh failed. Retrying with sudo...\n'
       if (cd "$REPO_ROOT/packages/athene" && sudo npm link --force >/dev/null 2>&1) && command -v athene >/dev/null 2>&1; then
-        fixed "ao launcher refreshed with sudo npm link --force"
+        fixed "athene launcher refreshed with sudo npm link --force"
         return
       fi
       printf 'ERROR: sudo npm link --force failed. Inspect npm output above.\n' >&2
     fi
-    warn "ao launcher refresh failed. Fix: cd $REPO_ROOT/packages/athene && sudo npm link --force"
+    warn "athene launcher refresh failed. Fix: cd $REPO_ROOT/packages/athene && sudo npm link --force"
     return
   fi
 
   if [ "$SCRIPT_LAYOUT" = "package-install" ]; then
-    warn "ao launcher is not in PATH. Fix: reinstall with npm install -g @made-by-moonlight/athene@latest or run via pnpx @made-by-moonlight/athene@latest"
+    warn "athene launcher is not in PATH. Fix: reinstall with npm install -g @made-by-moonlight/athene@latest or run via pnpx @made-by-moonlight/athene@latest"
     return
   fi
 
-  warn "ao launcher is not in PATH. Fix: cd $REPO_ROOT && bash scripts/setup.sh"
+  warn "athene launcher is not in PATH. Fix: cd $REPO_ROOT && bash scripts/setup.sh"
 }
 
 check_tmux() {
