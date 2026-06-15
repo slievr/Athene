@@ -59,7 +59,7 @@ function spawnDetached(cmd: string, args: string[]): boolean {
  * attach fails with "No agent-orchestrator.yaml found".
  */
 function openWindowsConsole(sessionId: string, cwd: string | undefined): boolean {
-  const title = `ao:${sessionId}`;
+  const title = `athene:${sessionId}`;
   const inner = ["athene", "session", "attach", sessionId];
 
   const wtArgs = ["-w", "0", "new-tab", "--title", title];

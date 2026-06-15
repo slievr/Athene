@@ -333,12 +333,12 @@ check_runtime_sanity() {
     return
   fi
 
-  if [ ! -f "$REPO_ROOT/packages/ao/bin/ao.js" ]; then
+  if [ ! -f "$REPO_ROOT/packages/ao/bin/athene.js" ]; then
     fail "launcher entrypoint is missing. Fix: reinstall from a clean checkout"
     return
   fi
 
-  if node "$REPO_ROOT/packages/ao/bin/ao.js" --version >/dev/null 2>&1; then
+  if node "$REPO_ROOT/packages/ao/bin/athene.js" --version >/dev/null 2>&1; then
     pass "launcher runtime sanity check passed (athene --version)"
   else
     fail "launcher runtime sanity check failed. Fix: run pnpm build and refresh the launcher"

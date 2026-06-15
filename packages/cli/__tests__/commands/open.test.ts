@@ -334,9 +334,9 @@ describe("open command (Windows)", () => {
     expect(cmd).toBe("wt.exe");
     expect(args).toEqual([
       "-w", "0", "new-tab",
-      "--title", "ao:tr-orchestrator",
+      "--title", "athene:tr-orchestrator",
       "-d", TEST_REPO_PATH,
-      "cmd.exe", "/k", "ao", "session", "attach", "tr-orchestrator",
+      "cmd.exe", "/k", "athene", "session", "attach", "tr-orchestrator",
     ]);
     expect(mockOpenUrl).not.toHaveBeenCalled();
   });
@@ -353,9 +353,9 @@ describe("open command (Windows)", () => {
     expect(mockSpawn).toHaveBeenCalledTimes(2);
     expect(mockSpawn.mock.calls[1][0]).toBe("cmd.exe");
     expect(mockSpawn.mock.calls[1][1]).toEqual([
-      "/c", "start", "ao:tr-orchestrator",
+      "/c", "start", "athene:tr-orchestrator",
       "/d", TEST_REPO_PATH,
-      "cmd.exe", "/k", "ao", "session", "attach", "tr-orchestrator",
+      "cmd.exe", "/k", "athene", "session", "attach", "tr-orchestrator",
     ]);
   });
 

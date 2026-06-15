@@ -268,7 +268,7 @@ function Check-RuntimeSanity {
         }
         return
     }
-    $entry = Join-Path $RepoRoot 'packages/ao/bin/ao.js'
+    $entry = Join-Path $RepoRoot 'packages/ao/bin/athene.js'
     if (-not (Test-Path $entry)) {
         Write-Fail "launcher entrypoint is missing. Fix: reinstall from a clean checkout"
         return

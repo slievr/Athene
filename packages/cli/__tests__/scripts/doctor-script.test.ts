@@ -45,10 +45,10 @@ function createHealthyRepo(tempRoot: string): string {
   );
   writeFileSync(join(fakeRepo, "packages", "cli", "dist", "index.js"), "export {};\n");
   writeFileSync(
-    join(fakeRepo, "packages", "ao", "bin", "ao.js"),
+    join(fakeRepo, "packages", "ao", "bin", "athene.js"),
     '#!/usr/bin/env node\nconsole.log("0.1.0");\n',
   );
-  chmodSync(join(fakeRepo, "packages", "ao", "bin", "ao.js"), 0o755);
+  chmodSync(join(fakeRepo, "packages", "ao", "bin", "athene.js"), 0o755);
   return fakeRepo;
 }
 

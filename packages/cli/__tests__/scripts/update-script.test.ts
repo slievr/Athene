@@ -232,7 +232,7 @@ exit 0`,
     const tempRoot = mkdtempSync(join(tmpdir(), "ao-update-smoke-"));
     const fakeRepo = join(tempRoot, "repo");
     mkdirSync(join(fakeRepo, "packages", "ao", "bin"), { recursive: true });
-    writeFileSync(join(fakeRepo, "packages", "ao", "bin", "ao.js"), "#!/usr/bin/env node\n");
+    writeFileSync(join(fakeRepo, "packages", "ao", "bin", "athene.js"), "#!/usr/bin/env node\n");
 
     const binDir = join(tempRoot, "bin");
     mkdirSync(binDir, { recursive: true });
@@ -259,13 +259,13 @@ exit 0`,
 
     expect(result.status).toBe(0);
     expect(commands).toContain(
-      `node ${join(fakeRepo, "packages", "ao", "bin", "ao.js")} --version`,
+      `node ${join(fakeRepo, "packages", "ao", "bin", "athene.js")} --version`,
     );
     expect(commands).toContain(
-      `node ${join(fakeRepo, "packages", "ao", "bin", "ao.js")} doctor --help`,
+      `node ${join(fakeRepo, "packages", "ao", "bin", "athene.js")} doctor --help`,
     );
     expect(commands).toContain(
-      `node ${join(fakeRepo, "packages", "ao", "bin", "ao.js")} update --help`,
+      `node ${join(fakeRepo, "packages", "ao", "bin", "athene.js")} update --help`,
     );
   });
 
@@ -301,7 +301,7 @@ exit 0`,
       const repoRoot = resolve(packageRoot, "../..");
       expect(result.status).toBe(0);
       expect(commands).toContain(
-        `node ${join(repoRoot, "packages", "ao", "bin", "ao.js")} --version`,
+        `node ${join(repoRoot, "packages", "ao", "bin", "athene.js")} --version`,
       );
     },
   );
@@ -357,7 +357,7 @@ exit 0`,
     const fakeRepo = join(tempRoot, "repo");
     mkdirSync(join(fakeRepo, "packages", "cli"), { recursive: true });
     mkdirSync(join(fakeRepo, "packages", "ao", "bin"), { recursive: true });
-    writeFileSync(join(fakeRepo, "packages", "ao", "bin", "ao.js"), "#!/usr/bin/env node\n");
+    writeFileSync(join(fakeRepo, "packages", "ao", "bin", "athene.js"), "#!/usr/bin/env node\n");
 
     const binDir = join(tempRoot, "bin");
     mkdirSync(binDir, { recursive: true });
@@ -419,10 +419,10 @@ exit 0`,
     expect(commands).not.toContain("git pull --ff-only origin main");
     // Smoke tests SHOULD still have run
     expect(commands).toContain(
-      `node ${join(fakeRepo, "packages", "ao", "bin", "ao.js")} --version`,
+      `node ${join(fakeRepo, "packages", "ao", "bin", "athene.js")} --version`,
     );
     expect(commands).toContain(
-      `node ${join(fakeRepo, "packages", "ao", "bin", "ao.js")} doctor --help`,
+      `node ${join(fakeRepo, "packages", "ao", "bin", "athene.js")} doctor --help`,
     );
   });
 

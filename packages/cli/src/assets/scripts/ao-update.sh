@@ -19,7 +19,7 @@ while [ $# -gt 0 ]; do
 Usage: athene update [--skip-smoke] [--smoke-only]
 
 Fast-forwards the local Agent Orchestrator install repo to main, installs deps,
-clean-rebuilds all workspace packages, refreshes the ao launcher, and runs smoke tests.
+clean-rebuilds all workspace packages, refreshes the athene launcher, and runs smoke tests.
 
 Options:
   --skip-smoke  Skip smoke tests after rebuild
@@ -42,7 +42,7 @@ fi
 
 is_repo_root() {
   local candidate="$1"
-  [ -f "$candidate/packages/ao/bin/ao.js" ] && [ -d "$candidate/packages/cli" ]
+  [ -f "$candidate/packages/ao/bin/athene.js" ] && [ -d "$candidate/packages/cli" ]
 }
 
 find_repo_root_from() {
@@ -159,9 +159,9 @@ maybe_sync_origin_with_upstream() {
 
 run_smoke_tests() {
   printf '\nRunning smoke tests...\n'
-  run_cmd node "$REPO_ROOT/packages/ao/bin/ao.js" --version
-  run_cmd node "$REPO_ROOT/packages/ao/bin/ao.js" doctor --help
-  run_cmd node "$REPO_ROOT/packages/ao/bin/ao.js" update --help
+  run_cmd node "$REPO_ROOT/packages/ao/bin/athene.js" --version
+  run_cmd node "$REPO_ROOT/packages/ao/bin/athene.js" doctor --help
+  run_cmd node "$REPO_ROOT/packages/ao/bin/athene.js" update --help
 }
 
 ensure_repo_clean() {
