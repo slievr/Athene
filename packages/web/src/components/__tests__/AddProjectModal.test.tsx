@@ -84,6 +84,10 @@ describe("AddProjectModal", () => {
         `/api/filesystem/browse?path=${encodeURIComponent(absolutePath)}`,
       ),
     );
+    // Wait for the browse response to settle: the "current folder, Git repository"
+    // button only appears after currentDirectory.isGitRepo is updated in state.
+    // Without this, canSubmit is still false on slow CI when the click fires.
+    await screen.findByRole("button", { name: /current folder, git repository/i });
 
     fireEvent.click(screen.getByRole("button", { name: /^add project$/i }));
 
