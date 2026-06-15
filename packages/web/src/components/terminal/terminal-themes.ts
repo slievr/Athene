@@ -2,7 +2,7 @@ import type { ITheme } from "@xterm/xterm";
 
 export type TerminalVariant = "agent" | "orchestrator";
 
-export function buildTerminalThemes(_variant: TerminalVariant): { dark: ITheme; light: ITheme } {
+export function buildTerminalThemes(_variant: TerminalVariant): { dark: ITheme; light: ITheme; ocean: ITheme } {
   // Mission-control terminal theme — the frame & xterm theme are ours; the PTY
   // content is the agent's own ANSI. The 16-color palette is harmonized to the
   // design tokens (xterm needs concrete hex, so these mirror globals.css). The
@@ -65,5 +65,17 @@ export function buildTerminalThemes(_variant: TerminalVariant): { dark: ITheme; 
     brightWhite: "#374151",
   };
 
-  return { dark, light };
+  // Ocean terminal variant — teal selection, cooler surfaces, same cursor.
+  const ocean: ITheme = {
+    ...dark,
+    background: "#090b10", // --term (ocean)
+    selectionBackground: "rgba(45, 212, 191, 0.28)", // teal instead of blue
+    selectionInactiveBackground: "rgba(45, 212, 191, 0.12)",
+    blue: "#2dd4bf", // --teal (teal fills the blue ANSI slot)
+    brightBlue: "#5de5d3", // --teal-soft
+    cyan: "#26c7b2",
+    brightCyan: "#4ad5c4",
+  };
+
+  return { dark, light, ocean };
 }
