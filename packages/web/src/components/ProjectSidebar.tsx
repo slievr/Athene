@@ -12,7 +12,6 @@ import { usePopoverClamp } from "@/hooks/usePopoverClamp";
 import { useResizable } from "@/hooks/useResizable";
 import { projectDashboardPath, projectSessionPath } from "@/lib/routes";
 import { ThemeToggle } from "./ThemeToggle";
-import { AppMark } from "./AppMark";
 import { AddProjectModal } from "./AddProjectModal";
 import { ProjectSettingsModal } from "./ProjectSettingsModal";
 
@@ -116,9 +115,8 @@ function loadExpandedProjects(): Set<string> | null {
 function SidebarBrand({ onToggleCollapsed }: { onToggleCollapsed?: () => void }) {
   return (
     <div className="project-sidebar__brand">
-      <AppMark />
       <span className="project-sidebar__brand-name">
-        Agent<b className="project-sidebar__brand-sep"> / </b>Orchestrator
+        Athene
       </span>
       {onToggleCollapsed ? (
         <button
@@ -356,6 +354,7 @@ function ProjectSidebarInner({
   const [projectMenuOpenId, setProjectMenuOpenId] = useState<string | null>(null);
   const [projectSettingsProjectId, setProjectSettingsProjectId] = useState<string | null>(null);
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
+  const [restartingOrchestratorProjectId, setRestartingOrchestratorProjectId] = useState<string | null>(null);
   const [removedProjectIds, setRemovedProjectIds] = useState<Set<string>>(new Set());
   const [addProjectOpen, setAddProjectOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -615,6 +614,35 @@ function ProjectSidebarInner({
       }
       return next;
     });
+  };
+
+  const handleRestartOrchestrator = async (project: ProjectInfo) => {
+    const confirmed = window.confirm(
+      `Restart orchestrator for ${project.name}? The current orchestrator session will be killed and a fresh one spawned.`,
+    );
+    if (!confirmed) return;
+
+    setRestartingOrchestratorProjectId(project.id);
+    setProjectMenuOpenId(null);
+    try {
+      const response = await fetch("/api/orchestrators", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: project.id, clean: true }),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(
+          (body && typeof body === "object" && "error" in body && typeof body.error === "string"
+            ? body.error
+            : null) ?? "Failed to restart orchestrator.",
+        );
+      }
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Failed to restart orchestrator.");
+    } finally {
+      setRestartingOrchestratorProjectId(null);
+    }
   };
 
   const handleRemoveProject = async (project: ProjectInfo) => {
@@ -1004,6 +1032,19 @@ function ProjectSidebarInner({
                           }}
                         >
                           Open orchestrator
+                        </button>
+                      ) : null}
+                      {orchestratorLink ? (
+                        <button
+                          type="button"
+                          className="project-sidebar__proj-menu-item"
+                          role="menuitem"
+                          onClick={() => void handleRestartOrchestrator(project)}
+                          disabled={restartingOrchestratorProjectId === project.id}
+                        >
+                          {restartingOrchestratorProjectId === project.id
+                            ? "Restarting..."
+                            : "Restart orchestrator"}
                         </button>
                       ) : null}
                       <button
