@@ -351,6 +351,185 @@
   --color-alert-comment-bg: rgba(232, 193, 74, 0.08);
 }
 
+/* ── Ocean theme ──────────────────────────────────────────────────────
+   Alternative dark theme: teal orchestrator accent replaces blue.
+   Surfaces are slightly cooler (blue-tinted dark). All semantic status
+   colors are preserved — orange agent, amber attention, red fail, green
+   merge. Only the brand/orchestrator accent changes: teal = you.        */
+.ocean {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* ════════════════════════════════════════════════════════════════════
+     OCEAN PALETTE — cool blue-tinted control room. Teal = orchestrator/
+     you; all other semantic tokens match the mission-control palette.   */
+  --bg: #08090e; /* app base — cooler than dark */
+  --bg-side: #060709; /* sidebar */
+  --bg-top: #08090e; /* topbar */
+  --col: #0c0e13; /* kanban column trough */
+  --card: #121418; /* the only bordered surface */
+  --card-hover: #171a21;
+  --term: #090b10; /* terminal / xterm background */
+
+  --t1: #edf0f4; /* text: primary */
+  --t2: #8a98aa; /* text: secondary */
+  --t3: #566170; /* text: tertiary */
+  --t4: #3a4550; /* text: faint */
+
+  --line: rgba(160, 200, 255, 0.06);
+  --line-2: rgba(160, 200, 255, 0.10);
+  --hover: rgba(160, 200, 255, 0.04);
+  --hover-2: rgba(160, 200, 255, 0.07);
+
+  --teal: #2dd4bf; /* orchestrator / you */
+  --teal-soft: #5de5d3;
+  --orange: #f59f4c; /* a working agent */
+  --amber: #e8c14a; /* needs-your-input / attention */
+  --red: #ef6b6b; /* failing / stuck */
+  --green: #74b98a; /* mergeable / passed / resolved */
+
+  /* Base surfaces */
+  --color-bg-base: var(--bg);
+  --color-bg-surface: var(--card);
+  --color-bg-elevated: var(--card-hover);
+  --color-bg-elevated-hover: var(--card-hover);
+  --color-bg-subtle: var(--hover);
+  --color-bg-hover: var(--hover-2);
+  --color-bg-inset: var(--col);
+  --color-bg-sidebar: var(--bg-side);
+  --color-bg-card: var(--card);
+
+  /* Backward-compat aliases */
+  --color-bg-primary: var(--color-bg-base);
+  --color-bg-secondary: var(--color-bg-surface);
+  --color-bg-tertiary: var(--color-bg-elevated);
+
+  /* Borders / hairlines */
+  --color-border-subtle: var(--line);
+  --color-border-default: var(--line);
+  --color-border-strong: var(--line-2);
+  --color-border-muted: var(--line);
+  --color-border-emphasis: var(--line-2);
+
+  /* Text ramp — primary → faint */
+  --color-text-primary: var(--t1);
+  --color-text-secondary: var(--t2);
+  --color-text-tertiary: var(--t3);
+  --color-text-muted: var(--t4);
+  --color-text-inverse: #ffffff;
+
+  /* Interactive accent — teal = orchestrator / you (links, focus, selection) */
+  --color-accent: var(--teal);
+  --color-accent-hover: #26c7b2;
+  --color-accent-subtle: rgba(45, 212, 191, 0.12);
+
+  /* Amber accent — needs-input / attention */
+  --color-accent-amber: var(--amber);
+  --color-accent-amber-dim: rgba(232, 193, 74, 0.12);
+  --color-accent-amber-border: rgba(232, 193, 74, 0.32);
+
+  /* Status — same semantic spectrum as dark */
+  --color-status-working: var(--orange);
+  --color-status-ready: var(--green);
+  --color-status-respond: var(--amber);
+  --color-status-review: var(--t2);
+  --color-status-pending: var(--t3);
+  --color-status-attention: var(--amber);
+  --color-status-idle: var(--t4);
+  --color-status-done: var(--t4);
+  --color-status-error: var(--red);
+  --color-status-merge: var(--green);
+  --color-ci-pass: var(--green);
+  --color-ci-fail: var(--red);
+
+  /* Semantic aliases */
+  --color-accent-blue: var(--teal);
+  --color-accent-green: var(--green);
+  --color-accent-yellow: var(--amber);
+  --color-accent-orange: var(--orange);
+  --color-accent-red: var(--red);
+  --color-accent-violet: var(--teal-soft);
+  --color-accent-purple: var(--teal-soft);
+
+  /* Theme-adaptive tints */
+  --color-tint-blue: rgba(45, 212, 191, 0.12);
+  --color-tint-green: rgba(116, 185, 138, 0.13);
+  --color-tint-yellow: rgba(232, 193, 74, 0.13);
+  --color-tint-red: rgba(239, 107, 107, 0.12);
+  --color-tint-violet: rgba(45, 212, 191, 0.10);
+  --color-tint-orange: rgba(245, 159, 76, 0.13);
+  --color-tint-neutral: rgba(255, 255, 255, 0.05);
+
+  /* Chip/badge */
+  --color-chip-bg: var(--hover-2);
+  --color-hover-overlay: var(--hover);
+
+  /* Scrollbar */
+  --color-scrollbar: rgba(255, 255, 255, 0.08);
+  --color-scrollbar-hover: rgba(255, 255, 255, 0.15);
+  --color-scrollbar-active: rgba(255, 255, 255, 0.25);
+
+  /* Body — flat base (calm control room, no ambient glow) */
+  --color-body-gradient-blue: transparent;
+  --color-body-gradient-violet: transparent;
+
+  /* Nav glass */
+  --color-nav-bg: rgba(8, 9, 14, 0.82);
+
+  /* Card surfaces — flat, hairline ring */
+  --card-bg: var(--card);
+  --card-merge-bg: var(--card);
+  --card-expanded-bg: var(--card-hover);
+  --card-shadow: none;
+  --card-shadow-hover: none;
+  --card-inset: none;
+  --card-border: var(--line);
+
+  /* Done card surfaces */
+  --card-done-bg: var(--card);
+  --card-done-border: var(--line);
+
+  --done-pill-exited-bg: var(--hover-2);
+  --done-pill-exited-color: var(--t3);
+  --done-pill-merged-bg: rgba(116, 185, 138, 0.14);
+  --done-pill-merged-color: var(--green);
+  --done-pill-killed-bg: rgba(239, 107, 107, 0.12);
+  --done-pill-killed-color: var(--red);
+  --done-meta-chip-bg: var(--hover);
+  --done-meta-chip-border: var(--line);
+  --done-section-border: var(--line);
+  --done-title-color: var(--t2);
+  --done-restore-bg: rgba(45, 212, 191, 0.10);
+  --done-restore-border: rgba(45, 212, 191, 0.24);
+  --done-restore-hover-bg: rgba(45, 212, 191, 0.18);
+
+  /* Detail card */
+  --detail-card-bg: var(--card);
+  --detail-card-shadow: none;
+
+  /* Buttons — flat in the control room */
+  --btn-shadow: none;
+  --btn-shadow-hover: none;
+  --btn-inset: none;
+
+  /* Kanban column trough */
+  --color-column-bg: var(--col);
+  --color-column-header: transparent;
+
+  /* Alert colors */
+  --color-alert-ci: var(--red);
+  --color-alert-ci-bg: rgba(239, 107, 107, 0.08);
+  --color-alert-ci-unknown: var(--amber);
+  --color-alert-review: var(--teal);
+  --color-alert-review-bg: rgba(45, 212, 191, 0.08);
+  --color-alert-changes: var(--amber);
+  --color-alert-changes-bg: rgba(232, 193, 74, 0.08);
+  --color-alert-conflict: var(--red);
+  --color-alert-conflict-bg: rgba(239, 107, 107, 0.08);
+  --color-alert-comment: var(--amber);
+  --color-alert-comment-bg: rgba(232, 193, 74, 0.08);
+}
+
 @theme {
   /* ── Typography — mission-control voices ─────────────────────────── */
   /* UI = Schibsted Grotesk (product voice); machine/data = JetBrains Mono. */
@@ -448,8 +627,8 @@ html:not(.dark) body {
   background: var(--color-bg-base);
 }
 
-/* Radial gradient only for dark mode */
-.dark body {
+/* Radial gradient only for dark variants */
+:is(.dark, .ocean) body {
   background:
     radial-gradient(ellipse 70% 40% at 15% 0%, var(--color-body-gradient-blue) 0%, transparent 60%),
     radial-gradient(
@@ -850,11 +1029,11 @@ html.light .xterm .xterm-viewport:hover::-webkit-scrollbar-thumb:active {
   font-family: var(--font-mono);
 }
 
-.dark .kanban-ghost__col {
+:is(.dark, .ocean) .kanban-ghost__col {
   border-color: rgba(255, 240, 220, 0.08);
 }
 
-.dark .kanban-ghost__head {
+:is(.dark, .ocean) .kanban-ghost__head {
   border-bottom-color: rgba(255, 240, 220, 0.07);
 }
 
@@ -2341,7 +2520,7 @@ body:not(.is-resizing-x) .sidebar-wrapper {
 .sidebar-session-dot--glow {
   box-shadow: 0 0 4px rgba(34, 197, 94, 0.5);
 }
-.dark .sidebar-session-dot--glow {
+:is(.dark, .ocean) .sidebar-session-dot--glow {
   box-shadow: 0 0 5px rgba(34, 197, 94, 0.6);
 }
 .sidebar-session-dot[data-level="working"] {
@@ -3120,24 +3299,24 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   overflow: hidden;
 }
 
-.dark .session-card {
+:is(.dark, .ocean) .session-card {
   box-shadow: none;
 }
 
-/* ── Dark mode weight reduction ────────────────────────────────────────
+/* ── Dark-variant weight reduction ─────────────────────────────────────
    Light text on dark backgrounds appears visually heavier due to
    subpixel antialiasing. Step down one weight level.                    */
 
-.dark .kanban-column [class*="font-semibold"] {
+:is(.dark, .ocean) .kanban-column [class*="font-semibold"] {
   font-weight: 500;
 }
-.dark .kanban-column [class*="font-bold"] {
+:is(.dark, .ocean) .kanban-column [class*="font-bold"] {
   font-weight: 600;
 }
-.dark .session-card-done .done-status-pill {
+:is(.dark, .ocean) .session-card-done .done-status-pill {
   font-weight: 500;
 }
-.dark .session-card-done .done-detail-heading {
+:is(.dark, .ocean) .session-card-done .done-detail-heading {
   font-weight: 600;
 }
 
@@ -3717,7 +3896,7 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   border-color: var(--card-border);
 }
 
-.dark .session-card.card-merge-ready {
+:is(.dark, .ocean) .session-card.card-merge-ready {
   box-shadow: none;
 }
 
@@ -3853,7 +4032,7 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
-.dark .session-card-done:hover {
+:is(.dark, .ocean) .session-card-done:hover {
   box-shadow: none;
 }
 
@@ -4459,6 +4638,13 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   --sidebar-border: rgba(255, 240, 220, 0.07);
   --sidebar-row-hover: rgba(255, 240, 220, 0.05);
   --sidebar-row-active: rgba(255, 240, 220, 0.07);
+}
+
+.ocean .project-sidebar {
+  --sidebar-bg: #0b0d11;
+  --sidebar-border: rgba(100, 180, 255, 0.07);
+  --sidebar-row-hover: rgba(100, 180, 255, 0.04);
+  --sidebar-row-active: rgba(100, 180, 255, 0.06);
 }
 
 .project-sidebar--collapsed {
