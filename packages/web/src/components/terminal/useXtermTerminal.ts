@@ -382,6 +382,17 @@ export function useXtermTerminal(
           writeTerminal(sessionId, data, projectId);
         });
 
+        // Shift+Enter → send \n (LF) to the PTY instead of the default \r that
+        // xterm maps for both plain Enter and Shift+Enter. Plain Enter continues
+        // to send \r via onData (the standard CR for terminal line discipline).
+        terminal.attachCustomKeyEventHandler((event: KeyboardEvent) => {
+          if (event.type === "keydown" && event.key === "Enter" && event.shiftKey) {
+            writeTerminal(sessionId, "\n", projectId);
+            return false;
+          }
+          return true;
+        });
+
         resizeTerminalMux(sessionId, terminal.cols, terminal.rows, projectId);
 
         cleanup = () => {
