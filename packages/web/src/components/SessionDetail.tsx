@@ -14,6 +14,7 @@ import type { ProjectInfo } from "@/lib/project-name";
 import { useSidebarContext } from "./workspace/SidebarContext";
 import { projectDashboardPath, projectSessionPath } from "@/lib/routes";
 
+import { AgentMessageInput } from "./AgentMessageInput";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { SessionDetailHeader, type OrchestratorZones } from "./SessionDetailHeader";
 import { SessionEndedSummary } from "./SessionEndedSummary";
@@ -156,18 +157,21 @@ export function SessionDetail({
               onRestore={handleRestore}
             />
           ) : (
-            <DirectTerminal
-              sessionId={session.id}
-              projectId={session.projectId}
-              tmuxName={session.metadata?.tmuxName}
-              startFullscreen={startFullscreen}
-              variant={terminalVariant}
-              appearance="theme"
-              height="100%"
-              isOpenCodeSession={isOpenCodeSession}
-              reloadCommand={isOpenCodeSession ? reloadCommand : undefined}
-              autoFocus
-            />
+            <>
+              <DirectTerminal
+                sessionId={session.id}
+                projectId={session.projectId}
+                tmuxName={session.metadata?.tmuxName}
+                startFullscreen={startFullscreen}
+                variant={terminalVariant}
+                appearance="theme"
+                height="100%"
+                isOpenCodeSession={isOpenCodeSession}
+                reloadCommand={isOpenCodeSession ? reloadCommand : undefined}
+                autoFocus
+              />
+              <AgentMessageInput sessionId={session.id} />
+            </>
           )}
         </div>
         {/* The orchestrator session has no PR/changes/browser to inspect — give
