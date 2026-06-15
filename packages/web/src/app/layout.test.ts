@@ -20,12 +20,12 @@ describe("app layout metadata", () => {
     await expect(generateMetadata()).resolves.toMatchObject({
       title: {
         template: "%s | Athene",
-        default: "ao | Athene",
+        default: "athene | Athene",
       },
       appleWebApp: {
         capable: true,
         statusBarStyle: "black-translucent",
-        title: "ao | Athene",
+        title: "athene | Athene",
       },
     });
   });

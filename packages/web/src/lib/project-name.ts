@@ -122,12 +122,12 @@ export const getProjectName = cache((): string => {
     const firstKey = Object.keys(config.projects)[0];
     if (firstKey) {
       const name = config.projects[firstKey].name ?? firstKey;
-      return name || firstKey || "ao";
+      return name || firstKey || "athene";
     }
   } catch {
     // Config not available
   }
-  return "ao";
+  return "athene";
 });
 
 export const getPrimaryProjectId = cache((): string => {
@@ -140,7 +140,7 @@ export const getPrimaryProjectId = cache((): string => {
   } catch {
     // Config not available
   }
-  return "ao";
+  return "athene";
 });
 
 export const getAllProjects = cache((): ProjectInfo[] => {
