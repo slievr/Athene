@@ -1,9 +1,9 @@
-﻿# PowerShell port of ao-doctor.sh — Windows-native health checks for AO.
+﻿# PowerShell port of athene-doctor.sh — Windows-native health checks for AO.
 # Invoked by `athene doctor` on Windows via runRepoScript().
 
 $ErrorActionPreference = 'Continue'
 
-# Manual arg parsing — matches ao-doctor.sh's `--fix` / `-h` / `--help` flags
+# Manual arg parsing — matches athene-doctor.sh's `--fix` / `-h` / `--help` flags
 # rather than PowerShell's `-Fix` convention, so the calling contract is
 # identical on Linux/macOS/Windows.
 $Fix  = $false
@@ -180,8 +180,8 @@ function Check-Launcher {
         Write-Pass "ao launcher resolves to $($resolved.Source)"
         return
     }
-    if ($ScriptLayout -eq 'source-checkout' -and $Fix -and (Get-Command npm -ErrorAction SilentlyContinue) -and (Test-Path (Join-Path $RepoRoot 'packages/ao'))) {
-        Push-Location (Join-Path $RepoRoot 'packages/ao')
+    if ($ScriptLayout -eq 'source-checkout' -and $Fix -and (Get-Command npm -ErrorAction SilentlyContinue) -and (Test-Path (Join-Path $RepoRoot 'packages/athene'))) {
+        Push-Location (Join-Path $RepoRoot 'packages/athene')
         try {
             $null = & npm link --force 2>&1
             if ($LASTEXITCODE -eq 0 -and (Get-Command 'athene' -ErrorAction SilentlyContinue)) {
@@ -196,7 +196,7 @@ function Check-Launcher {
         Write-Warn2 "ao launcher is not in PATH. Fix: reinstall with npm install -g @made-by-moonlight/athene@latest"
         return
     }
-    Write-Warn2 "ao launcher is not in PATH. Fix: cd $RepoRoot; pwsh scripts/setup.ps1 (or run npm link --force in packages/ao)"
+    Write-Warn2 "ao launcher is not in PATH. Fix: cd $RepoRoot; pwsh scripts/setup.ps1 (or run npm link --force in packages/athene)"
 }
 
 function Check-Tmux {
@@ -227,8 +227,8 @@ function Check-InstallLayout {
         $checks = @(
             @{ Path = 'package.json';                    Label = 'CLI package metadata is present' }
             @{ Path = 'dist/index.js';                   Label = 'packaged CLI entrypoint exists' }
-            @{ Path = 'dist/assets/scripts/ao-doctor.ps1'; Label = 'bundled doctor script is available' }
-            @{ Path = 'dist/assets/scripts/ao-update.ps1'; Label = 'bundled update script is available' }
+            @{ Path = 'dist/assets/scripts/athene-doctor.ps1'; Label = 'bundled doctor script is available' }
+            @{ Path = 'dist/assets/scripts/athene-update.ps1'; Label = 'bundled update script is available' }
         )
         foreach ($c in $checks) {
             $full = Join-Path $RepoRoot $c.Path
@@ -268,7 +268,7 @@ function Check-RuntimeSanity {
         }
         return
     }
-    $entry = Join-Path $RepoRoot 'packages/ao/bin/athene.js'
+    $entry = Join-Path $RepoRoot 'packages/athene/bin/athene.js'
     if (-not (Test-Path $entry)) {
         Write-Fail "launcher entrypoint is missing. Fix: reinstall from a clean checkout"
         return

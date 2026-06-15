@@ -14,7 +14,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const scriptPath = join(packageRoot, "src", "assets", "scripts", "ao-update.sh");
+const scriptPath = join(packageRoot, "src", "assets", "scripts", "athene-update.sh");
 
 function writeExecutable(path: string, content: string): void {
   writeFileSync(path, content);
@@ -25,7 +25,7 @@ function createFakeBinary(binDir: string, name: string, body: string): void {
   writeExecutable(join(binDir, name), `#!/bin/bash\nset -e\n${body}\n`);
 }
 
-describe("ao-update.sh", () => {
+describe("athene-update.sh", () => {
   it("falls back to origin when no upstream remote exists", () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "ao-update-script-"));
     const fakeRepo = join(tempRoot, "repo");

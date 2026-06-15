@@ -44,7 +44,7 @@ importers:
         specifier: ^8.55.0
         version: 8.58.1(eslint@10.2.0(jiti@2.6.1))(typescript@5.9.3)
 
-  packages/ao:
+  packages/athene:
     dependencies:
       '@made-by-moonlight/cli':
         specifier: workspace:*

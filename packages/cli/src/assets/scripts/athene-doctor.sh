@@ -222,20 +222,20 @@ check_launcher() {
     warn "ao launcher resolves to $ao_path, but its target is missing or not executable"
   fi
 
-  if [ "$SCRIPT_LAYOUT" = "source-checkout" ] && [ "$FIX_MODE" = true ] && command -v npm >/dev/null 2>&1 && [ -d "$REPO_ROOT/packages/ao" ]; then
-    if (cd "$REPO_ROOT/packages/ao" && npm link --force >/dev/null 2>&1) && command -v athene >/dev/null 2>&1; then
+  if [ "$SCRIPT_LAYOUT" = "source-checkout" ] && [ "$FIX_MODE" = true ] && command -v npm >/dev/null 2>&1 && [ -d "$REPO_ROOT/packages/athene" ]; then
+    if (cd "$REPO_ROOT/packages/athene" && npm link --force >/dev/null 2>&1) && command -v athene >/dev/null 2>&1; then
       fixed "ao launcher refreshed with npm link --force"
       return
     fi
     if [ -t 0 ]; then
       printf '  Launcher refresh failed. Retrying with sudo...\n'
-      if (cd "$REPO_ROOT/packages/ao" && sudo npm link --force >/dev/null 2>&1) && command -v athene >/dev/null 2>&1; then
+      if (cd "$REPO_ROOT/packages/athene" && sudo npm link --force >/dev/null 2>&1) && command -v athene >/dev/null 2>&1; then
         fixed "ao launcher refreshed with sudo npm link --force"
         return
       fi
       printf 'ERROR: sudo npm link --force failed. Inspect npm output above.\n' >&2
     fi
-    warn "ao launcher refresh failed. Fix: cd $REPO_ROOT/packages/ao && sudo npm link --force"
+    warn "ao launcher refresh failed. Fix: cd $REPO_ROOT/packages/athene && sudo npm link --force"
     return
   fi
 
@@ -285,13 +285,13 @@ check_install_layout() {
       fail "packaged CLI entrypoint is missing. Fix: reinstall @made-by-moonlight/athene"
     fi
 
-    if [ -f "$REPO_ROOT/dist/assets/scripts/ao-doctor.sh" ]; then
+    if [ -f "$REPO_ROOT/dist/assets/scripts/athene-doctor.sh" ]; then
       pass "bundled doctor script is available"
     else
       fail "bundled doctor script is missing. Fix: reinstall @made-by-moonlight/athene"
     fi
 
-    if [ -f "$REPO_ROOT/dist/assets/scripts/ao-update.sh" ]; then
+    if [ -f "$REPO_ROOT/dist/assets/scripts/athene-update.sh" ]; then
       pass "bundled update script is available"
     else
       fail "bundled update script is missing. Fix: reinstall @made-by-moonlight/athene"
@@ -333,12 +333,12 @@ check_runtime_sanity() {
     return
   fi
 
-  if [ ! -f "$REPO_ROOT/packages/ao/bin/athene.js" ]; then
+  if [ ! -f "$REPO_ROOT/packages/athene/bin/athene.js" ]; then
     fail "launcher entrypoint is missing. Fix: reinstall from a clean checkout"
     return
   fi
 
-  if node "$REPO_ROOT/packages/ao/bin/athene.js" --version >/dev/null 2>&1; then
+  if node "$REPO_ROOT/packages/athene/bin/athene.js" --version >/dev/null 2>&1; then
     pass "launcher runtime sanity check passed (athene --version)"
   else
     fail "launcher runtime sanity check failed. Fix: run pnpm build and refresh the launcher"
@@ -420,7 +420,7 @@ const repoRoot = process.argv[2];
 
 function resolvePackageJson(fromDir) {
   try {
-    return createRequire(path.join(fromDir, "ao-doctor.js")).resolve("node-pty/package.json");
+    return createRequire(path.join(fromDir, "athene-doctor.js")).resolve("node-pty/package.json");
   } catch {
     return null;
   }

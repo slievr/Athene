@@ -114,7 +114,7 @@ describe("athene update — activity events", () => {
     Object.defineProperty(process.stdout, "isTTY", { value: origStdoutTTY, configurable: true });
   });
 
-  it("emits cli.update_failed when ao-update.sh exits non-zero (git path)", async () => {
+  it("emits cli.update_failed when athene-update.sh exits non-zero (git path)", async () => {
     mockDetectInstallMethod.mockReturnValue("git");
     mockRunRepoScript.mockResolvedValue(2);
 
@@ -135,9 +135,9 @@ describe("athene update — activity events", () => {
     );
   });
 
-  it("emits cli.update_failed when ao-update.sh script is missing (git path)", async () => {
+  it("emits cli.update_failed when athene-update.sh script is missing (git path)", async () => {
     mockDetectInstallMethod.mockReturnValue("git");
-    mockRunRepoScript.mockRejectedValue(new Error("Script not found: ao-update.sh"));
+    mockRunRepoScript.mockRejectedValue(new Error("Script not found: athene-update.sh"));
 
     await expect(program.parseAsync(["node", "ao", "update"])).rejects.toThrow("process.exit(1)");
 

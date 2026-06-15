@@ -54,24 +54,24 @@ aliases (`packages/web/vitest.config.ts`, `packages/core/vitest.config.ts`),
 
 Package **directory** names already lack the `ao-` prefix (`packages/cli`, `packages/core`,
 `packages/plugins/tracker-linear`, …) so they need no rename. Optionally rename
-`packages/ao/` → `packages/athene/` for clarity (low value; keep to reduce churn).
+`packages/athene/` → `packages/athene/` for clarity (low value; keep to reduce churn).
 
 ### 2. Split scope/leaf references (NOT caught by step 1 — must be done explicitly)
 These pass scope and leaf as separate args or hardcode a leaf string:
 - `packages/core/src/plugin-registry.ts` — `BUILTIN_PLUGINS` (25 entries `pkg: "@aoagents/ao-plugin-*"` → `"@made-by-moonlight/plugin-*"`). Caught by step 1 (full strings), but verify.
 - `packages/cli/src/lib/preflight.ts:37` — `findPackageUp(webDir, "@aoagents", "ao-core")` → `("@slievr", "core")`.
-- `packages/cli/src/assets/scripts/ao-doctor.sh:450-484` — `findPackageUp/resolveNodeModulesPackage(repoRoot, "@aoagents", "ao-core"|"ao-web")` → `"@slievr","core"|"web"`.
+- `packages/cli/src/assets/scripts/athene-doctor.sh:450-484` — `findPackageUp/resolveNodeModulesPackage(repoRoot, "@aoagents", "ao-core"|"ao-web")` → `"@slievr","core"|"web"`.
 - `packages/core/src/daemon-children.ts:417` — returns literal `"ao-web"` → `"web"`.
 - `packages/core/src/update-cache.ts` — `getInstalledAoVersion()` candidates `@aoagents/ao/package.json`, `@aoagents/ao-cli`, `@aoagents/ao-web` → `@made-by-moonlight/athene`, `@made-by-moonlight/cli`, `@made-by-moonlight/web`. Keep cache path `~/.cache/ao/` (compat).
-- `packages/ao/bin/postinstall.js` — `findPackageUp(__dirname, "@aoagents", "ao-web"|"ao-cli")` and better-sqlite3/`@made-by-moonlight/core` lookups → update scope + leaf.
+- `packages/athene/bin/postinstall.js` — `findPackageUp(__dirname, "@aoagents", "ao-web"|"ao-cli")` and better-sqlite3/`@made-by-moonlight/core` lookups → update scope + leaf.
 - `scripts/rebuild-node-pty.js` — `@aoagents/ao-web`, `@aoagents/ao-cli` lookups → `@made-by-moonlight/web`, `@made-by-moonlight/cli`.
 
 ### 3. External-plugin name regex
 - `packages/core/src/config.ts:427` regex `^ao-plugin-(?:runtime|agent|workspace|tracker|scm|notifier|terminal)-(.+)$` derives a plugin's short name from its package name. Built-ins are unaffected (hardcoded list), but to support future `@made-by-moonlight/plugin-*` plugins, broaden to `^(?:ao-)?plugin-(?:runtime|agent|workspace|tracker|scm|notifier|terminal)-(.+)$` (accept both old and new prefixes). Update the adjacent comments/examples.
 
 ### 4. Binary rename `ao` → `athene`
-- `bin` field in `packages/ao/package.json` and `packages/cli/package.json`: `"ao"` → `"athene"`.
-- Rename shim `packages/ao/bin/ao.js` → `bin/athene.js` (content: `import "@made-by-moonlight/cli"`); update the `bin` path.
+- `bin` field in `packages/athene/package.json` and `packages/cli/package.json`: `"ao"` → `"athene"`.
+- Rename shim `packages/athene/bin/ao.js` → `bin/athene.js` (content: `import "@made-by-moonlight/cli"`); update the `bin` path.
 - `completions/_ao` → `completions/_athene`; update `#compdef ao` → `#compdef athene` and `ao completion zsh` → `athene completion zsh`.
 - **Embedded agent command strings (~48):** replace `ao <subcommand>` → `athene <subcommand>`
   in `packages/core/src/prompt-builder.ts` (primary, ~18) and across core
@@ -85,7 +85,7 @@ These pass scope and leaf as separate args or hardcode a leaf string:
 
 ### 5. CI + publish workflow (GitHub Actions in the fork)
 - Update scope filters in `.github/workflows/*.yml` (`ci.yml`, `release.yml`, `canary.yml`):
-  `@aoagents/ao-web` → `@made-by-moonlight/web`; version-source path `packages/ao/package.json` stays
+  `@aoagents/ao-web` → `@made-by-moonlight/web`; version-source path `packages/athene/package.json` stays
   (dir unchanged) but the package name it reads is now `@made-by-moonlight/athene`.
 - Replace upstream's two-stage private-server publish with a self-contained release job:
   use `changesets/action@v1` with `publish: pnpm release` (root `release` script already does
@@ -103,8 +103,8 @@ These pass scope and leaf as separate args or hardcode a leaf string:
 - `packages/core/src/plugin-registry.ts`, `config.ts` (regex), `update-cache.ts`,
   `daemon-children.ts`, `prompt-builder.ts`.
 - `packages/cli/src/lib/preflight.ts`, `packages/cli/src/commands/update.ts`,
-  `packages/cli/src/assets/scripts/ao-doctor.sh`.
-- `packages/ao/package.json` + `bin/athene.js` + `bin/postinstall.js`; `packages/cli/package.json`.
+  `packages/cli/src/assets/scripts/athene-doctor.sh`.
+- `packages/athene/package.json` + `bin/athene.js` + `bin/postinstall.js`; `packages/cli/package.json`.
 - `scripts/rebuild-node-pty.js`, `completions/_athene`, `.github/workflows/*.yml`.
 
 ## Verification (end-to-end)

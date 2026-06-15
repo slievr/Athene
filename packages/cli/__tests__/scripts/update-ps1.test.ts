@@ -7,14 +7,14 @@ import { fileURLToPath } from "node:url";
 // because spawnSync("bash", ...) requires Git Bash and the bash-specific scenarios
 // don't apply to the PS1 port. These tests run only on Windows and exercise the
 // PS1 script's argparse + help text — the high-frequency surface that breaks
-// when someone touches ao-update.ps1.
+// when someone touches athene-update.ps1.
 //
 // Full happy-path coverage (fake git/pnpm/npm binaries via .cmd shims) deserves
 // its own diff; this file establishes the baseline so any developer who breaks
 // the PS1 script's argparse or syntax is caught immediately.
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const scriptPath = join(packageRoot, "src", "assets", "scripts", "ao-update.ps1");
+const scriptPath = join(packageRoot, "src", "assets", "scripts", "athene-update.ps1");
 
 function runPwsh(args: string[], extraEnv: Record<string, string> = {}) {
   return spawnSync(
@@ -27,7 +27,7 @@ function runPwsh(args: string[], extraEnv: Record<string, string> = {}) {
   );
 }
 
-describe.runIf(process.platform === "win32")("ao-update.ps1", () => {
+describe.runIf(process.platform === "win32")("athene-update.ps1", () => {
   it("prints usage and exits 0 for --help", () => {
     const result = runPwsh(["--help"]);
     expect(result.status).toBe(0);

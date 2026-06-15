@@ -1,9 +1,9 @@
-﻿# PowerShell port of ao-update.sh — Windows-native source-checkout updater for AO.
+﻿# PowerShell port of athene-update.sh — Windows-native source-checkout updater for AO.
 # Invoked by `athene update` on Windows via runRepoScript() when install method is 'git'.
 
 $ErrorActionPreference = 'Stop'
 
-# Manual arg parsing — matches ao-update.sh's `--skip-smoke` / `--smoke-only` /
+# Manual arg parsing — matches athene-update.sh's `--skip-smoke` / `--smoke-only` /
 # `-h` / `--help` flags rather than PowerShell's `-SkipSmoke` convention, so the
 # calling contract is identical on Linux/macOS/Windows.
 $SkipSmoke = $false
@@ -44,7 +44,7 @@ if ($SkipSmoke -and $SmokeOnly) {
 $TargetBranch = if ($env:AO_UPDATE_BRANCH) { $env:AO_UPDATE_BRANCH } else { 'main' }
 
 function Test-AoRepoRoot([string]$path) {
-    return (Test-Path (Join-Path $path 'packages/ao/bin/athene.js')) -and
+    return (Test-Path (Join-Path $path 'packages/athene/bin/athene.js')) -and
            (Test-Path (Join-Path $path 'packages/cli'))
 }
 
@@ -139,7 +139,7 @@ function Sync-OriginWithUpstream {
 function Run-SmokeTests {
     Write-Host ""
     Write-Host "Running smoke tests..."
-    $aoBin = Join-Path $RepoRoot 'packages/ao/bin/athene.js'
+    $aoBin = Join-Path $RepoRoot 'packages/athene/bin/athene.js'
     Run-Cmd node $aoBin --version
     Run-Cmd node $aoBin doctor --help
     Run-Cmd node $aoBin update --help
@@ -202,7 +202,7 @@ if (-not $SmokeOnly) {
 
         Write-Host ""
         Write-Host "Refreshing ao launcher..."
-        Push-Location (Join-Path $RepoRoot 'packages/ao')
+        Push-Location (Join-Path $RepoRoot 'packages/athene')
         try {
             & npm link --force
             if ($LASTEXITCODE -ne 0) {

@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 // runtime on a user's machine.
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const scriptPath = join(packageRoot, "src", "assets", "scripts", "ao-doctor.ps1");
+const scriptPath = join(packageRoot, "src", "assets", "scripts", "athene-doctor.ps1");
 
 function runPwsh(args: string[], extraEnv: Record<string, string> = {}) {
   return spawnSync(
@@ -24,7 +24,7 @@ function runPwsh(args: string[], extraEnv: Record<string, string> = {}) {
   );
 }
 
-describe.runIf(process.platform === "win32")("ao-doctor.ps1", () => {
+describe.runIf(process.platform === "win32")("athene-doctor.ps1", () => {
   it("prints usage and exits 0 for --help", () => {
     const result = runPwsh(["--help"]);
     expect(result.status).toBe(0);

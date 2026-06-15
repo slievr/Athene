@@ -70,7 +70,7 @@ and add `ao` to the `plugins=(...)` list in `~/.zshrc`.
 
 `athene doctor` checks PATH and launcher resolution, required binaries, configured plugin resolution, terminal-runtime health (tmux on Unix; PowerShell / `runtime-process` on Windows), GitHub CLI health, config support directories, stale AO temp files, and core build/runtime sanity. Runs and is supported on macOS, Linux, and Windows.
 
-`athene update` fast-forwards the local install on `main`, reinstalls dependencies, clean-rebuilds core packages, refreshes the launcher, and runs smoke tests. Works on macOS, Linux, and Windows (Windows uses the bundled `ao-update.ps1` script automatically). Use `athene update --skip-smoke` to stop after rebuild, or `athene update --smoke-only` to rerun just the smoke checks.
+`athene update` fast-forwards the local install on `main`, reinstalls dependencies, clean-rebuilds core packages, refreshes the launcher, and runs smoke tests. Works on macOS, Linux, and Windows (Windows uses the bundled `athene-update.ps1` script automatically). Use `athene update --skip-smoke` to stop after rebuild, or `athene update --smoke-only` to rerun just the smoke checks.
 
 ## Multi-Project Rollout
 

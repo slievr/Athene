@@ -425,7 +425,7 @@ git switch main
 athene update
 ```
 
-`athene update` is intentionally conservative: it requires a clean working tree on `main`, fast-forwards from `origin/main`, reinstalls dependencies, clean-rebuilds the critical core/CLI/web packages, refreshes the launcher with `npm link`, and runs CLI smoke tests. Works on macOS, Linux, and Windows (Windows uses the bundled `ao-update.ps1` script automatically). Use `athene update --skip-smoke` to stop after rebuild, or `athene update --smoke-only` to rerun just the smoke checks.
+`athene update` is intentionally conservative: it requires a clean working tree on `main`, fast-forwards from `origin/main`, reinstalls dependencies, clean-rebuilds the critical core/CLI/web packages, refreshes the launcher with `npm link`, and runs CLI smoke tests. Works on macOS, Linux, and Windows (Windows uses the bundled `athene-update.ps1` script automatically). Use `athene update --skip-smoke` to stop after rebuild, or `athene update --smoke-only` to rerun just the smoke checks.
 
 ### "No agent-orchestrator.yaml found"
 
