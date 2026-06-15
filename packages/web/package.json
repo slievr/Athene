@@ -17,8 +17,7 @@
     "node": ">=20.18.3"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "files": [
     ".next/server",

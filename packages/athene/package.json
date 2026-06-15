@@ -45,7 +45,6 @@
     "@made-by-moonlight/athene-cli": "workspace:*"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   }
 }

@@ -105,7 +105,6 @@
     "vitest": "^4.0.18"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   }
 }
