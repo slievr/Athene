@@ -31,7 +31,7 @@ function createFakeBinary(binDir: string, name: string, body: string): void {
 function createHealthyRepo(tempRoot: string): string {
   const fakeRepo = join(tempRoot, "repo");
   mkdirSync(join(fakeRepo, "node_modules"), { recursive: true });
-  mkdirSync(join(fakeRepo, "packages", "ao", "bin"), { recursive: true });
+  mkdirSync(join(fakeRepo, "packages", "athene", "bin"), { recursive: true });
   mkdirSync(join(fakeRepo, "packages", "core", "dist"), { recursive: true });
   mkdirSync(join(fakeRepo, "packages", "cli", "dist"), { recursive: true });
   mkdirSync(join(fakeRepo, "packages", "web"), { recursive: true });
@@ -45,10 +45,10 @@ function createHealthyRepo(tempRoot: string): string {
   );
   writeFileSync(join(fakeRepo, "packages", "cli", "dist", "index.js"), "export {};\n");
   writeFileSync(
-    join(fakeRepo, "packages", "ao", "bin", "athene.js"),
+    join(fakeRepo, "packages", "athene", "bin", "athene.js"),
     '#!/usr/bin/env node\nconsole.log("0.1.0");\n',
   );
-  chmodSync(join(fakeRepo, "packages", "ao", "bin", "athene.js"), 0o755);
+  chmodSync(join(fakeRepo, "packages", "athene", "bin", "athene.js"), 0o755);
   return fakeRepo;
 }
 
@@ -96,7 +96,7 @@ function createHealthyPath(binDir: string): void {
     "gh",
     'if [ "$1" = "--version" ]; then\n  printf "gh version 2.50.0\\n"\n  exit 0\nfi\nif [ "$1" = "auth" ] && [ "$2" = "status" ]; then\n  exit 0\nfi\nexit 0',
   );
-  createFakeBinary(binDir, "ao", 'printf "/fake/ao\\n" >/dev/null\nexit 0');
+  createFakeBinary(binDir, "athene", 'printf "/fake/athene\\n" >/dev/null\nexit 0');
 }
 
 // Skipped on Windows: bash is required to execute the doctor script and is not
@@ -144,7 +144,7 @@ describe.skipIf(process.platform === "win32")("athene-doctor.sh", () => {
     mkdirSync(binDir, { recursive: true });
     createHealthyPath(binDir);
     createFakeBinary(binDir, "grep", 'exec /usr/bin/grep --color=always "$@"');
-    rmSync(join(binDir, "ao"), { force: true });
+    rmSync(join(binDir, "athene"), { force: true });
 
     const npmLog = join(tempRoot, "npm.log");
     createFakeBinary(
@@ -203,16 +203,16 @@ describe.skipIf(process.platform === "win32")("athene-doctor.sh", () => {
     expect(commentedWorktreeDirExists).toBe(false);
   });
 
-  it("repairs a dangling ao launcher shim in fix mode", () => {
+  it("repairs a dangling athene launcher shim in fix mode", () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "ao-doctor-dangling-launcher-"));
     const fakeRepo = createHealthyRepo(tempRoot);
     const binDir = join(tempRoot, "bin");
     mkdirSync(binDir, { recursive: true });
     createHealthyPath(binDir);
 
-    const aoPath = join(binDir, "ao");
-    rmSync(aoPath, { force: true });
-    symlinkSync(join(tempRoot, "deleted-checkout", "dist", "index.js"), aoPath);
+    const athenePath = join(binDir, "athene");
+    rmSync(athenePath, { force: true });
+    symlinkSync(join(tempRoot, "deleted-checkout", "dist", "index.js"), athenePath);
 
     const npmLog = join(tempRoot, "npm.log");
     createFakeBinary(
@@ -220,9 +220,9 @@ describe.skipIf(process.platform === "win32")("athene-doctor.sh", () => {
       "npm",
       `printf '%s\n' "$*" >> ${JSON.stringify(npmLog)}
 if [ "$1" = "link" ]; then
-  rm -f ${JSON.stringify(aoPath)}
-  printf '#!/bin/bash\nexit 0\n' > ${JSON.stringify(aoPath)}
-  chmod +x ${JSON.stringify(aoPath)}
+  rm -f ${JSON.stringify(athenePath)}
+  printf '#!/bin/bash\nexit 0\n' > ${JSON.stringify(athenePath)}
+  chmod +x ${JSON.stringify(athenePath)}
 fi
 if [ "$1" = "bin" ]; then
   printf "/tmp/npm-bin\n"
@@ -251,7 +251,7 @@ exit 0`,
     });
 
     const npmCommands = existsSync(npmLog) ? readFileSync(npmLog, "utf8") : "";
-    const repairedLauncherIsExecutable = existsSync(aoPath);
+    const repairedLauncherIsExecutable = existsSync(athenePath);
     rmSync(tempRoot, { recursive: true, force: true });
 
     expect(result.status).toBe(0);
