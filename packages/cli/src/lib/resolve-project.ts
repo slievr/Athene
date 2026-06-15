@@ -276,7 +276,7 @@ async function fromUrl(arg: string, deps: ResolveDeps, opts: ResolveOptions): Pr
     return fromUrlIntoGlobal(arg, deps);
   }
 
-  console.log(chalk.bold.cyan("\n  Agent Orchestrator — Quick Start\n"));
+  console.log(chalk.bold.cyan("\n  Athene — Quick Start\n"));
   const spinner = ora();
 
   spinner.start("Parsing repository URL");

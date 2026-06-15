@@ -498,7 +498,7 @@ async function cloneRepo(parsed: ParsedRepoUrl, targetDir: string, cwd: string):
  * Returns the loaded config.
  */
 export async function autoCreateConfig(workingDir: string): Promise<OrchestratorConfig> {
-  console.log(chalk.bold.cyan("\n  Agent Orchestrator — First Run Setup\n"));
+  console.log(chalk.bold.cyan("\n  Athene — First Run Setup\n"));
   console.log(chalk.dim("  Detecting project and generating config...\n"));
 
   const env = await detectEnvironment(workingDir);

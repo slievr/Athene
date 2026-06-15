@@ -18,7 +18,7 @@ while [ $# -gt 0 ]; do
       cat <<'EOF'
 Usage: athene update [--skip-smoke] [--smoke-only]
 
-Fast-forwards the local Agent Orchestrator install repo to main, installs deps,
+Fast-forwards the local Athene install repo to main, installs deps,
 clean-rebuilds all workspace packages, refreshes the athene launcher, and runs smoke tests.
 
 Options:
@@ -69,7 +69,7 @@ resolve_repo_root() {
 }
 
 if ! REPO_ROOT="$(resolve_repo_root)"; then
-  printf 'Unable to find Agent Orchestrator repo root. Fix: run via athene update or set AO_REPO_ROOT.\n' >&2
+  printf 'Unable to find Athene repo root. Fix: run via athene update or set AO_REPO_ROOT.\n' >&2
   exit 1
 fi
 
@@ -184,7 +184,7 @@ ensure_on_target_branch() {
   fi
 }
 
-printf 'Agent Orchestrator Update\n\n'
+printf 'Athene Update\n\n'
 
 require_command node "install Node.js 20+"
 
@@ -198,7 +198,7 @@ if [ "$SMOKE_ONLY" = false ]; then
   require_command npm "install npm with Node.js"
 
   if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    printf 'The update command must run inside the Agent Orchestrator git checkout.\n' >&2
+    printf 'The update command must run inside the Athene git checkout.\n' >&2
     exit 1
   fi
 

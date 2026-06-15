@@ -276,7 +276,7 @@ describe("spawn command", () => {
     // but the issue belongs to a different project.
     (mockConfigRef.current as Record<string, unknown>).projects = {
       "agent-orchestrator": {
-        name: "Agent Orchestrator",
+        name: "Athene",
         repo: "org/agent-orchestrator",
         path: join(tmpDir, "agent-orchestrator"),
         defaultBranch: "main",
@@ -330,7 +330,7 @@ describe("spawn command", () => {
   it("routes via sessionPrefix when that matches instead of project id", async () => {
     (mockConfigRef.current as Record<string, unknown>).projects = {
       "agent-orchestrator": {
-        name: "Agent Orchestrator",
+        name: "Athene",
         repo: "org/agent-orchestrator",
         path: join(tmpDir, "agent-orchestrator"),
         defaultBranch: "main",
@@ -898,7 +898,7 @@ describe("batch-spawn command", () => {
   it("groups cross-project issues and routes each to the correct project", async () => {
     (mockConfigRef.current as Record<string, unknown>).projects = {
       "agent-orchestrator": {
-        name: "Agent Orchestrator",
+        name: "Athene",
         repo: "org/agent-orchestrator",
         path: join(tmpDir, "agent-orchestrator"),
         defaultBranch: "main",
@@ -952,7 +952,7 @@ describe("batch-spawn command", () => {
   it("skips a prefixed issue that already has an active session in the target project", async () => {
     (mockConfigRef.current as Record<string, unknown>).projects = {
       "agent-orchestrator": {
-        name: "Agent Orchestrator",
+        name: "Athene",
         repo: "org/agent-orchestrator",
         path: join(tmpDir, "agent-orchestrator"),
         defaultBranch: "main",

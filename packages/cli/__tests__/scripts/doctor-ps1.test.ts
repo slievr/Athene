@@ -61,7 +61,7 @@ describe.runIf(process.platform === "win32")("ao-doctor.ps1", () => {
         AO_DOCTOR_TMP_ROOT: tempRoot,
       });
       expect([0, 1]).toContain(result.status);
-      expect(result.stdout).toContain("Agent Orchestrator Doctor");
+      expect(result.stdout).toContain("Athene Doctor");
       expect(result.stdout).toMatch(/Results: \d+ PASS, \d+ WARN, \d+ FAIL, \d+ FIXED/);
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });

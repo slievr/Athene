@@ -7,7 +7,7 @@
  *
  * No-op on non-macOS platforms.
  *
- * @see https://github.com/ComposioHQ/agent-orchestrator/issues/1072
+ * @see https://github.com/slievr/Athene/issues/1072
  */
 
 import { spawn, type ChildProcess } from "node:child_process";

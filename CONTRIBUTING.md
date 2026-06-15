@@ -1,4 +1,4 @@
-# Contributing to Agent Orchestrator
+# Contributing to Athene
 
 Thanks for your interest in contributing. This guide covers how to report bugs, submit PRs, and build new plugins.
 
@@ -13,7 +13,7 @@ Thanks for your interest in contributing. This guide covers how to report bugs, 
 
 ## Reporting Bugs
 
-Open an issue at [github.com/ComposioHQ/agent-orchestrator/issues](https://github.com/ComposioHQ/agent-orchestrator/issues).
+Open an issue at [github.com/slievr/Athene/issues](https://github.com/slievr/Athene/issues).
 
 Include:
 
@@ -33,7 +33,7 @@ Include:
 - **Windows**: tmux is **not** required. The default runtime on Windows is `process` (ConPTY via `node-pty`), and PowerShell is the default shell. See [docs/CROSS_PLATFORM.md](docs/CROSS_PLATFORM.md) for what's different on Windows when contributing.
 
 ```bash
-git clone https://github.com/ComposioHQ/agent-orchestrator.git
+git clone https://github.com/slievr/Athene.git
 cd agent-orchestrator
 pnpm install
 pnpm build

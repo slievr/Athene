@@ -6,7 +6,7 @@
 
 ## What Changed
 
-Agent Orchestrator has migrated from flat, configurable directories (`dataDir` and `worktreeDir`) to a **hash-based project isolation** architecture. This change eliminates configuration overhead and prevents collisions when running multiple orchestrator instances from different directories.
+Athene has migrated from flat, configurable directories (`dataDir` and `worktreeDir`) to a **hash-based project isolation** architecture. This change eliminates configuration overhead and prevents collisions when running multiple orchestrator instances from different directories.
 
 ### Before (Flat Architecture)
 

@@ -1,6 +1,6 @@
 # AO CLI Reference
 
-The `ao` CLI is the control interface for Agent Orchestrator. Most commands are used by the **orchestrator agent itself** to manage sessions, not by humans directly. Humans typically only need `athene start` and the web dashboard.
+The `ao` CLI is the control interface for Athene. Most commands are used by the **orchestrator agent itself** to manage sessions, not by humans directly. Humans typically only need `athene start` and the web dashboard.
 
 ## Commands humans use
 

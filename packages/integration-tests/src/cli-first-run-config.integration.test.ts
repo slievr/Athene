@@ -44,7 +44,7 @@ describe.skipIf(!canRun)("CLI first-run config generation (integration)", () => 
     await execFileAsync("git", ["branch", "-M", "main"], { cwd: repoPath });
     await execFileAsync(
       "git",
-      ["remote", "add", "origin", "https://github.com/ComposioHQ/ao-first-run-fixture.git"],
+      ["remote", "add", "origin", "https://github.com/slievr/ao-first-run-fixture.git"],
       { cwd: repoPath },
     );
     writeFileSync(join(repoPath, "README.md"), "# first-run integration\n");

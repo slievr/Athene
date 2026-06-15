@@ -462,7 +462,7 @@ export function registerStatus(program: Command): void {
           : allSessions.filter((s) => !isTerminalSession(s));
 
         if (!opts.json) {
-          console.log(banner("AGENT ORCHESTRATOR STATUS"));
+          console.log(banner("ATHENE STATUS"));
           if (opts.watch) {
             console.log(
               chalk.dim(
@@ -686,7 +686,7 @@ async function showFallbackStatus(): Promise<void> {
     return;
   }
 
-  console.log(banner("AGENT ORCHESTRATOR STATUS"));
+  console.log(banner("ATHENE STATUS"));
   console.log();
   console.log(
     chalk.dim(`  ${allTmux.length} tmux session${allTmux.length !== 1 ? "s" : ""} found\n`),

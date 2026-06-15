@@ -79,7 +79,7 @@ interface NotifyTemplate {
   data: NotificationDataV3;
 }
 
-const DEMO_PR_URL = "https://github.com/ComposioHQ/agent-orchestrator/pull/1579";
+const DEMO_PR_URL = "https://github.com/slievr/Athene/pull/1579";
 
 const DEMO_PR_CONTEXT: NotificationEventContext = {
   pr: {
@@ -88,7 +88,7 @@ const DEMO_PR_CONTEXT: NotificationEventContext = {
     title: "Normalize AO notifier payloads",
     branch: "ao/demo-notifier-harness",
     baseBranch: "main",
-    owner: "ComposioHQ",
+    owner: "slievr",
     repo: "agent-orchestrator",
     isDraft: false,
   },
@@ -99,7 +99,7 @@ const DEMO_PR_CONTEXT: NotificationEventContext = {
       title: "Normalize AO notifier payloads",
       branch: "ao/demo-notifier-harness",
       baseBranch: "main",
-      owner: "ComposioHQ",
+      owner: "slievr",
       repo: "agent-orchestrator",
       isDraft: false,
     },
@@ -319,7 +319,7 @@ export const NOTIFY_TEST_ACTIONS: NotifyAction[] = [
   },
   {
     label: "View PR",
-    url: "https://github.com/ComposioHQ/agent-orchestrator/pull/1579",
+    url: "https://github.com/slievr/Athene/pull/1579",
   },
   {
     label: "Acknowledge",

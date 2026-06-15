@@ -1,12 +1,12 @@
 #!/bin/bash
-# Agent Orchestrator setup script
+# Athene setup script
 # Validates prerequisites, installs dependencies, builds packages, and links the CLI globally
 
 set -e  # Exit on error
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-echo "Agent Orchestrator Setup"
+echo "Athene Setup"
 echo ""
 
 # ─── Hard requirements (exit 1 if missing) ────────────────────────────────────

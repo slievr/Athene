@@ -1,7 +1,7 @@
 {
   "name": "@slievr/cli",
   "version": "0.9.2",
-  "description": "CLI for agent-orchestrator — the `athene` command",
+  "description": "CLI for Athene — the `athene` command",
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -14,12 +14,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ComposioHQ/agent-orchestrator.git",
+    "url": "https://github.com/slievr/Athene.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://github.com/ComposioHQ/agent-orchestrator",
+  "homepage": "https://github.com/slievr/Athene",
   "bugs": {
-    "url": "https://github.com/ComposioHQ/agent-orchestrator/issues"
+    "url": "https://github.com/slievr/Athene/issues"
   },
   "engines": {
     "node": ">=20.18.3"

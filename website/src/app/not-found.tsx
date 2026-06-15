@@ -9,7 +9,7 @@ export default function NotFound() {
           className="mb-14 inline-flex w-fit items-center gap-2 text-sm font-semibold text-white no-underline"
         >
           <img src="/ao-logo.svg" alt="" aria-hidden="true" width={28} height={28} className="h-7 w-7" />
-          Agent Orchestrator
+          Athene
         </a>
 
         <div className="grid gap-10 md:grid-cols-[1fr_360px] md:items-end">

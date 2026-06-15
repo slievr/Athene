@@ -18,7 +18,7 @@ import type { ProjectConfig, SessionId } from "./types.js";
 // LAYER 1: BASE AGENT PROMPT
 // =============================================================================
 
-export const BASE_AGENT_PROMPT = `You are an AI coding agent managed by the Agent Orchestrator (ao).
+export const BASE_AGENT_PROMPT = `You are an AI coding agent managed by the Athene (ao).
 
 ## Session Lifecycle
 - You are running inside a managed session. Focus on the assigned task.
@@ -57,7 +57,7 @@ Rules:
 - Respond to every review comment, even if just to acknowledge it.`;
 
 /** Trimmed base prompt for projects without a configured repo/remote. */
-export const BASE_AGENT_PROMPT_NO_REPO = `You are an AI coding agent managed by the Agent Orchestrator (ao).
+export const BASE_AGENT_PROMPT_NO_REPO = `You are an AI coding agent managed by the Athene (ao).
 
 ## Session Lifecycle
 - You are running inside a managed session. Focus on the assigned task.

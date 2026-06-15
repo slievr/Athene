@@ -528,7 +528,7 @@ check_node_pty_spawn_helper() {
   warn "node-pty spawn-helper is not executable at $helper_path (mode 0o$mode). Web dashboard terminals can fail with posix_spawnp failed. Fix: run athene doctor --fix or chmod +x $helper_path. See ao#1770."
 }
 
-printf 'Agent Orchestrator Doctor\n\n'
+printf 'Athene Doctor\n\n'
 
 check_node
 check_git
@@ -549,4 +549,4 @@ if [ "$FAIL_COUNT" -gt 0 ]; then
   exit 1
 fi
 
-printf 'Environment looks healthy enough to run Agent Orchestrator.\n'
+printf 'Environment looks healthy enough to run Athene.\n'

@@ -10,7 +10,7 @@ const terminalLines = [
   { text: "$ athene batch-spawn 42 43 44 45 46", type: "cmd" as const, delay: 0 },
   { text: "", type: "blank" as const, delay: 800 },
   { text: "⟡ Loaded agent-orchestrator.yaml (agent: claude-code, tracker: github)", type: "info" as const, delay: 1000 },
-  { text: "⟡ Resolving 5 issues from ComposioHQ/my-saas-app", type: "info" as const, delay: 1400 },
+  { text: "⟡ Resolving 5 issues from slievr/my-saas-app", type: "info" as const, delay: 1400 },
   { text: "⟡ Creating worktrees in ~/.agent-orchestrator/a1b2c3/worktrees/", type: "info" as const, delay: 1800 },
   { text: "", type: "blank" as const, delay: 2200 },
   { text: "✓ s-001 → #42 Add user auth flow (claude-code)", type: "success" as const, delay: 2400 },
@@ -100,7 +100,7 @@ export function LandingHero({ starsLabel }: LandingHeroProps) {
           <span className="text-[var(--landing-muted)]">One dashboard.</span>
         </h1>
         <p className="landing-fade-rise-d1 text-[var(--landing-muted)] text-[0.9375rem] max-w-[38rem] mt-6 leading-[1.7]">
-          Agent Orchestrator spawns Claude Code, Codex, Cursor, Aider, and OpenCode
+          Athene spawns Claude Code, Codex, Cursor, Aider, and OpenCode
           in isolated git worktrees. Each agent gets its own branch, creates PRs,
           fixes CI, and addresses reviews autonomously.
         </p>
@@ -115,7 +115,7 @@ export function LandingHero({ starsLabel }: LandingHeroProps) {
             Read Docs
           </a>
           <a
-            href="https://github.com/ComposioHQ/agent-orchestrator"
+            href="https://github.com/slievr/Athene"
             target="_blank"
             rel="noopener noreferrer"
             className="liquid-glass-solid rounded-lg px-6 py-3 text-sm no-underline transition-colors"

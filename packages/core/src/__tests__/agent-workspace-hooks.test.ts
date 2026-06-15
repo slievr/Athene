@@ -115,7 +115,7 @@ describe("setupPathWrapperWorkspace (Unix)", () => {
       String(c[0]).includes("AGENTS.md"),
     );
     expect(agentsMdWrites).toHaveLength(1);
-    expect(String(agentsMdWrites[0][1])).toContain("Agent Orchestrator");
+    expect(String(agentsMdWrites[0][1])).toContain("Athene");
   });
 
   it("writes bash wrappers (not .cmd) on Unix", async () => {
@@ -207,7 +207,7 @@ describe("setupPathWrapperWorkspace (Windows)", () => {
       String(c[0]).includes("AGENTS.md"),
     );
     expect(agentsMdWrites).toHaveLength(1);
-    expect(String(agentsMdWrites[0][1])).toContain("Agent Orchestrator");
+    expect(String(agentsMdWrites[0][1])).toContain("Athene");
   });
 
   it("uses semicolon as PATH delimiter on Windows", () => {

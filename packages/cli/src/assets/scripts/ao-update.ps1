@@ -26,7 +26,7 @@ if ($Help) {
     @'
 Usage: athene update [--skip-smoke] [--smoke-only]
 
-Fast-forwards the local Agent Orchestrator install repo to main, installs deps,
+Fast-forwards the local Athene install repo to main, installs deps,
 clean-rebuilds all workspace packages, refreshes the ao launcher, and runs smoke tests.
 
 Options:
@@ -65,7 +65,7 @@ function Resolve-RepoRoot {
     if ($fromScript) { return $fromScript }
     $fromCwd = Find-RepoRootFrom (Get-Location).Path
     if ($fromCwd) { return $fromCwd }
-    Write-Error "Unable to find Agent Orchestrator repo root. Fix: run via athene update or set AO_REPO_ROOT."
+    Write-Error "Unable to find Athene repo root. Fix: run via athene update or set AO_REPO_ROOT."
     exit 1
 }
 
@@ -161,7 +161,7 @@ function Ensure-OnTargetBranch {
     }
 }
 
-Write-Host "Agent Orchestrator Update`n"
+Write-Host "Athene Update`n"
 
 Require-Command 'node' 'install Node.js 20+'
 
@@ -176,7 +176,7 @@ if (-not $SmokeOnly) {
 
     & git rev-parse --is-inside-work-tree *> $null
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "The update command must run inside the Agent Orchestrator git checkout."
+        Write-Error "The update command must run inside the Athene git checkout."
         exit 1
     }
 

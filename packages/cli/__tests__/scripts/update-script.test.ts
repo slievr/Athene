@@ -108,7 +108,7 @@ esac\nexit 0`,
         binDir,
         "git",
         `printf 'git %s\\n' "$*" >> ${JSON.stringify(commandLog)}\ncase "$*" in\n  "remote get-url origin") printf 'https://github.com/yyovil/agent-orchestrator.git\\n' ;;
-  "remote get-url upstream") printf 'https://github.com/ComposioHQ/agent-orchestrator.git\\n' ;;
+  "remote get-url upstream") printf 'https://github.com/slievr/Athene.git\\n' ;;
   "rev-parse --is-inside-work-tree") printf 'true\\n' ;;
   "status --porcelain") ;;
   "branch --show-current") printf 'main\\n' ;;
@@ -154,7 +154,7 @@ esac\nexit 0`,
 
       expect(result.status).toBe(0);
       expect(commands).toContain(
-        "gh repo sync yyovil/agent-orchestrator --source ComposioHQ/agent-orchestrator --branch main",
+        "gh repo sync yyovil/agent-orchestrator --source slievr/Athene --branch main",
       );
       expect(commands).toContain("git fetch upstream main");
       expect(commands).toContain("git pull --ff-only upstream main");

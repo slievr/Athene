@@ -26,11 +26,11 @@ PR #1466 ("Storage V2") is the big refactor: replaces `storageKey`-based flat me
 
 | Role | Branch | Where it lives | What it represents |
 |------|--------|----------------|--------------------|
-| **Base** | `main` | `ComposioHQ/agent-orchestrator` | The merge target. PR diffs against this. |
+| **Base** | `main` | `slievr/Athene` | The merge target. PR diffs against this. |
 | **Head (PR)** | `storage-redesign` | `harshitsinghbhandari/agent-orchestrator` (fork) | The actual PR head — what GitHub shows on PR #1466. All authored commits live here. |
 | **Simulation** | `simulate-pr-1466-merged` | `harshitsinghbhandari/agent-orchestrator` (fork) | What `main` will look like AFTER PR #1466 lands. Used for end-to-end testing of the merged state and for post-merge fixes. Tracks `storage-redesign` via repeated merges + a small number of additional fixes (e.g. `89a51107 fix(cli): add removeProjectFromRunning and targeted stop tests`). |
 
-All three branches live in **Harshit's fork** (`harshitsinghbhandari/agent-orchestrator`). The upstream repo (`ComposioHQ/agent-orchestrator`) only has `main`.
+All three branches live in **Harshit's fork** (`harshitsinghbhandari/agent-orchestrator`). The upstream repo (`slievr/Athene`) only has `main`.
 
 ---
 
@@ -40,7 +40,7 @@ All three branches live in **Harshit's fork** (`harshitsinghbhandari/agent-orche
 
 Your remotes are already set up:
 - `origin` / `harshit` → `harshitsinghbhandari/agent-orchestrator`
-- `upstream` → `ComposioHQ/agent-orchestrator`
+- `upstream` → `slievr/Athene`
 
 ```bash
 git fetch upstream && git fetch origin
@@ -58,7 +58,7 @@ Clone the upstream repo, then add Harshit's fork as a remote to access the PR br
 
 ```bash
 # Clone upstream
-git clone https://github.com/ComposioHQ/agent-orchestrator.git
+git clone https://github.com/slievr/Athene.git
 cd agent-orchestrator
 
 # Add the fork that holds the PR branches
@@ -74,7 +74,7 @@ git checkout -b simulate-pr-1466-merged harshit/simulate-pr-1466-merged
 
 Alternatively, use the GitHub CLI:
 ```bash
-gh repo clone ComposioHQ/agent-orchestrator
+gh repo clone slievr/Athene
 cd agent-orchestrator
 gh pr checkout 1466    # checks out storage-redesign from the fork automatically
 ```
@@ -88,7 +88,7 @@ gh pr checkout 1466    # checks out storage-redesign from the fork automatically
 | Add a fix that should ride along with the merge but you're unsure about PR scope | `simulate-pr-1466-merged` first, then cherry-pick / merge into `storage-redesign` once validated | The simulate branch is the safe playground. |
 | Compare the PR's diff against base | `git diff origin/main...storage-redesign` | Three-dot diff = PR's contribution only. |
 
-**Do not push directly to `ComposioHQ/agent-orchestrator` main.** PR #1466 will land via the GitHub merge button.
+**Do not push directly to `slievr/Athene` main.** PR #1466 will land via the GitHub merge button.
 
 ---
 
@@ -130,7 +130,7 @@ This branch exists to validate the *merged* state — useful when:
 git checkout simulate-pr-1466-merged
 
 # Keep it current with both sides (adjust remote names to your setup):
-git fetch origin          # upstream: ComposioHQ/agent-orchestrator
+git fetch origin          # upstream: slievr/Athene
 git merge origin/main     # absorb new main commits (resolve conflicts)
 
 # If you have the fork as a remote named 'harshit':
@@ -149,7 +149,7 @@ git push
 
 ## Project context (orient quickly)
 
-- **Repo:** `ComposioHQ/agent-orchestrator` — pnpm workspace (~30 packages).
+- **Repo:** `slievr/Athene` — pnpm workspace (~30 packages).
 - **Stack:** TypeScript strict, Node 20+, Next.js 15 (App Router), React 19, Tailwind v4, xterm.js, Zod, Vitest.
 - **Read this in the repo root:** `CLAUDE.md` — codebase conventions and working principles.
 - **Read this for design rules:** `DESIGN.md` — design system, anti-patterns.
@@ -193,4 +193,4 @@ After that, `git diff main...storage-redesign -- packages/core/src/migrate-stora
 ## Contact
 
 PR author: **Harshit Singh** (`@harshitsinghbhandari`)
-PR URL: https://github.com/ComposioHQ/agent-orchestrator/pull/1466
+PR URL: https://github.com/slievr/Athene/pull/1466

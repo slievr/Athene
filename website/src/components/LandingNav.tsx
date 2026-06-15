@@ -32,7 +32,7 @@ export function LandingNav() {
         className="inline-flex items-center gap-2 text-base font-semibold text-white no-underline font-sans font-[680] tracking-tight"
       >
         <img src="/ao-logo.svg" alt="" aria-hidden="true" width={28} height={28} className="h-7 w-7" />
-        Agent Orchestrator
+        Athene
       </a>
       <ul className="hidden md:flex items-center gap-8 list-none">
         <li>
@@ -71,7 +71,7 @@ export function LandingNav() {
           <DiscordIcon />
         </a>
         <a
-          href="https://github.com/ComposioHQ/agent-orchestrator"
+          href="https://github.com/slievr/Athene"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="GitHub"

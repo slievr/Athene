@@ -4,7 +4,7 @@ Architecture overview, code conventions, and patterns for contributors and AI ag
 
 ## Architecture Overview
 
-Agent Orchestrator is a monorepo with four main packages:
+Athene is a monorepo with four main packages:
 
 ```
 packages/
@@ -90,7 +90,7 @@ For AI agent-specific guidance (including high-risk files like `types.ts`, `life
 **Prerequisites**: Node.js 20.18.3+, pnpm 9.15+, Git 2.25+
 
 ```bash
-git clone https://github.com/ComposioHQ/agent-orchestrator.git
+git clone https://github.com/slievr/Athene.git
 cd agent-orchestrator
 pnpm install
 pnpm build
@@ -161,7 +161,7 @@ agent-orchestrator/
 
 ## Keeping the local AO install current
 
-When you are developing Agent Orchestrator from a long-lived local checkout, refresh the local `ao` install before debugging launcher or packaging issues:
+When you are developing Athene from a long-lived local checkout, refresh the local `ao` install before debugging launcher or packaging issues:
 
 ```bash
 git switch main

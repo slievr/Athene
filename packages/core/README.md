@@ -1,6 +1,6 @@
 # @slievr/core
 
-Core services, types, and configuration for the Agent Orchestrator system.
+Core services, types, and configuration for the Athene system.
 
 ## What's Here
 

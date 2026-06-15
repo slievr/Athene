@@ -24,7 +24,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
-DEFAULT_REPO = "ComposioHQ/agent-orchestrator"
+DEFAULT_REPO = "slievr/Athene"
 DEFAULT_WINDOW_DAYS = 7
 MAX_BODY_CHARS = 2000
 MIN_HIGHLIGHTS = 8

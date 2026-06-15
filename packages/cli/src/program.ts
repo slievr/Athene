@@ -28,7 +28,7 @@ export function createProgram(): Command {
 
   program
     .name("athene")
-    .description("Agent Orchestrator — manage parallel AI coding agents")
+    .description("Athene — manage parallel AI coding agents")
     .version(getCliVersion());
 
   registerStart(program);

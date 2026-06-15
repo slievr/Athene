@@ -6,7 +6,7 @@ import { CONFIG_SCHEMA_URL } from "@slievr/core";
 
 export function getConfigInstruction(): string {
   return `
-# Agent Orchestrator Config Reference
+# Athene Config Reference
 # File: agent-orchestrator.yaml
 
 $schema: ${CONFIG_SCHEMA_URL}

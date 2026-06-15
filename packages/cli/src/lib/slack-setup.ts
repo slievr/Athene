@@ -12,7 +12,7 @@ import {
 } from "./notifier-routing.js";
 
 const SLACK_APPS_URL = "https://api.slack.com/apps";
-const DEFAULT_USERNAME = "Agent Orchestrator";
+const DEFAULT_USERNAME = "Athene";
 const SETUP_TIMEOUT_MS = 10_000;
 
 export interface SlackSetupOptions {

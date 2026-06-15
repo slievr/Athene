@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/project-name", () => ({
-  getProjectName: () => "Agent Orchestrator",
+  getProjectName: () => "Athene",
 }));
 
 describe("app manifest", () => {
@@ -9,7 +9,7 @@ describe("app manifest", () => {
     const { default: manifest } = await import("./manifest");
 
     expect(manifest()).toMatchObject({
-      name: "ao | Agent Orchestrator",
+      name: "ao | Athene",
       short_name: "athene",
       start_url: "/",
       scope: "/",

@@ -1,4 +1,4 @@
-# Agent Orchestrator Config Examples
+# Athene Config Examples
 
 This directory contains example configurations for common use cases.
 

@@ -1,4 +1,4 @@
-# Design System — Agent Orchestrator
+# Design System — Athene
 
 > **This document supersedes the previous "Warm Terminal" system.** AO's design
 > language is **Mission Control**: a calm, high-signal control room for

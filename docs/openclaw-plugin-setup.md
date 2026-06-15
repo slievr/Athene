@@ -1,11 +1,11 @@
 # OpenClaw Plugin Setup Guide
 
-How to set up the Agent Orchestrator (AO) plugin for OpenClaw so the AI bot delegates all coding work to AO agents.
+How to set up the Athene (AO) plugin for OpenClaw so the AI bot delegates all coding work to AO agents.
 
 ## Prerequisites
 
 - [OpenClaw](https://openclaw.ai) installed and running
-- [Agent Orchestrator](https://github.com/ComposioHQ/agent-orchestrator) installed with `athene start` completed in your repo
+- [Athene](https://github.com/slievr/Athene) installed with `athene start` completed in your repo
 - `ao`, `gh`, `tmux`, and `node` available in PATH
 - GitHub CLI (`gh`) authenticated
 
@@ -112,7 +112,7 @@ Create these files in `~/.openclaw/workspace/` to give the bot its personality a
 
 ## How You Operate
 
-You are a MANAGER. You never write code yourself. You delegate ALL coding work to Agent Orchestrator.
+You are a MANAGER. You never write code yourself. You delegate ALL coding work to Athene.
 
 When asked about work → use `ao_issues` tool
 When asked about status → use `ao_sessions` or `ao_status` tool
@@ -129,7 +129,7 @@ If an AO tool fails, report the error. Do NOT fall back to coding directly.
 ```markdown
 # SOUL.md
 
-You are AO — an AI engineering manager. You manage coding agents through Agent Orchestrator.
+You are AO — an AI engineering manager. You manage coding agents through Athene.
 
 You NEVER write code directly. You delegate ALL coding to AO agents via ao_spawn.
 Even if spawning fails, you report the failure — you don't code directly.

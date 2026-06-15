@@ -15,7 +15,7 @@ VM_KEY="$HOME/.ssh/qakeypair.pem"
 REPO_PATH="/srv/ao-preview/manual-qa/agent-orchestrator"
 TMUX_SESSION="ao-qa"
 
-UPSTREAM_REMOTE="https://github.com/ComposioHQ/agent-orchestrator.git"
+UPSTREAM_REMOTE="https://github.com/slievr/Athene.git"
 
 BRANCH_CORE="feat/multi-pr-per-session"
 BRANCH_UI="feat/multi-pr-card-ui"
@@ -25,7 +25,7 @@ BRANCH_UI="feat/multi-pr-card-ui"
 echo ""
 echo "Which repository?"
 echo ""
-echo "  1) Upstream — ComposioHQ/agent-orchestrator (default)"
+echo "  1) Upstream — slievr/Athene (default)"
 echo "  2) Fork     — enter your GitHub fork URL"
 echo ""
 read -rp "Enter 1 or 2 [default: 1]: " repo_choice

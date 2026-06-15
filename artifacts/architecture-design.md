@@ -1,4 +1,4 @@
-# Architecture Design — Agent Orchestrator
+# Architecture Design — Athene
 
 _Compiled: 2026-02-13_
 

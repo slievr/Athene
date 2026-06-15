@@ -33,7 +33,7 @@ fail_step() {
 
 # Test starts here
 echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║  Agent Orchestrator - Onboarding Integration Test     ║${NC}"
+echo -e "${BLUE}║  Athene - Onboarding Integration Test     ║${NC}"
 echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
 echo ""
 

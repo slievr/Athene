@@ -1,8 +1,8 @@
-<h1 align="center">Agent Orchestrator — The Orchestration Layer for Parallel AI Agents</h1>
+<h1 align="center">Athene — The Orchestration Layer for Parallel AI Agents</h1>
 
 <p align="center">
-<a href="https://github.com/ComposioHQ/agent-orchestrator">
-  <img width="800" alt="Agent Orchestrator banner" src="docs/assets/agent_orchestrator_banner.png">
+<a href="https://github.com/slievr/Athene">
+  <img width="800" alt="Athene banner" src="docs/assets/agent_orchestrator_banner.png">
 </a>
 </p>
 
@@ -10,18 +10,18 @@
 
 Spawn parallel AI coding agents, each in its own git worktree. Agents autonomously fix CI failures, address review comments, and open PRs — you supervise from one dashboard.
 
-[![GitHub stars](https://img.shields.io/github/stars/ComposioHQ/agent-orchestrator?style=flat-square)](https://github.com/ComposioHQ/agent-orchestrator/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/slievr/Athene?style=flat-square)](https://github.com/slievr/Athene/stargazers)
 [![npm version](https://img.shields.io/npm/v/%40aoagents%2Fao?style=flat-square)](https://www.npmjs.com/package/@slievr/athene)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
-[![PRs merged](https://img.shields.io/badge/PRs_merged-61-brightgreen?style=flat-square)](https://github.com/ComposioHQ/agent-orchestrator/pulls?q=is%3Amerged)
-[![Tests](https://img.shields.io/badge/test_cases-3%2C288-blue?style=flat-square)](https://github.com/ComposioHQ/agent-orchestrator/releases/tag/metrics-v1)
+[![PRs merged](https://img.shields.io/badge/PRs_merged-61-brightgreen?style=flat-square)](https://github.com/slievr/Athene/pulls?q=is%3Amerged)
+[![Tests](https://img.shields.io/badge/test_cases-3%2C288-blue?style=flat-square)](https://github.com/slievr/Athene/releases/tag/metrics-v1)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/UZv7JjxbwG)
 
 </div>
 
 ---
 
-Agent Orchestrator manages fleets of AI coding agents working in parallel on your codebase. Each agent gets its own git worktree, its own branch, and its own PR. When CI fails, the agent fixes it. When reviewers leave comments, the agent addresses them. You only get pulled in when human judgment is needed.
+Athene manages fleets of AI coding agents working in parallel on your codebase. Each agent gets its own git worktree, its own branch, and its own PR. When CI fails, the agent fixes it. When reviewers leave comments, the agent addresses them. You only get pulled in when human judgment is needed.
 
 **Agent-agnostic** (Claude Code, Codex, Aider) · **Runtime-agnostic** (tmux, ConPTY/process, Docker) · **Tracker-agnostic** (GitHub, Linear)
 
@@ -30,7 +30,7 @@ Agent Orchestrator manages fleets of AI coding agents working in parallel on you
 ## See it in action
 
 <a href="https://x.com/agent_wrapper/status/2026329204405723180">
-  <img src="docs/assets/demo-video-tweet.png" alt="Agent Orchestrator demo — AI agents building their own orchestrator" width="560">
+  <img src="docs/assets/demo-video-tweet.png" alt="Athene demo — AI agents building their own orchestrator" width="560">
 </a>
 <br><br>
 <a href="https://x.com/agent_wrapper/status/2026329204405723180"><img src="docs/assets/btn-watch-demo.png" alt="Watch the Demo on X" height="48"></a>
@@ -66,7 +66,7 @@ If `npm install -g` fails with EACCES, prefix with `sudo` or [fix your npm permi
 To install from source (for contributors):
 
 ```bash
-git clone https://github.com/ComposioHQ/agent-orchestrator.git
+git clone https://github.com/slievr/Athene.git
 cd agent-orchestrator && bash scripts/setup.sh
 ```
 </details>
@@ -135,7 +135,7 @@ The orchestrator agent uses the [AO CLI](docs/CLI.md) internally to manage sessi
 
 ```yaml
 # agent-orchestrator.yaml
-$schema: https://raw.githubusercontent.com/ComposioHQ/agent-orchestrator/main/schema/config.schema.json
+$schema: https://raw.githubusercontent.com/slievr/Athene/main/schema/config.schema.json
 # Runtime data is auto-derived under ~/.agent-orchestrator/{hash}-{projectId}/
 port: 3000
 
@@ -180,7 +180,7 @@ AO keeps your Mac awake while running, so you can access the dashboard remotely 
 
 ```yaml
 # agent-orchestrator.yaml
-$schema: https://raw.githubusercontent.com/ComposioHQ/agent-orchestrator/main/schema/config.schema.json
+$schema: https://raw.githubusercontent.com/slievr/Athene/main/schema/config.schema.json
 power:
   preventIdleSleep: true  # Default on macOS; no-op on Linux and Windows
 ```
@@ -207,13 +207,13 @@ Seven plugin slots. Lifecycle stays in core.
 
 All interfaces defined in [`packages/core/src/types.ts`](packages/core/src/types.ts). A plugin implements one interface and exports a `PluginModule`. That's it.
 
-## Why Agent Orchestrator?
+## Why Athene?
 
 Running one AI agent in a terminal is easy. Running 30 across different issues, branches, and PRs is a coordination problem.
 
 **Without orchestration**, you manually: create branches, start agents, check if they're stuck, read CI failures, forward review comments, track which PRs are ready to merge, clean up when done.
 
-**With Agent Orchestrator**, you: `athene start` and walk away. The system handles isolation, feedback routing, and status tracking. You review PRs and make decisions — the rest is automated.
+**With Athene**, you: `athene start` and walk away. The system handles isolation, feedback routing, and status tracking. You review PRs and make decisions — the rest is automated.
 
 ## Documentation
 

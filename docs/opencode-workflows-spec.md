@@ -1,6 +1,6 @@
-# OpenCode Workflow Spec (Agent Orchestrator)
+# OpenCode Workflow Spec (Athene)
 
-This document defines intended behavior for Agent Orchestrator when `agent: opencode` is selected, including edge cases and expected outcomes.
+This document defines intended behavior for Athene when `agent: opencode` is selected, including edge cases and expected outcomes.
 
 ## Scope
 

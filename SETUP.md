@@ -1,6 +1,6 @@
-# Agent Orchestrator Setup Guide
+# Athene Setup Guide
 
-Comprehensive guide to installing, configuring, and troubleshooting Agent Orchestrator.
+Comprehensive guide to installing, configuring, and troubleshooting Athene.
 
 ## Prerequisites
 
@@ -98,11 +98,11 @@ npm install -g @slievr/athene
 
 ### Build from Source (for contributors)
 
-If you want to develop or contribute to Agent Orchestrator:
+If you want to develop or contribute to Athene:
 
 ```bash
 # Clone the repository
-git clone https://github.com/ComposioHQ/agent-orchestrator
+git clone https://github.com/slievr/Athene
 cd agent-orchestrator
 
 # Run the setup script (installs deps, builds, links CLI)
@@ -199,7 +199,7 @@ See [agent-orchestrator.yaml.example](./agent-orchestrator.yaml.example) for a f
 
 ### Plugin Slots
 
-Agent Orchestrator has 8 plugin slots. All are swappable:
+Athene has 8 plugin slots. All are swappable:
 
 | Slot          | Purpose              | Default       | Alternatives                                    |
 | ------------- | -------------------- | ------------- | ----------------------------------------------- |
@@ -389,7 +389,7 @@ echo $LINEAR_API_KEY  # Should print your key
 ```bash
 # Send test message
 curl -X POST -H 'Content-type: application/json' \
-  --data '{"text":"Agent Orchestrator test"}' \
+  --data '{"text":"Athene test"}' \
   $SLACK_WEBHOOK_URL
 ```
 
@@ -856,4 +856,4 @@ Useful for:
 
 ---
 
-**Need help?** Open an issue at: https://github.com/ComposioHQ/agent-orchestrator/issues
+**Need help?** Open an issue at: https://github.com/slievr/Athene/issues

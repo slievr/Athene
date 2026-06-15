@@ -144,5 +144,5 @@ If you're tempted to do any of these, *don't* — they were proposed in earlier 
 
 1. Re-read `CLAUDE.md` "Working Principles."
 2. Read the relevant commit message — they're detailed for this PR.
-3. Search the PR conversation on GitHub: https://github.com/ComposioHQ/agent-orchestrator/pull/1466
+3. Search the PR conversation on GitHub: https://github.com/slievr/Athene/pull/1466
 4. Bias toward simplification (per `feedback_simplify_backend` memory). The backend is already lean after this PR; keep it that way.

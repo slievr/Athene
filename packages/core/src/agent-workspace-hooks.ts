@@ -919,9 +919,9 @@ process.exit(exitCode);
  * and helps if the wrappers are bypassed.
  */
 export const AO_AGENTS_MD_SECTION = `
-## Agent Orchestrator (ao) Session
+## Athene (ao) Session
 
-You are running inside an Agent Orchestrator managed workspace.
+You are running inside an Athene managed workspace.
 Session metadata is updated automatically via shell wrappers.
 
 If automatic updates fail, you can manually update metadata:
@@ -955,7 +955,7 @@ async function atomicWriteFile(filePath: string, content: string, mode: number):
  * and `postLaunchSetup`.
  *
  * 1. Creates ~/.ao/bin/ with gh/git wrappers and metadata helper script
- * 2. Appends an "Agent Orchestrator" section to the workspace AGENTS.md
+ * 2. Appends an "Athene" section to the workspace AGENTS.md
  */
 export async function setupPathWrapperWorkspace(workspacePath: string): Promise<void> {
   // 1. Write shared wrappers to ~/.ao/bin/ (skip if version marker matches)
@@ -1005,7 +1005,7 @@ export async function setupPathWrapperWorkspace(workspacePath: string): Promise<
   await mkdir(join(workspacePath, ".ao"), { recursive: true });
   // On Windows, ao-metadata-helper.sh is never created — use a platform-appropriate section
   const agentsMdContent = isWindows()
-    ? `## Agent Orchestrator (ao) Session\n\nYou are running inside an Agent Orchestrator managed workspace.\nSession metadata is updated automatically via shell wrappers.\n`
+    ? `## Athene (ao) Session\n\nYou are running inside an Athene managed workspace.\nSession metadata is updated automatically via shell wrappers.\n`
     : AO_AGENTS_MD_SECTION.trimStart();
   await writeFile(aoAgentsMdPath, agentsMdContent, "utf-8");
 }

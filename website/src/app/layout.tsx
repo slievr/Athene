@@ -20,28 +20,28 @@ const siteUrl = "https://aoagents.dev";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    template: "%s | Agent Orchestrator",
-    default: "Agent Orchestrator",
+    template: "%s | Athene",
+    default: "Athene",
   },
   description:
     "Open-source platform for running parallel AI coding agents. Spawn Claude Code, Codex, Aider, and more in isolated worktrees — all managed from one dashboard.",
   keywords: ["AI agents", "coding agents", "Claude Code", "agent orchestration", "parallel agents", "open source"],
-  authors: [{ name: "ComposioHQ", url: "https://github.com/ComposioHQ" }],
-  creator: "ComposioHQ",
+  authors: [{ name: "slievr", url: "https://github.com/slievr" }],
+  creator: "slievr",
   openGraph: {
     type: "website",
     url: siteUrl,
-    siteName: "Agent Orchestrator",
-    title: "Agent Orchestrator",
+    siteName: "Athene",
+    title: "Athene",
     description:
       "Open-source platform for running parallel AI coding agents. Spawn Claude Code, Codex, Aider, and more in isolated worktrees — all managed from one dashboard.",
-    images: [{ url: "/og-image.png", width: 1024, height: 1024, alt: "Agent Orchestrator" }],
+    images: [{ url: "/og-image.png", width: 1024, height: 1024, alt: "Athene" }],
   },
   twitter: {
     card: "summary",
     site: "@slievr",
     creator: "@slievr",
-    title: "Agent Orchestrator",
+    title: "Athene",
     description:
       "Open-source platform for running parallel AI coding agents. Spawn Claude Code, Codex, Aider, and more in isolated worktrees — all managed from one dashboard.",
     images: ["/og-image.png"],

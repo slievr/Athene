@@ -1,7 +1,7 @@
 /**
  * @slievr/core
  *
- * Core library for the Agent Orchestrator.
+ * Core library for the Athene.
  * Exports all types, config loader, and service implementations.
  */
 

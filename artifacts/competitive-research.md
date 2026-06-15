@@ -8,7 +8,7 @@ Research into 16+ projects that orchestrate AI coding agents. The goal: understa
 
 ---
 
-## Tier 1: Direct Competitors (Multi-Agent Orchestrators)
+## Tier 1: Direct Competitors (Multi-Athenes)
 
 ### Gas Town (Steve Yegge)
 
@@ -85,7 +85,7 @@ Research into 16+ projects that orchestrate AI coding agents. The goal: understa
 
 ---
 
-### CAO — CLI Agent Orchestrator (AWS Labs)
+### CAO — CLI Athene (AWS Labs)
 
 - **GitHub**: https://github.com/awslabs/cli-agent-orchestrator
 - **Stack**: Python, tmux, HTTP server (localhost:9889)
@@ -426,7 +426,7 @@ Agent code remains the same regardless of deployment target.
 - [wshobson/agents](https://github.com/wshobson/agents)
 - [LangChain: Two Agent-Sandbox Patterns](https://blog.langchain.com/the-two-patterns-by-which-agents-connect-sandboxes/)
 - [Modal: Top Code Sandbox Products](https://modal.com/blog/top-code-agent-sandbox-products)
-- [Rise of Coding Agent Orchestrators](https://www.aviator.co/blog/the-rise-of-coding-agent-orchestrators/)
+- [Rise of Coding Athenes](https://www.aviator.co/blog/the-rise-of-coding-agent-orchestrators/)
 - [E2B](https://e2b.dev/)
 - [Daytona](https://www.daytona.io/)
 - [Fly.io AI](https://fly.io/ai)

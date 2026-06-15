@@ -327,7 +327,7 @@ function Check-StaleTempFiles {
     Write-Warn2 "$($stale.Count) stale temp files older than 60 minutes found under $tempRoot. Fix: rerun athene doctor --fix"
 }
 
-Write-Host "Agent Orchestrator Doctor`n"
+Write-Host "Athene Doctor`n"
 
 Check-Node
 Check-Git
@@ -348,5 +348,5 @@ if ($script:FailCount -gt 0) {
     exit 1
 }
 
-Write-Host "Environment looks healthy enough to run Agent Orchestrator."
+Write-Host "Environment looks healthy enough to run Athene."
 exit 0

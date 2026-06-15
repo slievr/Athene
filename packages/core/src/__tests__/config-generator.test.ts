@@ -70,19 +70,19 @@ describe("isRepoUrl", () => {
 
 describe("parseRepoUrl", () => {
   it("parses HTTPS GitHub URL", () => {
-    const result = parseRepoUrl("https://github.com/ComposioHQ/DevOS");
+    const result = parseRepoUrl("https://github.com/slievr/DevOS");
     expect(result).toEqual({
-      ownerRepo: "ComposioHQ/DevOS",
-      owner: "ComposioHQ",
+      ownerRepo: "slievr/DevOS",
+      owner: "slievr",
       repo: "DevOS",
       host: "github.com",
-      cloneUrl: "https://github.com/ComposioHQ/DevOS.git",
+      cloneUrl: "https://github.com/slievr/DevOS.git",
     });
   });
 
   it("parses HTTPS URL with .git suffix", () => {
-    const result = parseRepoUrl("https://github.com/ComposioHQ/DevOS.git");
-    expect(result.ownerRepo).toBe("ComposioHQ/DevOS");
+    const result = parseRepoUrl("https://github.com/slievr/DevOS.git");
+    expect(result.ownerRepo).toBe("slievr/DevOS");
     expect(result.repo).toBe("DevOS");
   });
 
@@ -92,13 +92,13 @@ describe("parseRepoUrl", () => {
   });
 
   it("parses SSH URL", () => {
-    const result = parseRepoUrl("git@github.com:ComposioHQ/DevOS.git");
+    const result = parseRepoUrl("git@github.com:slievr/DevOS.git");
     expect(result).toEqual({
-      ownerRepo: "ComposioHQ/DevOS",
-      owner: "ComposioHQ",
+      ownerRepo: "slievr/DevOS",
+      owner: "slievr",
       repo: "DevOS",
       host: "github.com",
-      cloneUrl: "https://github.com/ComposioHQ/DevOS.git",
+      cloneUrl: "https://github.com/slievr/DevOS.git",
     });
   });
 
@@ -266,12 +266,12 @@ describe("generateConfigFromUrl", () => {
     writeFileSync(join(tmpDir, "tsconfig.json"), "{}");
     writeFileSync(join(tmpDir, "pnpm-lock.yaml"), "");
 
-    const parsed = parseRepoUrl("https://github.com/ComposioHQ/DevOS");
+    const parsed = parseRepoUrl("https://github.com/slievr/DevOS");
     const config = generateConfigFromUrl({ parsed, repoPath: tmpDir });
 
     // Check top-level structure
     expect(config["$schema"]).toBe(
-      "https://raw.githubusercontent.com/ComposioHQ/agent-orchestrator/main/schema/config.schema.json",
+      "https://raw.githubusercontent.com/slievr/Athene/main/schema/config.schema.json",
     );
     expect(config.port).toBe(3000);
     expect(config.defaults).toEqual({
@@ -287,7 +287,7 @@ describe("generateConfigFromUrl", () => {
 
     const project = projects.devos;
     expect(project.name).toBe("DevOS");
-    expect(project.repo).toBe("ComposioHQ/DevOS");
+    expect(project.repo).toBe("slievr/DevOS");
     expect(project.path).toBe(tmpDir);
     expect(project.defaultBranch).toBe("main");
     expect(project.scm).toEqual({ plugin: "github" });
@@ -355,7 +355,7 @@ describe("generateConfigFromUrl", () => {
   });
 
   it("preserves CamelCase for session prefix generation", () => {
-    const parsed = parseRepoUrl("https://github.com/ComposioHQ/DevOS");
+    const parsed = parseRepoUrl("https://github.com/slievr/DevOS");
     const config = generateConfigFromUrl({ parsed, repoPath: tmpDir });
 
     const projects = config.projects as Record<string, Record<string, unknown>>;
@@ -418,7 +418,7 @@ describe("configToYaml", () => {
     const config = { port: 3000, projects: { app: { name: "App" } } };
     const yaml = configToYaml(config);
     expect(yaml).toContain(
-      "$schema: https://raw.githubusercontent.com/ComposioHQ/agent-orchestrator/main/schema/config.schema.json",
+      "$schema: https://raw.githubusercontent.com/slievr/Athene/main/schema/config.schema.json",
     );
     expect(yaml).toContain("port: 3000");
     expect(yaml).toContain("name: App");

@@ -1,7 +1,7 @@
 {
   "name": "@slievr/notifier-macos",
   "version": "0.9.1",
-  "description": "Native macOS notification helper app for AO",
+  "description": "Native macOS notification helper app for Athene",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
@@ -21,12 +21,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ComposioHQ/agent-orchestrator.git",
+    "url": "https://github.com/slievr/Athene.git",
     "directory": "packages/notifier-macos"
   },
-  "homepage": "https://github.com/ComposioHQ/agent-orchestrator",
+  "homepage": "https://github.com/slievr/Athene",
   "bugs": {
-    "url": "https://github.com/ComposioHQ/agent-orchestrator/issues"
+    "url": "https://github.com/slievr/Athene/issues"
   },
   "engines": {
     "node": ">=20.0.0"

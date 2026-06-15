@@ -4,7 +4,7 @@ Instructions for GitHub Copilot when generating code, reviewing PRs, and suggest
 
 ## Project Overview
 
-Agent Orchestrator (AO) is a TypeScript monorepo that manages fleets of parallel AI coding agents. Each agent gets its own git worktree, branch, and PR. The system handles CI feedback routing, review comment handling, and session lifecycle.
+Athene (AO) is a TypeScript monorepo that manages fleets of parallel AI coding agents. Each agent gets its own git worktree, branch, and PR. The system handles CI feedback routing, review comment handling, and session lifecycle.
 
 **Stack:** TypeScript (strict), pnpm monorepo, Next.js 15 + React 19, Tailwind CSS v4, Vitest, ESLint flat config.
 

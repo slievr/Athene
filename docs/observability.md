@@ -1,6 +1,6 @@
 # Observability Signals
 
-This document describes runtime observability emitted by Agent Orchestrator.
+This document describes runtime observability emitted by Athene.
 
 ## Goals
 

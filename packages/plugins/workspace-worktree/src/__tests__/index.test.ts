@@ -783,7 +783,7 @@ describe("workspace.restore()", () => {
   // When the local session branch already exists (destroy() preserves it on
   // purpose), restore() must re-attach it instead of falling through to the
   // -b path that would either fail ("branch already exists") or discard
-  // commits. See https://github.com/ComposioHQ/agent-orchestrator/issues/1741.
+  // commits. See https://github.com/slievr/Athene/issues/1741.
   //
   // The recovery sequence (in reattachExistingBranch):
   //   1. `git worktree remove --force <path>` (best-effort: clears registry)

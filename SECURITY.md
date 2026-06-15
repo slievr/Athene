@@ -160,7 +160,7 @@ When reviewing PRs:
 
 ### Secure Configuration
 
-When setting up Agent Orchestrator:
+When setting up Athene:
 
 1. **Copy example config**: `cp agent-orchestrator.yaml.example agent-orchestrator.yaml`
 2. **Add real secrets**: Edit `agent-orchestrator.yaml` with your actual tokens
@@ -169,7 +169,7 @@ When setting up Agent Orchestrator:
 
 ### Required Secrets
 
-Agent Orchestrator may require these secrets:
+Athene may require these secrets:
 
 | Service   | Environment Variable | Where to Get                             |
 | --------- | -------------------- | ---------------------------------------- |
@@ -225,4 +225,4 @@ This project uses:
 
 ## License
 
-This security policy is part of the Agent Orchestrator project and is licensed under the MIT License.
+This security policy is part of the Athene project and is licensed under the MIT License.

@@ -29,7 +29,7 @@ export default async function DocsSlugPage({ params }: PageProps) {
         single: false,
       }}
       editOnGithub={{
-        owner: "ComposioHQ",
+        owner: "slievr",
         repo: "agent-orchestrator",
         sha: "main",
         path: `website/content/docs/${page.file?.path ?? ""}`,

@@ -10,7 +10,7 @@ function makeProjects(): Record<string, ProjectConfig> {
   return {
     "agent-orchestrator": {
       ...baseProject,
-      name: "Agent Orchestrator",
+      name: "Athene",
       path: "/tmp/ao",
       sessionPrefix: "ao",
     },

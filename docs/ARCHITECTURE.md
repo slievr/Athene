@@ -1,6 +1,6 @@
-# Agent Orchestrator — Technical Architecture
+# Athene — Technical Architecture
 
-This document explains how the various parts of the Agent Orchestrator communicate with each other: where HTTP is used, where WebSocket is used, and what each carries.
+This document explains how the various parts of the Athene communicate with each other: where HTTP is used, where WebSocket is used, and what each carries.
 
 ---
 

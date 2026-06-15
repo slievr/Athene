@@ -20,7 +20,7 @@ export function LandingHowItWorks() {
               Configure &amp; <em className="italic text-[var(--landing-muted)]">assign</em>
             </h3>
             <p className="text-[var(--landing-muted)] text-[0.9375rem] leading-[1.7] max-w-[28rem]">
-              Point Agent Orchestrator at your repo with a YAML config. Choose your agent, set up trackers and notifiers. One file, full control.
+              Point Athene at your repo with a YAML config. Choose your agent, set up trackers and notifiers. One file, full control.
             </p>
           </div>
           <div className="landing-card rounded-2xl p-8 min-h-[260px]">

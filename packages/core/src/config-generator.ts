@@ -14,7 +14,7 @@ import { getDefaultRuntime } from "./platform.js";
 // Main is the canonical config-schema contract; schema evolution must remain
 // forward-compatible and additive for older CLIs that stamp this URL.
 export const CONFIG_SCHEMA_URL =
-  "https://raw.githubusercontent.com/ComposioHQ/agent-orchestrator/main/schema/config.schema.json";
+  "https://raw.githubusercontent.com/slievr/Athene/main/schema/config.schema.json";
 
 export function withConfigSchema<T extends Record<string, unknown>>(
   config: T,
@@ -39,9 +39,9 @@ export function withConfigSchema<T extends Record<string, unknown>>(
 
 /** Parsed repo URL components */
 export interface ParsedRepoUrl {
-  /** Full owner/repo string, e.g. "ComposioHQ/DevOS" */
+  /** Full owner/repo string, e.g. "slievr/DevOS" */
   ownerRepo: string;
-  /** Owner/org, e.g. "ComposioHQ" */
+  /** Owner/org, e.g. "slievr" */
   owner: string;
   /** Repo name, e.g. "DevOS" */
   repo: string;

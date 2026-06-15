@@ -448,13 +448,13 @@ describe("SessionDetail desktop layout", () => {
       "href",
       "/projects/my-app",
     );
-    expect(banner.queryByText("Agent Orchestrator")).not.toBeInTheDocument();
+    expect(banner.queryByText("Athene")).not.toBeInTheDocument();
     expect(banner.queryByText("# My App Orchestrator")).not.toBeInTheDocument();
     expect(banner.queryByText("orchestrator/my-app-orchestrator")).not.toBeInTheDocument();
     expect(banner.queryByRole("link", { name: "PR #777" })).not.toBeInTheDocument();
   });
 
-  it("shows the project name for the Agent Orchestrator project header", () => {
+  it("shows the project name for the Athene project header", () => {
     render(
       <SessionDetail
         session={makeSession({
@@ -468,14 +468,14 @@ describe("SessionDetail desktop layout", () => {
         orchestratorZones={{ merge: 0, respond: 0, review: 0, pending: 0, working: 1, done: 2 }}
         projectOrchestratorId="ao-orchestrator"
         projects={[
-          { id: "agent-orchestrator", name: "Agent Orchestrator", path: "/tmp/agent-orchestrator" },
+          { id: "agent-orchestrator", name: "Athene", path: "/tmp/agent-orchestrator" },
         ]}
       />,
     );
 
     const banner = within(screen.getByRole("banner"));
 
-    expect(banner.getByText("Agent Orchestrator")).toBeInTheDocument();
+    expect(banner.getByText("Athene")).toBeInTheDocument();
     expect(banner.getByText("Orchestrator")).toHaveClass("session-detail-mode-badge--neutral");
     expect(banner.getByRole("link", { name: "Open Kanban" })).toHaveAttribute(
       "href",

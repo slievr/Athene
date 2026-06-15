@@ -1,11 +1,18 @@
 ---
 title: Changelog
-description: Release notes for AO, including new features, improvements, and fixes by version.
+description: Release notes for Athene, including new features, improvements, and fixes by version.
 ---
 
-Release notes for AO, including new features, improvements, and fixes by version.
+Release notes for Athene, including new features, improvements, and fixes by version.
 
 This page is maintained from weekly release notes. Run `athene --version` to check your installed version.
+
+## Athene fork
+
+June 15, 2026
+
+- Forked Agent Orchestrator and rebranded to **Athene**: all packages moved to the `@slievr/*` scope (umbrella `@slievr/athene`), and the CLI binary is now `athene`.
+- On-disk state is unchanged (`~/.agent-orchestrator/`, `agent-orchestrator.yaml`, `~/.ao`, `~/.cache/ao`), so `athene` runs against existing setups and coexists with an installed `ao`.
 
 ## 0.3.0 "The Rebuild"
 
@@ -26,6 +33,6 @@ April 25, 2026
 
 ## Sources
 
-- [Package changelogs on GitHub](https://github.com/ComposioHQ/agent-orchestrator/tree/main/packages)
-- [GitHub Releases](https://github.com/ComposioHQ/agent-orchestrator/releases)
-- [`main` commit history](https://github.com/ComposioHQ/agent-orchestrator/commits/main)
+- [Package changelogs on GitHub](https://github.com/slievr/Athene/tree/main/packages)
+- [GitHub Releases](https://github.com/slievr/Athene/releases)
+- [`main` commit history](https://github.com/slievr/Athene/commits/main)

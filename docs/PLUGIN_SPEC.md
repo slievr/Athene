@@ -1,6 +1,6 @@
 # AO Plugin Spec
 
-This document defines the runtime contract and packaging requirements for Agent Orchestrator plugins.
+This document defines the runtime contract and packaging requirements for Athene plugins.
 
 ## Runtime Contract
 

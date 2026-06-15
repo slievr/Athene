@@ -680,7 +680,7 @@ describe("start command — OpenClaw preflight", () => {
 describe("start command — URL argument", () => {
   it("reuses existing clone and generates config", async () => {
     const repoDir = join(tmpDir, "DevOS");
-    createFakeRepo(repoDir, "https://github.com/ComposioHQ/DevOS.git", {
+    createFakeRepo(repoDir, "https://github.com/slievr/DevOS.git", {
       "package.json": "{}",
       "pnpm-lock.yaml": "",
     });
@@ -690,7 +690,7 @@ describe("start command — URL argument", () => {
       "node",
       "test",
       "start",
-      "https://github.com/ComposioHQ/DevOS",
+      "https://github.com/slievr/DevOS",
       "--no-dashboard",
       "--no-orchestrator",
     ]);
@@ -2866,7 +2866,7 @@ describe("start command — already-running detection", () => {
               projectId,
               path: repoDir,
               defaultBranch: "main",
-              displayName: "Agent Orchestrator",
+              displayName: "Athene",
               sessionPrefix: "app",
             },
           },
@@ -2877,7 +2877,7 @@ describe("start command — already-running detection", () => {
 
     mockConfigRef.current = makeConfig({
       [projectId]: makeProject({
-        name: "Agent Orchestrator",
+        name: "Athene",
         path: repoDir,
         sessionPrefix: "app",
       }),

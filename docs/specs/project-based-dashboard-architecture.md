@@ -1,7 +1,7 @@
 # Project-Based Dashboard Architecture
 
 **Status:** Draft  
-**Author:** Agent Orchestrator  
+**Author:** Athene  
 **Date:** 2026-03-09  
 **Target Merge:** `opencode-lifyecycle`
 
@@ -9,7 +9,7 @@
 
 ## Overview
 
-This spec defines the architecture changes required to scope the Agent Orchestrator dashboard by project. Currently, the dashboard displays all sessions across all configured projects, which creates cognitive overhead for multi-project setups. The target architecture adds project filtering at every layer (API, SSE events, frontend state) while maintaining full backward compatibility for single-project deployments.
+This spec defines the architecture changes required to scope the Athene dashboard by project. Currently, the dashboard displays all sessions across all configured projects, which creates cognitive overhead for multi-project setups. The target architecture adds project filtering at every layer (API, SSE events, frontend state) while maintaining full backward compatibility for single-project deployments.
 
 **Key Change:** Add optional `project` query parameter to session list/event endpoints, filtering all responses to a single project scope. Frontend will read `projectName` from config and pass it as the filter.
 

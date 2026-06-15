@@ -4,9 +4,9 @@ description: "Open-source, pluggable agentic coding orchestrator. Manages durabl
 metadata: {"openclaw": {"emoji": "🤖", "requires": {"bins": ["ao", "gh"], "anyBins": ["node", "npm"], "env": ["ANTHROPIC_API_KEY"]}, "os": ["darwin", "linux", "win32"]}}
 ---
 
-# Agent Orchestrator (AO)
+# Athene (AO)
 
-> https://github.com/ComposioHQ/agent-orchestrator
+> https://github.com/slievr/Athene
 
 AO is an open-source, pluggable agentic coding orchestrator. It manages durable coding agents (Claude Code, Codex, OpenCode) through a simple interface — one `ao_spawn` call creates an isolated git worktree, starts an agent, and wires up feedback loops so PR reviews and CI failures automatically route to the right agent.
 
@@ -163,7 +163,7 @@ What to know:
 - **GitHub access**: AO uses `gh` (GitHub CLI) with whatever credentials you've authenticated via `gh auth login`. Use a fine-grained PAT scoped to only the repos AO needs.
 - **Anthropic API**: Agents use your `ANTHROPIC_API_KEY` to call the LLM. Use a dedicated key with spending limits.
 - **No secrets in worktrees**: AO creates git worktrees for agents. Don't symlink `.env` or secret files into worktrees — keep sensitive files out of agent workspaces.
-- **Official source**: Install AO from the [official repo](https://github.com/ComposioHQ/agent-orchestrator).
+- **Official source**: Install AO from the [official repo](https://github.com/slievr/Athene).
 
 ## Troubleshooting
 

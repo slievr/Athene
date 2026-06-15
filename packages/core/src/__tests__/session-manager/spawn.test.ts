@@ -2484,7 +2484,7 @@ describe("spawn", () => {
       expect(existsSync(agentsMdPath)).toBe(true);
       const written = readFileSync(agentsMdPath, "utf-8");
       expect(written).toContain("<!-- AO_ORCHESTRATOR_PROMPT_START -->");
-      expect(written).toContain("## Agent Orchestrator");
+      expect(written).toContain("## Athene");
       expect(written).toContain("You are the orchestrator.");
 
       expect(mockRuntime.create).toHaveBeenCalledWith(

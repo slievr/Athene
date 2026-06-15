@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Agent Orchestrator",
+  title: "Athene",
   description:
     "Open-source platform for running parallel AI coding agents. Spawn Claude Code, Codex, Aider, and more in isolated worktrees — all managed from one dashboard.",
   openGraph: {
     type: "website",
     url: "https://aoagents.dev/landing",
-    siteName: "Agent Orchestrator",
-    title: "Agent Orchestrator",
+    siteName: "Athene",
+    title: "Athene",
     description:
       "Open-source platform for running parallel AI coding agents. Spawn Claude Code, Codex, Aider, and more in isolated worktrees — all managed from one dashboard.",
-    images: [{ url: "/og-image.png", width: 1024, height: 1024, alt: "Agent Orchestrator" }],
+    images: [{ url: "/og-image.png", width: 1024, height: 1024, alt: "Athene" }],
   },
   twitter: {
     card: "summary",
     site: "@slievr",
     creator: "@slievr",
-    title: "Agent Orchestrator",
+    title: "Athene",
     description:
       "Open-source platform for running parallel AI coding agents. Spawn Claude Code, Codex, Aider, and more in isolated worktrees — all managed from one dashboard.",
     images: ["/og-image.png"],
