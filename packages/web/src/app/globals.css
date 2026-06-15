@@ -9494,3 +9494,80 @@ body.is-resizing-x {
   cursor: col-resize;
   user-select: none;
 }
+
+/* Agent message input — below the live terminal */
+.agent-message-input {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--color-border-subtle);
+  background: var(--color-bg-base);
+}
+
+.agent-message-input__textarea {
+  width: 100%;
+  resize: none;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.agent-message-input__textarea:focus {
+  border-color: var(--color-accent);
+}
+
+.agent-message-input__textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.agent-message-input__footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-message-input__hint {
+  flex: 1;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.agent-message-input__error {
+  flex: 1;
+  font-size: 11px;
+  color: var(--color-status-error);
+}
+
+.agent-message-input__send-btn {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 5px;
+  border: 1px solid var(--color-border-default);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.agent-message-input__send-btn:hover:not(:disabled) {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.agent-message-input__send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
