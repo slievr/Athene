@@ -8,13 +8,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   resolve: {
     alias: [
-      { find: /^@slievr\/core$/, replacement: resolve(__dirname, "src/index.ts") },
+      { find: /^@made-by-moonlight\/core$/, replacement: resolve(__dirname, "src/index.ts") },
       {
-        find: /^@slievr\/core\/scm-webhook-utils$/,
+        find: /^@made-by-moonlight\/core\/scm-webhook-utils$/,
         replacement: resolve(__dirname, "src/scm-webhook-utils.ts"),
       },
-      { find: /^@slievr\/core\/types$/, replacement: resolve(__dirname, "src/types.ts") },
-      { find: /^@slievr\/core\/utils$/, replacement: resolve(__dirname, "src/utils.ts") },
+      { find: /^@made-by-moonlight\/core\/types$/, replacement: resolve(__dirname, "src/types.ts") },
+      { find: /^@made-by-moonlight\/core\/utils$/, replacement: resolve(__dirname, "src/utils.ts") },
     ],
   },
   plugins: [
@@ -35,11 +35,11 @@ export default defineConfig({
       // Integration tests import real plugins. These aliases resolve
       // package names to source files so we don't need circular devDeps
       // (plugins depend on core, core can't depend on plugins).
-      "@slievr/plugin-tracker-github": resolve(
+      "@made-by-moonlight/plugin-tracker-github": resolve(
         __dirname,
         "../plugins/tracker-github/src/index.ts",
       ),
-      "@slievr/plugin-scm-github": resolve(__dirname, "../plugins/scm-github/src/index.ts"),
+      "@made-by-moonlight/plugin-scm-github": resolve(__dirname, "../plugins/scm-github/src/index.ts"),
     },
     coverage: {
       provider: "v8",

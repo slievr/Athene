@@ -11,7 +11,7 @@ import {
 import { join } from "node:path";
 import { homedir } from "node:os";
 import { setTimeout as sleep } from "node:timers/promises";
-import { atomicWriteFileSync, recordActivityEvent } from "@slievr/core";
+import { atomicWriteFileSync, recordActivityEvent } from "@made-by-moonlight/core";
 
 export interface RunningState {
   pid: number;

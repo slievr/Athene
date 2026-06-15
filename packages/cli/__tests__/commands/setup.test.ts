@@ -94,7 +94,7 @@ const SLACK_SECRET_WEBHOOK_URL = testHttpsUrl(
 const SLACK_BAD_WEBHOOK_URL = testHttpsUrl(["hooks", "slack", "com"], "/services/T000/B000/bad");
 const SLACK_NEW_WEBHOOK_URL = testHttpsUrl(["hooks", "slack", "com"], "/services/TNEW/BNEW/new");
 
-vi.mock("@slievr/core", () => ({
+vi.mock("@made-by-moonlight/core", () => ({
   CONFIG_SCHEMA_URL:
     "https://raw.githubusercontent.com/slievr/Athene/main/schema/config.schema.json",
   DEFAULT_DASHBOARD_NOTIFICATION_LIMIT: 50,
@@ -172,7 +172,7 @@ vi.mock("@composio/core", () => {
 
 vi.mock("@clack/prompts", () => mockClack);
 
-import { recordActivityEvent } from "@slievr/core";
+import { recordActivityEvent } from "@made-by-moonlight/core";
 import { registerSetup } from "../../src/commands/setup.js";
 import { applyNotifierRoutingPreset } from "../../src/lib/notifier-routing.js";
 

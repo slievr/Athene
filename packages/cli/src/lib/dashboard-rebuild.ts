@@ -6,7 +6,7 @@
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { normalize, resolve } from "node:path";
 import ora from "ora";
-import { findPidByPort, isWindows, killProcessTree } from "@slievr/core";
+import { findPidByPort, isWindows, killProcessTree } from "@made-by-moonlight/core";
 import { exec, execSilent } from "./shell.js";
 
 /**
@@ -25,7 +25,7 @@ export function assertDashboardRebuildSupported(webDir: string): void {
   if (isInstalledUnderNodeModules(webDir)) {
     throw new Error(
       "Dashboard rebuild is only available from a source checkout. " +
-        "Run `athene update`, or reinstall with `npm install -g @slievr/athene@latest`.",
+        "Run `athene update`, or reinstall with `npm install -g @made-by-moonlight/athene@latest`.",
     );
   }
 }

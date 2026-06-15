@@ -4,7 +4,7 @@
  * Single source of truth for:
  *   - the on-disk path of the update-check cache
  *   - a raw (no-validation) read of that cache file
- *   - the currently-installed `@slievr/athene` version
+ *   - the currently-installed `@made-by-moonlight/athene` version
  *
  * Both the CLI's `update-check.ts` and the dashboard's `/api/version` route
  * consume these. Without this module, both sides would reimplement the cache
@@ -68,12 +68,12 @@ export function readUpdateCheckCacheRaw(): UpdateCheckCacheRaw | null {
 }
 
 /**
- * The currently-installed `@slievr/athene` version.
+ * The currently-installed `@made-by-moonlight/athene` version.
  *
  * Tries the wrapper package first (the canonical version users see). Falls
- * back to the CLI package, then `@slievr/web` for dev mode where the
+ * back to the CLI package, then `@made-by-moonlight/web` for dev mode where the
  * wrapper isn't always in `node_modules` — these packages ship in lockstep
- * with `@slievr/athene` (the changeset linked group), so either is a safe proxy.
+ * with `@made-by-moonlight/athene` (the changeset linked group), so either is a safe proxy.
  *
  * Final fallback returns `"0.0.0"` so callers always have a string to
  * `isVersionOutdated` against.
@@ -81,9 +81,9 @@ export function readUpdateCheckCacheRaw(): UpdateCheckCacheRaw | null {
 export function getInstalledAoVersion(): string {
   const require = createRequire(fileURLToPath(import.meta.url));
   const candidates = [
-    "@slievr/athene/package.json",
-    "@slievr/cli/package.json",
-    "@slievr/web/package.json",
+    "@made-by-moonlight/athene/package.json",
+    "@made-by-moonlight/cli/package.json",
+    "@made-by-moonlight/web/package.json",
   ];
   for (const candidate of candidates) {
     try {

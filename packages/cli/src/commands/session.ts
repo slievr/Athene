@@ -10,7 +10,7 @@ import {
   loadConfig,
   SessionNotRestorableError,
   WorkspaceMissingError,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { DEFAULT_PORT } from "../lib/constants.js";
 import { git, getTmuxActivity, tmux } from "../lib/shell.js";
 import { formatAge } from "../lib/format.js";

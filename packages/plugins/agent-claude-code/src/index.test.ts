@@ -6,7 +6,7 @@ import {
   type RuntimeHandle,
   type AgentLaunchConfig,
   type WorkspaceHooksConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks — available inside vi.mock factories
@@ -62,7 +62,7 @@ vi.mock("node:os", () => ({
   homedir: mockHomedir,
 }));
 
-vi.mock("@slievr/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/core", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,

@@ -7,7 +7,7 @@ import {
   resolveProjectIdForSessionId,
   type OrchestratorConfig,
   type ObservabilitySummary,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { NextResponse } from "next/server";
 
 let webApiObserver: ReturnType<typeof createProjectObserver> | null | undefined;

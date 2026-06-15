@@ -4,7 +4,7 @@
 
 **The orchestration layer for parallel AI coding agents.**
 
-[![npm version](https://img.shields.io/npm/v/%40aoagents%2Fao?style=flat-square)](https://www.npmjs.com/package/@slievr/athene)
+[![npm version](https://img.shields.io/npm/v/%40aoagents%2Fao?style=flat-square)](https://www.npmjs.com/package/@made-by-moonlight/athene)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](https://github.com/slievr/Athene/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/slievr/Athene?style=flat-square)](https://github.com/slievr/Athene)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/UZv7JjxbwG)
@@ -20,10 +20,10 @@ Spawn parallel AI coding agents, each in its own git worktree, on a single machi
 ## Install
 
 ```bash
-npm install -g @slievr/athene
+npm install -g @made-by-moonlight/athene
 ```
 
-> **Nightly builds** (latest `main`): `npm install -g @slievr/athene@nightly` — back to stable with `@latest`.
+> **Nightly builds** (latest `main`): `npm install -g @made-by-moonlight/athene@nightly` — back to stable with `@latest`.
 
 **Prerequisites:** [Node.js 20.18.3+](https://nodejs.org), [Git 2.25+](https://git-scm.com), the [`gh` CLI](https://cli.github.com), and at least one coding-agent CLI (e.g. [Claude Code](https://www.anthropic.com/claude-code)).
 

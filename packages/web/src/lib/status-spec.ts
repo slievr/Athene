@@ -18,7 +18,7 @@
  * Tone is refined from the (tested) attention-level bucket so a card's badge
  * never disagrees with the column it sits in.
  */
-import { ACTIVITY_STATE, SESSION_STATUS, CI_STATUS } from "@slievr/core/types";
+import { ACTIVITY_STATE, SESSION_STATUS, CI_STATUS } from "@made-by-moonlight/core/types";
 import {
   type DashboardSession,
   getAttentionLevel,

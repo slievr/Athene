@@ -411,7 +411,7 @@ export function classifyAoOrphanCommand(command: string): string | null {
   const normalized = normalizeCommand(command);
 
   if (
-    normalized.includes("@slievr/web") &&
+    normalized.includes("@made-by-moonlight/web") &&
     (normalized.includes("/dist-server/") || normalized.includes(" dist-server/"))
   ) {
     return "ao-web";

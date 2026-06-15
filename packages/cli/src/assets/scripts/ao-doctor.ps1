@@ -193,7 +193,7 @@ function Check-Launcher {
         return
     }
     if ($ScriptLayout -eq 'package-install') {
-        Write-Warn2 "ao launcher is not in PATH. Fix: reinstall with npm install -g @slievr/athene@latest"
+        Write-Warn2 "ao launcher is not in PATH. Fix: reinstall with npm install -g @made-by-moonlight/athene@latest"
         return
     }
     Write-Warn2 "ao launcher is not in PATH. Fix: cd $RepoRoot; pwsh scripts/setup.ps1 (or run npm link --force in packages/ao)"
@@ -232,7 +232,7 @@ function Check-InstallLayout {
         )
         foreach ($c in $checks) {
             $full = Join-Path $RepoRoot $c.Path
-            if (Test-Path $full) { Write-Pass $c.Label } else { Write-Fail "$($c.Label) (missing $full). Fix: reinstall @slievr/athene" }
+            if (Test-Path $full) { Write-Pass $c.Label } else { Write-Fail "$($c.Label) (missing $full). Fix: reinstall @made-by-moonlight/athene" }
         }
         return
     }
@@ -244,12 +244,12 @@ function Check-InstallLayout {
     if (Test-Path (Join-Path $RepoRoot 'packages/core/dist/index.js')) {
         Write-Pass "core package is built"
     } else {
-        Write-Fail "core package is not built. Fix: run pnpm --filter @slievr/core build"
+        Write-Fail "core package is not built. Fix: run pnpm --filter @made-by-moonlight/core build"
     }
     if (Test-Path (Join-Path $RepoRoot 'packages/cli/dist/index.js')) {
         Write-Pass "CLI package is built"
     } else {
-        Write-Fail "CLI package is not built. Fix: run pnpm --filter @slievr/cli build"
+        Write-Fail "CLI package is not built. Fix: run pnpm --filter @made-by-moonlight/cli build"
     }
 }
 
@@ -257,14 +257,14 @@ function Check-RuntimeSanity {
     if ($ScriptLayout -eq 'package-install') {
         $entry = Join-Path $RepoRoot 'dist/index.js'
         if (-not (Test-Path $entry)) {
-            Write-Fail "packaged CLI entrypoint is missing. Fix: reinstall @slievr/athene"
+            Write-Fail "packaged CLI entrypoint is missing. Fix: reinstall @made-by-moonlight/athene"
             return
         }
         & node $entry --version *> $null
         if ($LASTEXITCODE -eq 0) {
             Write-Pass "packaged CLI runtime sanity check passed (athene --version)"
         } else {
-            Write-Fail "packaged CLI runtime sanity check failed. Fix: reinstall @slievr/athene"
+            Write-Fail "packaged CLI runtime sanity check failed. Fix: reinstall @made-by-moonlight/athene"
         }
         return
     }

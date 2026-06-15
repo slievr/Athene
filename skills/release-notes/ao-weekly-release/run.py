@@ -250,7 +250,7 @@ def fetch_stars(repo: str) -> int | None:
         return None
 
 
-def fetch_npm_version(package: str = "@slievr/athene") -> str | None:
+def fetch_npm_version(package: str = "@made-by-moonlight/athene") -> str | None:
     """Fetch the latest published version from the npm registry."""
     try:
         result = subprocess.run(
@@ -442,8 +442,8 @@ def render_markdown(snap: Snapshot) -> str:
     install_block = [
         "## Install",
         "```bash",
-        "npm install -g @slievr/athene",
-        f"# or pin to the current release: npm install -g @slievr/athene@{version}",
+        "npm install -g @made-by-moonlight/athene",
+        f"# or pin to the current release: npm install -g @made-by-moonlight/athene@{version}",
         "```",
     ]
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { OrchestratorEvent, NotifyAction } from "@slievr/core";
+import type { OrchestratorEvent, NotifyAction } from "@made-by-moonlight/core";
 import { manifest, create } from "./index.js";
 
 const { mockToolsExecute, mockConstructorOptions } = vi.hoisted(() => ({

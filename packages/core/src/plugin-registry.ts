@@ -3,7 +3,7 @@
  *
  * Plugins can be:
  * 1. Built-in (packages/plugins/*)
- * 2. npm packages (@slievr/plugin-*)
+ * 2. npm packages (@made-by-moonlight/plugin-*)
  * 3. Local file paths specified in config
  */
 
@@ -38,37 +38,37 @@ function makeKey(slot: PluginSlot, name: string): string {
 /** Built-in plugin package names, mapped to their npm package */
 const BUILTIN_PLUGINS: Array<{ slot: PluginSlot; name: string; pkg: string }> = [
   // Runtimes
-  { slot: "runtime", name: "tmux", pkg: "@slievr/plugin-runtime-tmux" },
-  { slot: "runtime", name: "process", pkg: "@slievr/plugin-runtime-process" },
+  { slot: "runtime", name: "tmux", pkg: "@made-by-moonlight/plugin-runtime-tmux" },
+  { slot: "runtime", name: "process", pkg: "@made-by-moonlight/plugin-runtime-process" },
   // Agents
-  { slot: "agent", name: "claude-code", pkg: "@slievr/plugin-agent-claude-code" },
-  { slot: "agent", name: "codex", pkg: "@slievr/plugin-agent-codex" },
-  { slot: "agent", name: "aider", pkg: "@slievr/plugin-agent-aider" },
-  { slot: "agent", name: "cursor", pkg: "@slievr/plugin-agent-cursor" },
-  { slot: "agent", name: "kimicode", pkg: "@slievr/plugin-agent-kimicode" },
-  { slot: "agent", name: "grok", pkg: "@slievr/plugin-agent-grok" },
-  { slot: "agent", name: "opencode", pkg: "@slievr/plugin-agent-opencode" },
+  { slot: "agent", name: "claude-code", pkg: "@made-by-moonlight/plugin-agent-claude-code" },
+  { slot: "agent", name: "codex", pkg: "@made-by-moonlight/plugin-agent-codex" },
+  { slot: "agent", name: "aider", pkg: "@made-by-moonlight/plugin-agent-aider" },
+  { slot: "agent", name: "cursor", pkg: "@made-by-moonlight/plugin-agent-cursor" },
+  { slot: "agent", name: "kimicode", pkg: "@made-by-moonlight/plugin-agent-kimicode" },
+  { slot: "agent", name: "grok", pkg: "@made-by-moonlight/plugin-agent-grok" },
+  { slot: "agent", name: "opencode", pkg: "@made-by-moonlight/plugin-agent-opencode" },
   // Workspaces
-  { slot: "workspace", name: "worktree", pkg: "@slievr/plugin-workspace-worktree" },
-  { slot: "workspace", name: "clone", pkg: "@slievr/plugin-workspace-clone" },
+  { slot: "workspace", name: "worktree", pkg: "@made-by-moonlight/plugin-workspace-worktree" },
+  { slot: "workspace", name: "clone", pkg: "@made-by-moonlight/plugin-workspace-clone" },
   // Trackers
-  { slot: "tracker", name: "github", pkg: "@slievr/plugin-tracker-github" },
-  { slot: "tracker", name: "linear", pkg: "@slievr/plugin-tracker-linear" },
-  { slot: "tracker", name: "gitlab", pkg: "@slievr/plugin-tracker-gitlab" },
+  { slot: "tracker", name: "github", pkg: "@made-by-moonlight/plugin-tracker-github" },
+  { slot: "tracker", name: "linear", pkg: "@made-by-moonlight/plugin-tracker-linear" },
+  { slot: "tracker", name: "gitlab", pkg: "@made-by-moonlight/plugin-tracker-gitlab" },
   // SCM
-  { slot: "scm", name: "github", pkg: "@slievr/plugin-scm-github" },
-  { slot: "scm", name: "gitlab", pkg: "@slievr/plugin-scm-gitlab" },
+  { slot: "scm", name: "github", pkg: "@made-by-moonlight/plugin-scm-github" },
+  { slot: "scm", name: "gitlab", pkg: "@made-by-moonlight/plugin-scm-gitlab" },
   // Notifiers
-  { slot: "notifier", name: "composio", pkg: "@slievr/plugin-notifier-composio" },
-  { slot: "notifier", name: "dashboard", pkg: "@slievr/plugin-notifier-dashboard" },
-  { slot: "notifier", name: "desktop", pkg: "@slievr/plugin-notifier-desktop" },
-  { slot: "notifier", name: "discord", pkg: "@slievr/plugin-notifier-discord" },
-  { slot: "notifier", name: "openclaw", pkg: "@slievr/plugin-notifier-openclaw" },
-  { slot: "notifier", name: "slack", pkg: "@slievr/plugin-notifier-slack" },
-  { slot: "notifier", name: "webhook", pkg: "@slievr/plugin-notifier-webhook" },
+  { slot: "notifier", name: "composio", pkg: "@made-by-moonlight/plugin-notifier-composio" },
+  { slot: "notifier", name: "dashboard", pkg: "@made-by-moonlight/plugin-notifier-dashboard" },
+  { slot: "notifier", name: "desktop", pkg: "@made-by-moonlight/plugin-notifier-desktop" },
+  { slot: "notifier", name: "discord", pkg: "@made-by-moonlight/plugin-notifier-discord" },
+  { slot: "notifier", name: "openclaw", pkg: "@made-by-moonlight/plugin-notifier-openclaw" },
+  { slot: "notifier", name: "slack", pkg: "@made-by-moonlight/plugin-notifier-slack" },
+  { slot: "notifier", name: "webhook", pkg: "@made-by-moonlight/plugin-notifier-webhook" },
   // Terminals
-  { slot: "terminal", name: "iterm2", pkg: "@slievr/plugin-terminal-iterm2" },
-  { slot: "terminal", name: "web", pkg: "@slievr/plugin-terminal-web" },
+  { slot: "terminal", name: "iterm2", pkg: "@made-by-moonlight/plugin-terminal-iterm2" },
+  { slot: "terminal", name: "web", pkg: "@made-by-moonlight/plugin-terminal-web" },
 ];
 
 function matchesNotifierPlugin(

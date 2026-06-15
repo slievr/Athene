@@ -27,7 +27,7 @@ import { CopyDebugBundleButton } from "./CopyDebugBundleButton";
 import { DashboardNotificationButton } from "./DashboardNotificationButton";
 import { SidebarContext, useSidebarContext } from "./workspace/SidebarContext";
 import { ProjectSidebar } from "./ProjectSidebar";
-import { isOrchestratorSession } from "@slievr/core/types";
+import { isOrchestratorSession } from "@made-by-moonlight/core/types";
 import { projectDashboardPath, projectReviewPath, projectSessionPath } from "@/lib/routes";
 import { BottomSheet } from "./BottomSheet";
 

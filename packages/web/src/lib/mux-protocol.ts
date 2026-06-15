@@ -2,7 +2,7 @@ import type {
   DashboardNotificationRecord,
   SerializedDashboardAction as DashboardNotificationAction,
   SerializedDashboardEvent as DashboardNotificationEvent,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import type { AttentionLevel } from "./types";
 
 export type {

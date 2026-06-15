@@ -1,6 +1,6 @@
 import { type ChildProcess, execFile as execFileCb } from "node:child_process";
 import { promisify } from "node:util";
-import { killProcessTree } from "@slievr/core";
+import { killProcessTree } from "@made-by-moonlight/core";
 
 const execFileAsync = promisify(execFileCb);
 

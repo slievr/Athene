@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Command } from "commander";
-import type * as CoreModule from "@slievr/core";
+import type * as CoreModule from "@made-by-moonlight/core";
 
 const { mockConfigRef, mockSessionManager, mockApplyAgentReport, mockGetProjectSessionsDir } = vi.hoisted(
   () => ({
@@ -13,7 +13,7 @@ const { mockConfigRef, mockSessionManager, mockApplyAgentReport, mockGetProjectS
   }),
 );
 
-vi.mock("@slievr/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/core", async (importOriginal) => {
   const actual = (await importOriginal()) as typeof CoreModule;
   return {
     ...actual,

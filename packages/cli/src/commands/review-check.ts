@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import ora from "ora";
 import type { Command } from "commander";
-import { loadConfig } from "@slievr/core";
+import { loadConfig } from "@made-by-moonlight/core";
 import { gh } from "../lib/shell.js";
 import { getSessionManager } from "../lib/create-session-manager.js";
 

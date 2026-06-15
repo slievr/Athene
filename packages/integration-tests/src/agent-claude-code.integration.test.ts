@@ -23,9 +23,9 @@ import {
   readLastJsonlEntry,
   type ActivityDetection,
   type AgentSessionInfo,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import claudeCodePlugin, { toClaudeProjectPath } from "@slievr/plugin-agent-claude-code";
+import claudeCodePlugin, { toClaudeProjectPath } from "@made-by-moonlight/plugin-agent-claude-code";
 import {
   isTmuxAvailable,
   killSessionsByPrefix,

@@ -4,12 +4,12 @@ import {
   type OrchestratorEvent,
   type NotifyAction,
   type NotifyContext,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import {
   isRetryableHttpStatus,
   normalizeRetryConfig,
   validateUrl,
-} from "@slievr/core/utils";
+} from "@made-by-moonlight/core/utils";
 
 export const manifest = {
   name: "webhook",

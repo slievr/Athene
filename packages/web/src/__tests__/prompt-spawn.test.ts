@@ -22,7 +22,7 @@ import {
   type OrchestratorConfig,
   type PluginRegistry,
   type SCM,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { sessionToDashboard } from "@/lib/serialize";
 
 // ── Shared test fixtures ──────────────────────────────────────────────

@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import chalk from "chalk";
 import { parseDocument } from "yaml";
-import { CONFIG_SCHEMA_URL, findConfigFile, isCanonicalGlobalConfigPath } from "@slievr/core";
+import { CONFIG_SCHEMA_URL, findConfigFile, isCanonicalGlobalConfigPath } from "@made-by-moonlight/core";
 import {
   applyNotifierRoutingPreset,
   getNotifierRoutingState,
@@ -88,7 +88,7 @@ function parseDesktopBackend(value: unknown): DesktopBackend | undefined {
 function packageDirFromImport(): string | null {
   try {
     const require = createRequire(import.meta.url);
-    return dirname(require.resolve("@slievr/notifier-macos/package.json"));
+    return dirname(require.resolve("@made-by-moonlight/notifier-macos/package.json"));
   } catch {
     return null;
   }
@@ -232,14 +232,14 @@ function copyBundledApp(targetAppPath = getInstalledNotifierAppPath()): string {
   const sourceAppPath = getBundledNotifierAppPath();
   if (!sourceAppPath || !existsSync(getNotifierExecutablePath(sourceAppPath))) {
     throw new DesktopSetupError(
-      "AO Notifier.app is not built. Run: pnpm --filter @slievr/notifier-macos build",
+      "AO Notifier.app is not built. Run: pnpm --filter @made-by-moonlight/notifier-macos build",
     );
   }
 
   if (isPlaceholderNotifierApp(sourceAppPath)) {
     throw new DesktopSetupError(
       "AO Notifier.app was built as a non-macOS placeholder and cannot be installed. " +
-        "Rebuild @slievr/notifier-macos on macOS, or use --backend terminal-notifier.",
+        "Rebuild @made-by-moonlight/notifier-macos on macOS, or use --backend terminal-notifier.",
     );
   }
 

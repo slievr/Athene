@@ -6,7 +6,7 @@ import {
   isRestorable,
   isTerminalSession,
   markOutdatedCodeReviewRunsForSession,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { getServices } from "@/lib/services";
 import {
   getAllProjects,

@@ -15,8 +15,8 @@ vi.mock("node:child_process", () => {
   return { execFile };
 });
 
-vi.mock("@slievr/core", async () => {
-  const actual = (await vi.importActual("@slievr/core")) as Record<string, unknown>;
+vi.mock("@made-by-moonlight/core", async () => {
+  const actual = (await vi.importActual("@made-by-moonlight/core")) as Record<string, unknown>;
   return {
     ...actual,
     recordActivityEvent: recordActivityEventMock,
@@ -30,7 +30,7 @@ import {
   type Session,
   type ProjectConfig,
   type SCMWebhookRequest,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 // ---------------------------------------------------------------------------
 // Fixtures

@@ -1,4 +1,4 @@
-import type { PluginModule, Terminal, Session } from "@slievr/core";
+import type { PluginModule, Terminal, Session } from "@made-by-moonlight/core";
 
 export const manifest = {
   name: "web",

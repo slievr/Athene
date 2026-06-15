@@ -17,7 +17,7 @@ import {
   loadGlobalConfig,
   readUpdateCheckCacheRaw,
   type UpdateChannel,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 export const dynamic = "force-dynamic";
 

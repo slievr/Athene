@@ -1,7 +1,7 @@
 import { type NextRequest } from "next/server";
 import { validateIdentifier } from "@/lib/validation";
 import { getServices } from "@/lib/services";
-import { SessionNotFoundError, recordActivityEvent } from "@slievr/core";
+import { SessionNotFoundError, recordActivityEvent } from "@made-by-moonlight/core";
 import {
   getCorrelationId,
   jsonWithCorrelation,

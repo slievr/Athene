@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
-import { createInitialCanonicalLifecycle, createActivitySignal, type Session } from "@slievr/core";
+import { createInitialCanonicalLifecycle, createActivitySignal, type Session } from "@made-by-moonlight/core";
 
 vi.mock("node:child_process", () => ({
   execFile: vi.fn(),

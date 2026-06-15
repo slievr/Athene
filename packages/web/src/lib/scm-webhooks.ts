@@ -9,7 +9,7 @@ import {
   type SCMWebhookEvent,
   type SCMWebhookRequest,
   type Session,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 export interface WebhookProjectMatch {
   projectId: string;

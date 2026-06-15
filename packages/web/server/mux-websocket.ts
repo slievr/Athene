@@ -23,7 +23,7 @@ import {
   recordActivityEvent,
   readDashboardNotificationsFromFile,
   type DashboardNotificationRecord,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import {
   findTmux,
   resolveTmuxSession,

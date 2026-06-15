@@ -169,7 +169,7 @@ git status --short --branch   # `athene update` expects a clean working tree on 
 athene update
 ```
 
-`athene update` is intentionally conservative: it fast-forwards the local install checkout from `origin/main`, runs `pnpm install`, clean-rebuilds `@slievr/core`, `@slievr/cli`, and `@slievr/web`, refreshes the global launcher with `npm link`, and ends with CLI smoke tests. Use `athene update --skip-smoke` to stop after the rebuild, or `athene update --smoke-only` to rerun the smoke checks without fetching or rebuilding.
+`athene update` is intentionally conservative: it fast-forwards the local install checkout from `origin/main`, runs `pnpm install`, clean-rebuilds `@made-by-moonlight/core`, `@made-by-moonlight/cli`, and `@made-by-moonlight/web`, refreshes the global launcher with `npm link`, and ends with CLI smoke tests. Use `athene update --skip-smoke` to stop after the rebuild, or `athene update --smoke-only` to rerun the smoke checks without fetching or rebuilding.
 
 If your branch has drift from `main`, update the install checkout first and then return to your feature worktree. That keeps CLI behavior and generated docs aligned with the version contributors are expected to run.
 
@@ -196,7 +196,7 @@ function processInput(value: unknown): string {
 }
 
 // Type-only imports for type-only usage
-import type { PluginModule, Runtime } from "@slievr/core";
+import type { PluginModule, Runtime } from "@made-by-moonlight/core";
 ```
 
 Formatting: semicolons, double quotes, 2-space indent, strict mode.
@@ -234,7 +234,7 @@ A plugin exports a `manifest`, a `create()` factory, and a default `PluginModule
 
 ```typescript
 // packages/plugins/runtime-myplugin/src/index.ts
-import type { PluginModule, Runtime } from "@slievr/core";
+import type { PluginModule, Runtime } from "@made-by-moonlight/core";
 
 export const manifest = {
   name: "myplugin",
@@ -268,7 +268,7 @@ export default { manifest, create } satisfies PluginModule<Runtime>;
 
 ```json
 {
-  "name": "@slievr/athene-runtime-myplugin",
+  "name": "@made-by-moonlight/athene-runtime-myplugin",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
@@ -279,7 +279,7 @@ export default { manifest, create } satisfies PluginModule<Runtime>;
     "test": "vitest"
   },
   "dependencies": {
-    "@slievr/core": "workspace:*"
+    "@made-by-moonlight/core": "workspace:*"
   }
 }
 ```
@@ -333,10 +333,10 @@ Orchestrator sessions use a separate prompt from `packages/core/src/orchestrator
 pnpm test
 
 # Run tests for a specific package
-pnpm --filter @slievr/core test
+pnpm --filter @made-by-moonlight/core test
 
 # Watch mode
-pnpm --filter @slievr/core test -- --watch
+pnpm --filter @made-by-moonlight/core test -- --watch
 
 # Integration tests
 pnpm test:integration
@@ -359,7 +359,7 @@ Use mock plugins in tests — don't call real tmux or external services in unit 
 
 1. Edit `Session` interface in `packages/core/src/types.ts`
 2. Initialize the field in `spawn()` in `session-manager.ts`
-3. Rebuild: `pnpm --filter @slievr/core build`
+3. Rebuild: `pnpm --filter @made-by-moonlight/core build`
 
 ### Add a new reaction
 

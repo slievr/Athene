@@ -4,7 +4,7 @@ import {
   resolveProjectIdForSessionId,
   type OrchestratorConfig,
   type ProjectObserver,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 export function createObserverContext(surface: string): {
   config: OrchestratorConfig | undefined;

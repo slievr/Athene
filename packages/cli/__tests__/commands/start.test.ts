@@ -24,7 +24,7 @@ import {
   getDefaultRuntime,
   recordActivityEvent,
   type SessionManager,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks
@@ -135,9 +135,9 @@ vi.mock("ora", () => ({
   }),
 }));
 
-vi.mock("@slievr/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/core", async (importOriginal) => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-  const actual = await importOriginal<typeof import("@slievr/core")>();
+  const actual = await importOriginal<typeof import("@made-by-moonlight/core")>();
   const normalizeOrchestratorSessionStrategy =
     actual.normalizeOrchestratorSessionStrategy ??
     ((strategy: string | undefined) => {

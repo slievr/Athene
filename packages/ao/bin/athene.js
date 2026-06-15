@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-import "@slievr/cli";
+import "@made-by-moonlight/cli";

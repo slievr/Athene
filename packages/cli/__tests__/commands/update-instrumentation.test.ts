@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Command } from "commander";
 import { EventEmitter } from "node:events";
-import * as AoCore from "@slievr/core";
+import * as AoCore from "@made-by-moonlight/core";
 
 const { mockRunRepoScript } = vi.hoisted(() => ({
   mockRunRepoScript: vi.fn(),
@@ -26,7 +26,7 @@ const {
   mockCheckForUpdate: vi.fn(),
   mockInvalidateCache: vi.fn(),
   mockGetCurrentVersion: vi.fn(() => "0.2.2"),
-  mockGetUpdateCommand: vi.fn(() => "npm install -g @slievr/athene@latest"),
+  mockGetUpdateCommand: vi.fn(() => "npm install -g @made-by-moonlight/athene@latest"),
 }));
 
 vi.mock("../../src/lib/update-check.js", () => ({
@@ -62,7 +62,7 @@ vi.mock("node:child_process", async () => {
   return { ...actual, spawn: (...args: unknown[]) => mockSpawn(...args) };
 });
 
-vi.mock("@slievr/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/core", async (importOriginal) => {
   const actual = await importOriginal<typeof AoCore>();
   return {
     ...actual,
@@ -159,7 +159,7 @@ describe("athene update — activity events", () => {
       latestVersion: "0.3.0",
       isOutdated: true,
       installMethod: "npm-global" as const,
-      recommendedCommand: "npm install -g @slievr/athene@latest",
+      recommendedCommand: "npm install -g @made-by-moonlight/athene@latest",
       checkedAt: new Date().toISOString(),
     });
     Object.defineProperty(process.stdin, "isTTY", { value: true, configurable: true });
@@ -186,7 +186,7 @@ describe("athene update — activity events", () => {
       latestVersion: null,
       isOutdated: false,
       installMethod: "npm-global" as const,
-      recommendedCommand: "npm install -g @slievr/athene@latest",
+      recommendedCommand: "npm install -g @made-by-moonlight/athene@latest",
       checkedAt: null,
     });
 

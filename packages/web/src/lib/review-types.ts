@@ -1,4 +1,4 @@
-import type { CodeReviewRunSummary } from "@slievr/core";
+import type { CodeReviewRunSummary } from "@made-by-moonlight/core";
 
 export type ReviewBoardColumn =
   | "queued"

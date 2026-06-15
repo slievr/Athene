@@ -5,7 +5,7 @@ import {
   type RuntimeHandle,
   type AgentLaunchConfig,
   type ProjectConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import {
   mkdtempSync,
   mkdirSync,
@@ -51,7 +51,7 @@ const {
   mockIsWindows: vi.fn(() => false),
 }));
 
-vi.mock("@slievr/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/core", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,

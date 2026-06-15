@@ -8,7 +8,7 @@ import {
   type NotificationEventContext,
   type NotifyAction,
   type OrchestratorEvent,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { create, manifest } from "./index.js";
 
 function makeEvent(overrides: Partial<OrchestratorEvent> = {}): OrchestratorEvent {

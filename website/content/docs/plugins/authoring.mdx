@@ -46,7 +46,7 @@ Return `true` when the system has what your plugin needs — a binary on PATH, a
 ### Default export
 
 ```typescript
-import type { PluginModule, Notifier } from "@slievr/core";
+import type { PluginModule, Notifier } from "@made-by-moonlight/core";
 
 export const manifest = {
   name: "my-notifier",
@@ -138,7 +138,7 @@ pagerduty/
 The generated `src/index.ts` looks like this:
 
 ```typescript
-import type { PluginModule } from "@slievr/core";
+import type { PluginModule } from "@made-by-moonlight/core";
 
 export const manifest = {
   name: "pagerduty",
@@ -167,11 +167,11 @@ export default plugin;
 
 ### Implement the slot interface
 
-Replace the placeholder `create()` body with a real implementation. Import the slot interface from `@slievr/core`:
+Replace the placeholder `create()` body with a real implementation. Import the slot interface from `@made-by-moonlight/core`:
 
 ```typescript
-import type { PluginModule, Notifier } from "@slievr/core";
-import { validateUrl } from "@slievr/core";
+import type { PluginModule, Notifier } from "@made-by-moonlight/core";
+import { validateUrl } from "@made-by-moonlight/core";
 ```
 
 See [Slot interfaces at a glance](#slot-interfaces-at-a-glance) for the methods you need to implement.
@@ -222,7 +222,7 @@ plugins:
 
 ## Slot interfaces at a glance
 
-All interfaces are defined in `packages/core/src/types.ts` and exported from `@slievr/core`.
+All interfaces are defined in `packages/core/src/types.ts` and exported from `@made-by-moonlight/core`.
 
 ### Runtime
 
@@ -433,7 +433,7 @@ projects:
 
 ## Core utilities available to plugins
 
-All utilities are exported from `@slievr/core`. The source lives in `packages/core/src/index.ts`.
+All utilities are exported from `@made-by-moonlight/core`. The source lives in `packages/core/src/index.ts`.
 
 **Shell safety and HTTP:**
 

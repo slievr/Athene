@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { tmpdir } from "node:os";
-import processPlugin from "@slievr/plugin-runtime-process";
-import type { RuntimeHandle } from "@slievr/core";
+import processPlugin from "@made-by-moonlight/plugin-runtime-process";
+import type { RuntimeHandle } from "@made-by-moonlight/core";
 import { sleep } from "./helpers/polling.js";
 
 describe("runtime-process (integration)", () => {

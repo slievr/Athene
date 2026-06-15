@@ -1,4 +1,4 @@
-import type { ActivityState } from "@slievr/core/types";
+import type { ActivityState } from "@made-by-moonlight/core/types";
 
 /** Emoji indicators for each activity state, shared across components. */
 export const activityIcon: Record<ActivityState, string> = {

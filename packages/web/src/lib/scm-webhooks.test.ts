@@ -5,7 +5,7 @@ import {
   type ProjectConfig,
   type SCMWebhookEvent,
   type Session,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { eventMatchesProject, findAffectedSessions } from "./scm-webhooks";
 
 const project: ProjectConfig = {

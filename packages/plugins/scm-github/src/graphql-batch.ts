@@ -17,7 +17,7 @@ import {
   type PRInfo,
   type PRState,
   type ReviewDecision,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { LRUCache } from "./lru-cache.js";
 
 let execFileAsync = promisify(execFile);

@@ -10,7 +10,7 @@ import {
   type OrchestratorConfig,
   type OrchestratorEvent,
   type PluginRegistry,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import {
   addSinkNotifierConfig,
   createNotifyTestEvent,

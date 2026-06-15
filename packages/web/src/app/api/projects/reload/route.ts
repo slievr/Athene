@@ -4,7 +4,7 @@ import {
   getGlobalConfigPath,
   loadConfig,
   recordActivityEvent,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { invalidatePortfolioServicesCache } from "@/lib/services";
 
 export const dynamic = "force-dynamic";

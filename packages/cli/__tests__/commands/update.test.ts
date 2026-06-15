@@ -33,7 +33,7 @@ const {
   mockGetCurrentVersion: vi.fn(() => "0.2.2"),
   mockGetUpdateCommand: vi.fn((method: string) => {
     if (method === "git") return "athene update";
-    return "npm install -g @slievr/athene@latest";
+    return "npm install -g @made-by-moonlight/athene@latest";
   }),
 }));
 
@@ -65,7 +65,7 @@ vi.mock("../../src/lib/create-session-manager.js", () => ({
   })),
 }));
 
-import type * as AoCoreType from "@slievr/core";
+import type * as AoCoreType from "@made-by-moonlight/core";
 import type * as FsType from "node:fs";
 
 const { mockIsWindows, mockLoadConfig, mockLoadGlobalConfig, mockExistsSync } = vi.hoisted(() => ({
@@ -75,8 +75,8 @@ const { mockIsWindows, mockLoadConfig, mockLoadGlobalConfig, mockExistsSync } = 
   mockExistsSync: vi.fn(() => false),
 }));
 
-vi.mock("@slievr/core", async () => {
-  const actual = (await vi.importActual("@slievr/core")) as typeof AoCoreType;
+vi.mock("@made-by-moonlight/core", async () => {
+  const actual = (await vi.importActual("@made-by-moonlight/core")) as typeof AoCoreType;
   return {
     ...actual,
     loadConfig: (...args: unknown[]) => mockLoadConfig(...args),
@@ -136,7 +136,7 @@ function makeNpmUpdateInfo(overrides = {}) {
     latestVersion: "0.3.0",
     isOutdated: true,
     installMethod: "npm-global" as const,
-    recommendedCommand: "npm install -g @slievr/athene@latest",
+    recommendedCommand: "npm install -g @made-by-moonlight/athene@latest",
     checkedAt: new Date().toISOString(),
     ...overrides,
   };
@@ -405,7 +405,7 @@ describe("update command", () => {
 
       expect(mockPromptConfirm).not.toHaveBeenCalled();
       const allOutput = logSpy.mock.calls.map((c) => c[0]).join("\n");
-      expect(allOutput).toContain("npm install -g @slievr/athene@latest");
+      expect(allOutput).toContain("npm install -g @made-by-moonlight/athene@latest");
     });
 
     it("runs npm install when user confirms", async () => {
@@ -559,13 +559,13 @@ describe("update command", () => {
       mockDetectInstallMethod.mockReturnValue("pnpm-global");
       mockResolveUpdateChannel.mockReturnValue("stable");
       mockGetUpdateCommand.mockImplementation((method: string) => {
-        if (method === "pnpm-global") return "pnpm add -g @slievr/athene@latest";
-        return "npm install -g @slievr/athene@latest";
+        if (method === "pnpm-global") return "pnpm add -g @made-by-moonlight/athene@latest";
+        return "npm install -g @made-by-moonlight/athene@latest";
       });
       mockCheckForUpdate.mockResolvedValue(
         makeNpmUpdateInfo({
           installMethod: "pnpm-global",
-          recommendedCommand: "pnpm add -g @slievr/athene@latest",
+          recommendedCommand: "pnpm add -g @made-by-moonlight/athene@latest",
         }),
       );
       Object.defineProperty(process.stdin, "isTTY", { value: true, configurable: true });
@@ -606,7 +606,7 @@ describe("update command", () => {
         }),
       ]);
       expect(mockSpawn.mock.calls[1][0]).toBe("pnpm");
-      expect(mockSpawn.mock.calls[1][1]).toEqual(["add", "-g", "@slievr/athene@latest"]);
+      expect(mockSpawn.mock.calls[1][1]).toEqual(["add", "-g", "@made-by-moonlight/athene@latest"]);
       expect(mockSpawn.mock.calls[2][0]).toBe("athene");
       expect(mockSpawn.mock.calls[2][1]).toEqual(["--version"]);
       expect(mockSpawn.mock.calls[3]).toEqual([
@@ -746,7 +746,7 @@ describe("update command", () => {
         .join("\n");
       expect(stderr).toContain("AO was not updated. You are still on version 0.2.2.");
       expect(stderr).toContain("pnpm's global store metadata is inconsistent");
-      expect(stderr).toContain("You can also try: npm install -g @slievr/athene@latest");
+      expect(stderr).toContain("You can also try: npm install -g @made-by-moonlight/athene@latest");
       expect(stderr).toContain("ERR_PNPM_UNEXPECTED_VIRTUAL_STORE");
       expect(mockInvalidateCache).not.toHaveBeenCalled();
     });
@@ -811,7 +811,7 @@ describe("update command", () => {
           currentVersion: "0.5.0",
           latestVersion: "0.5.0-nightly-abc",
           isOutdated: false,
-          recommendedCommand: "npm install -g @slievr/athene@nightly",
+          recommendedCommand: "npm install -g @made-by-moonlight/athene@nightly",
         }),
       );
       mockPromptConfirm.mockResolvedValue(true);
@@ -927,7 +927,7 @@ describe("update command", () => {
           currentVersion: "0.5.0",
           latestVersion: "0.5.0-nightly-abc",
           isOutdated: false,
-          recommendedCommand: "npm install -g @slievr/athene@nightly",
+          recommendedCommand: "npm install -g @made-by-moonlight/athene@nightly",
         }),
       );
       mockPromptConfirm.mockResolvedValue(true);
@@ -1027,7 +1027,7 @@ describe("update command", () => {
       const logSpy = vi.mocked(console.log);
       await program.parseAsync(["node", "test", "update"]);
       const all = logSpy.mock.calls.map((c) => String(c[0])).join("\n");
-      expect(all).toMatch(/Run: npm install -g @slievr\/athene@latest/);
+      expect(all).toMatch(/Run: npm install -g @made-by-moonlight\/athene@latest/);
       expect(mockSpawn).not.toHaveBeenCalled();
     });
 
@@ -1102,8 +1102,8 @@ describe("update command", () => {
     });
 
     it.each([
-      ["pnpm-global" as const, "pnpm add -g @slievr/athene@latest"],
-      ["bun-global" as const, "bun add -g @slievr/athene@latest"],
+      ["pnpm-global" as const, "pnpm add -g @made-by-moonlight/athene@latest"],
+      ["bun-global" as const, "bun add -g @made-by-moonlight/athene@latest"],
     ])("applies the same shell:true on Windows for %s installs", async (method, command) => {
       mockIsWindows.mockReturnValue(true);
       mockDetectInstallMethod.mockReturnValue(method);

@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import chalk from "chalk";
 import type { Command } from "commander";
-import { isWindows, loadConfig } from "@slievr/core";
+import { isWindows, loadConfig } from "@made-by-moonlight/core";
 import { findWebDir, buildDashboardEnv, waitForPortAndOpen } from "../lib/web-dir.js";
 import { forwardSignalsToChild } from "../lib/shell.js";
 import {
@@ -101,7 +101,7 @@ export function registerDashboard(program: Command): void {
           const stderr = stderrChunks.join("");
           if (looksLikeStaleBuild(stderr)) {
             const recoveryCommand = isInstalledUnderNodeModules(webDir)
-              ? "npm install -g @slievr/athene@latest"
+              ? "npm install -g @made-by-moonlight/athene@latest"
               : "athene dashboard --rebuild";
             console.error(
               chalk.yellow(

@@ -7,7 +7,7 @@ import {
   getProjectDir,
   loadGlobalConfig,
   registerProjectInGlobalConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 const invalidatePortfolioServicesCache = vi.fn();
 const getServices = vi.fn();

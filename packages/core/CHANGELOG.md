@@ -1,4 +1,4 @@
-# @slievr/core
+# @made-by-moonlight/core
 
 ## 0.9.1
 
@@ -35,7 +35,7 @@
 
   This release pivots:
 
-  **`@slievr/plugin-agent-claude-code`** now installs two scripts per
+  **`@made-by-moonlight/plugin-agent-claude-code`** now installs two scripts per
   workspace:
   - `metadata-updater` — unchanged; PostToolUse(Bash) extracts gh/git
     side-effects (PR URL, branch, merge status).
@@ -57,7 +57,7 @@
   stub for Claude — the JSONL-backed cascade is the only source of truth
   for active / ready / waiting_input / blocked.
 
-  **`@slievr/core`** extends `ActivityLogEntry.source` and
+  **`@made-by-moonlight/core`** extends `ActivityLogEntry.source` and
   `ActivitySignalSource` with a `"hook"` value so the new entries are
   parseable and their provenance is visible in telemetry. No downstream
   consumer needs changes — the cascade has always read whatever source
@@ -135,9 +135,9 @@
     Bake window (Wed–Thu) pauses scheduled nightlies; the captain re-cuts via
     workflow*dispatch when a fix lands. Stable `release.yml` publishes via
     `changesets/action`. `.changeset/config.json` adds the snapshot template
-    (`{tag}-{commit}`). `@slievr/web` stays in the linked group and ships
-    alongside `@slievr/cli` (it's a workspace:* runtime dep, so marking it
-    private would 404 every `npm install -g @slievr/athene` after publish).
+    (`{tag}-{commit}`). `@made-by-moonlight/web` stays in the linked group and ships
+    alongside `@made-by-moonlight/cli` (it's a workspace:* runtime dep, so marking it
+    private would 404 every `npm install -g @made-by-moonlight/athene` after publish).
     `scripts/check-publishable-deps.mjs` runs in both release.yml and canary.yml
     before the publish step and fails CI if a publishable package depends on a
     `private: true` package via workspace:\_.
@@ -159,7 +159,7 @@ in `POST /api/update` so the dashboard returns a structured 409.
     top of the dashboard when `isOutdated`. Click POSTs to `/api/update`;
     dismissal persists per-version in `localStorage`.
   - **Bun + Homebrew detection.** New install-method classifiers for
-    `~/.bun/install/global/` (auto-installs `bun add -g @slievr/athene@<channel>`)
+    `~/.bun/install/global/` (auto-installs `bun add -g @made-by-moonlight/athene@<channel>`)
     and `/Cellar/ao/` (notice only — `brew upgrade ao` to avoid clobbering
     brew's symlinks). `installMethod` config field overrides path detection.
 
@@ -282,7 +282,7 @@ in `POST /api/update` so the dashboard returns a structured 409.
     plugin previously kept independent caches; per poll cycle the system
     spawned at least two `opencode session list` processes instead of
     one. Both consumers now use the shared cache exported from
-    `@slievr/core` (`getCachedOpenCodeSessionList`).
+    `@made-by-moonlight/core` (`getCachedOpenCodeSessionList`).
   - **TTL no longer covers the send-confirmation loop.** The cache TTL
     dropped from 3s to 500ms so the
     `updatedAt > baselineUpdatedAt` delivery signal in

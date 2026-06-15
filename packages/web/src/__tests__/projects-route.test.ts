@@ -15,7 +15,7 @@ import {
   generateExternalId,
   loadGlobalConfig,
   registerProjectInGlobalConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 const invalidatePortfolioServicesCache = vi.fn();
 

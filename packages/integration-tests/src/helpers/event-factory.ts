@@ -7,7 +7,7 @@ import {
   type EventType,
   type SessionStatus,
   type ActivityState,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 /**
  * Create a test OrchestratorEvent with sensible defaults.

@@ -1,5 +1,5 @@
 /**
- * @slievr/core
+ * @made-by-moonlight/core
  *
  * Core library for the Athene.
  * Exports all types, config loader, and service implementations.

@@ -1,5 +1,5 @@
 const steps = [
-  { num: "STEP 01", title: "Install", desc: "One command. No dependencies beyond Node.js.", cmd: "npm i -g @slievr/athene" },
+  { num: "STEP 01", title: "Install", desc: "One command. No dependencies beyond Node.js.", cmd: "npm i -g @made-by-moonlight/athene" },
   { num: "STEP 02", title: "Configure", desc: "Create an agent-orchestrator.yaml. Pick your agents, tracker, and notifiers.", cmd: "athene start" },
   { num: "STEP 03", title: "Launch", desc: "Assign issues and watch agents spawn.", cmd: "athene batch-spawn 1 2 3" },
 ];

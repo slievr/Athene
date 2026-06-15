@@ -5,8 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import worktreePlugin from "@slievr/plugin-workspace-worktree";
-import type { ProjectConfig, WorkspaceInfo } from "@slievr/core";
+import worktreePlugin from "@made-by-moonlight/plugin-workspace-worktree";
+import type { ProjectConfig, WorkspaceInfo } from "@made-by-moonlight/core";
 
 const execFileAsync = promisify(execFile);
 

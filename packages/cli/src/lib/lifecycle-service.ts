@@ -3,7 +3,7 @@ import {
   createProjectObserver,
   type LifecycleManager,
   type OrchestratorConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { getLifecycleManager } from "./create-session-manager.js";
 
 const DEFAULT_INTERVAL_MS = 30_000;

@@ -13,7 +13,7 @@ import {
   type RuntimeHandle,
   type RuntimeMetrics,
   type AttachInfo,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import {
   getPipePath,
   ptyHostSendMessage,
@@ -509,7 +509,7 @@ export async function sweepWindowsPtyHosts(): Promise<{
   if (!isWindows()) {
     return { attempted: 0, gracefullyExited: 0, forceKilled: 0, failed: 0 };
   }
-  const { getWindowsPtyHosts, unregisterWindowsPtyHost } = await import("@slievr/core");
+  const { getWindowsPtyHosts, unregisterWindowsPtyHost } = await import("@made-by-moonlight/core");
   const entries = getWindowsPtyHosts();
   let gracefullyExited = 0;
   let forceKilled = 0;

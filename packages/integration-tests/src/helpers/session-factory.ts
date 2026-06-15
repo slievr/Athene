@@ -2,7 +2,7 @@
  * Factory helpers to build Session and RuntimeHandle objects for tests.
  */
 
-import { createActivitySignal, createInitialCanonicalLifecycle, type RuntimeHandle, type Session } from "@slievr/core";
+import { createActivitySignal, createInitialCanonicalLifecycle, type RuntimeHandle, type Session } from "@made-by-moonlight/core";
 
 /** Build a tmux RuntimeHandle for a given session name. */
 export function makeTmuxHandle(sessionName: string): RuntimeHandle {

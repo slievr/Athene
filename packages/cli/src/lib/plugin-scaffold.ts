@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import type { PluginSlot } from "@slievr/core";
+import type { PluginSlot } from "@made-by-moonlight/core";
 
 export interface PluginScaffoldInput {
   author?: string;
@@ -80,7 +80,7 @@ function buildPackageJson(input: PluginScaffoldInput): string {
         clean: "rm -rf dist",
       },
       dependencies: {
-        "@slievr/core": CORE_VERSION_RANGE,
+        "@made-by-moonlight/core": CORE_VERSION_RANGE,
       },
       devDependencies: {
         "@types/node": NODE_TYPES_VERSION,
@@ -122,7 +122,7 @@ function buildIndexTs(input: PluginScaffoldInput): string {
   const displayName = input.displayName.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
   const description = input.description.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
 
-  return `import type { PluginModule } from "@slievr/core";
+  return `import type { PluginModule } from "@made-by-moonlight/core";
 
 export const manifest = {
   name: "${manifestName}",

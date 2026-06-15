@@ -5,7 +5,7 @@ import {
   type PluginModule,
   type Terminal,
   type Session,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 export const manifest = {
   name: "iterm2",
@@ -15,7 +15,7 @@ export const manifest = {
 };
 
 // Re-export for backwards compatibility
-export { escapeAppleScript } from "@slievr/core";
+export { escapeAppleScript } from "@made-by-moonlight/core";
 
 /**
  * Run an AppleScript snippet and return stdout.

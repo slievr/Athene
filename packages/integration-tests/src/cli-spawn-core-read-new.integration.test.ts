@@ -24,7 +24,7 @@ import {
   type OrchestratorConfig,
   getProjectSessionsDir,
   generateSessionName,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { isTmuxAvailable, killSessionsByPrefix, killSession } from "./helpers/tmux.js";
 
 const tmuxOk = await isTmuxAvailable();

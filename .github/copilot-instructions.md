@@ -34,7 +34,7 @@ Full conventions: `CLAUDE.md`. Plugin development: `docs/DEVELOPMENT.md`. Design
 - Before generating new code in an existing file, read how similar features are already implemented in that same file. Match the pattern.
 - Do not introduce new patterns when established ones already exist. Search the codebase first.
 - Match existing naming conventions, import styles, and file organization.
-- Use `@slievr/core` for cross-package imports.
+- Use `@made-by-moonlight/core` for cross-package imports.
 - Use the `workspace:*` protocol in `package.json`.
 
 ### TypeScript Strict Mode
@@ -94,14 +94,14 @@ These are the areas where Copilot review adds the most value: issues CI cannot c
 **6. Plugin isolation.** Plugins must never import each other directly. They communicate through:
 - The `Session` object
 - The `LifecycleManager` event system
-- Core utilities exported from `@slievr/core`
+- Core utilities exported from `@made-by-moonlight/core`
 
 **7. Resource cleanup.** Check that:
 - File handles, subprocesses, and runtime sessions (tmux on Unix, ConPTY pty-host processes on Windows) are cleaned up on all exit paths: success, error, and early return
 - `destroy()` methods exist and use best-effort semantics
 - There are no resource leaks in error paths
 
-**8. Shell safety.** Any command construction must use `shellEscape()` from `@slievr/core` for all dynamic arguments. Flag raw string interpolation in shell commands.
+**8. Shell safety.** Any command construction must use `shellEscape()` from `@made-by-moonlight/core` for all dynamic arguments. Flag raw string interpolation in shell commands.
 
 ### What to Ignore
 
@@ -179,7 +179,7 @@ Performance
 ### Plugin Implementation
 
 ```typescript
-import type { PluginModule, Runtime } from "@slievr/core";
+import type { PluginModule, Runtime } from "@made-by-moonlight/core";
 
 export const manifest = {
   name: "tmux",
@@ -223,7 +223,7 @@ const issue = await tracker.getIssue("123"); // null if not found
 ### Shell Commands
 
 ```typescript
-import { shellEscape } from "@slievr/core";
+import { shellEscape } from "@made-by-moonlight/core";
 
 const cmd = `git checkout ${shellEscape(branchName)}`;
 // NEVER: `git checkout ${branchName}`

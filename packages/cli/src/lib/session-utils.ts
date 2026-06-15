@@ -1,4 +1,4 @@
-import type { OrchestratorConfig } from "@slievr/core";
+import type { OrchestratorConfig } from "@made-by-moonlight/core";
 
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

@@ -8,7 +8,7 @@ import {
   SessionNotFoundError,
   recordActivityEvent,
   type OrchestratorConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import {
   getCorrelationId,
   jsonWithCorrelation,

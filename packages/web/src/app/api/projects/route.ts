@@ -10,7 +10,7 @@ import {
   migrateToGlobalConfig,
   recordActivityEvent,
   registerProjectInGlobalConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { revalidatePath } from "next/cache";
 import { getAllProjects } from "@/lib/project-name";
 import { invalidatePortfolioServicesCache } from "@/lib/services";

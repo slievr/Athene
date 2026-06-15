@@ -13,7 +13,7 @@ import {
   savePreferences,
   loadLocalProjectConfig,
   loadConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import {
   formatPortfolioDegradedReason,
   formatPortfolioProjectName,

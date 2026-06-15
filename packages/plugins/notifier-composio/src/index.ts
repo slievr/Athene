@@ -9,7 +9,7 @@ import {
   type NotificationDataV3,
   type OrchestratorEvent,
   type PluginModule,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 // Module-level guard so we only emit notifier.dep_missing once per process.
 let depMissingEmitted = false;

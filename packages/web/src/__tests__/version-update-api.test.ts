@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { EventEmitter } from "node:events";
-import type * as AoCoreType from "@slievr/core";
+import type * as AoCoreType from "@made-by-moonlight/core";
 import type * as ChildProcessType from "node:child_process";
 
 // Use a real on-disk cache file in a per-test temp dir rather than mocking
@@ -17,8 +17,8 @@ const { mockGlobalConfig } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@slievr/core", async () => {
-  const actual = (await vi.importActual("@slievr/core")) as typeof AoCoreType;
+vi.mock("@made-by-moonlight/core", async () => {
+  const actual = (await vi.importActual("@made-by-moonlight/core")) as typeof AoCoreType;
   return {
     ...actual,
     loadGlobalConfig: () => mockGlobalConfig.value,

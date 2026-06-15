@@ -213,7 +213,7 @@ On Windows the high-level component map (HTTP API, mux WS server, dashboard, fla
 
 ### Default runtime
 
-`getDefaultRuntime()` from `@slievr/core` returns `"process"` on Windows and `"tmux"` everywhere else. A fresh Windows install therefore loads the `runtime-process` plugin without requiring YAML edits. Users on Unix who want the process runtime opt in via `runtime: process` in `agent-orchestrator.yaml`.
+`getDefaultRuntime()` from `@made-by-moonlight/core` returns `"process"` on Windows and `"tmux"` everywhere else. A fresh Windows install therefore loads the `runtime-process` plugin without requiring YAML edits. Users on Unix who want the process runtime opt in via `runtime: process` in `agent-orchestrator.yaml`.
 
 ### The pty-host helper process
 

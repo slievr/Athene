@@ -37,7 +37,7 @@ import {
   type OrchestratorConfig,
   type ParsedRepoUrl,
   type ProjectConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import chalk from "chalk";
 import ora from "ora";
 import { findFreePort } from "./web-dir.js";

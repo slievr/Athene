@@ -23,7 +23,7 @@ const {
     },
   }));
 
-vi.mock("@slievr/core", () => {
+vi.mock("@made-by-moonlight/core", () => {
   function buildSubject(input: {
     sessionId: string;
     projectId: string;

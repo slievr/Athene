@@ -13,7 +13,7 @@ import {
   type RuntimeMetrics,
   type AttachInfo,
   shellEscape,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 const execFileAsync = promisify(execFile);
 const TMUX_COMMAND_TIMEOUT_MS = 5_000;

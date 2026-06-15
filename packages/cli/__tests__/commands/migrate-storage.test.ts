@@ -4,14 +4,14 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Command } from "commander";
-import * as AoCore from "@slievr/core";
+import * as AoCore from "@made-by-moonlight/core";
 
 const { mockMigrateStorage, mockRollbackStorage } = vi.hoisted(() => ({
   mockMigrateStorage: vi.fn(),
   mockRollbackStorage: vi.fn(),
 }));
 
-vi.mock("@slievr/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/core", async (importOriginal) => {
   const actual = await importOriginal<typeof AoCore>();
   return {
     ...actual,

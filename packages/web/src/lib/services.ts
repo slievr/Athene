@@ -30,21 +30,21 @@ import {
   type Session,
   isOrchestratorSession,
   TERMINAL_STATUSES,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 // Static plugin imports — webpack needs these to be string literals
-import pluginRuntimeTmux from "@slievr/plugin-runtime-tmux";
-import pluginRuntimeProcess from "@slievr/plugin-runtime-process";
-import pluginAgentClaudeCode from "@slievr/plugin-agent-claude-code";
-import pluginAgentCodex from "@slievr/plugin-agent-codex";
-import pluginAgentCursor from "@slievr/plugin-agent-cursor";
-import pluginAgentKimicode from "@slievr/plugin-agent-kimicode";
-import pluginAgentGrok from "@slievr/plugin-agent-grok";
-import pluginAgentOpencode from "@slievr/plugin-agent-opencode";
-import pluginWorkspaceWorktree from "@slievr/plugin-workspace-worktree";
-import pluginScmGithub from "@slievr/plugin-scm-github";
-import pluginTrackerGithub from "@slievr/plugin-tracker-github";
-import pluginTrackerLinear from "@slievr/plugin-tracker-linear";
+import pluginRuntimeTmux from "@made-by-moonlight/plugin-runtime-tmux";
+import pluginRuntimeProcess from "@made-by-moonlight/plugin-runtime-process";
+import pluginAgentClaudeCode from "@made-by-moonlight/plugin-agent-claude-code";
+import pluginAgentCodex from "@made-by-moonlight/plugin-agent-codex";
+import pluginAgentCursor from "@made-by-moonlight/plugin-agent-cursor";
+import pluginAgentKimicode from "@made-by-moonlight/plugin-agent-kimicode";
+import pluginAgentGrok from "@made-by-moonlight/plugin-agent-grok";
+import pluginAgentOpencode from "@made-by-moonlight/plugin-agent-opencode";
+import pluginWorkspaceWorktree from "@made-by-moonlight/plugin-workspace-worktree";
+import pluginScmGithub from "@made-by-moonlight/plugin-scm-github";
+import pluginTrackerGithub from "@made-by-moonlight/plugin-tracker-github";
+import pluginTrackerLinear from "@made-by-moonlight/plugin-tracker-linear";
 
 export interface Services {
   config: LoadedConfig;

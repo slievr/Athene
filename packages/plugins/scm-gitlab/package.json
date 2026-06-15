@@ -1,5 +1,5 @@
 {
-  "name": "@slievr/plugin-scm-gitlab",
+  "name": "@made-by-moonlight/plugin-scm-gitlab",
   "version": "0.9.1",
   "description": "SCM plugin: GitLab (MRs, CI, reviews)",
   "license": "MIT",
@@ -38,7 +38,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@slievr/core": "workspace:*"
+    "@made-by-moonlight/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.2.3",

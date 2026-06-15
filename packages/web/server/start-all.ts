@@ -14,7 +14,7 @@ import {
   killProcessTree,
   markDaemonShutdownHandlerInstalled,
   spawnManagedDaemonChild,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

@@ -16,7 +16,7 @@ const { mockLoadConfig, mockGetGlobalConfigPath, MockConfigNotFoundError } = vi.
   return { mockLoadConfig, mockGetGlobalConfigPath, MockConfigNotFoundError };
 });
 
-vi.mock("@slievr/core", () => ({
+vi.mock("@made-by-moonlight/core", () => ({
   loadConfig: mockLoadConfig,
   getGlobalConfigPath: mockGetGlobalConfigPath,
   ConfigNotFoundError: MockConfigNotFoundError,

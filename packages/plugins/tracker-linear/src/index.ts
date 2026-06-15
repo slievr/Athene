@@ -18,7 +18,7 @@ import {
   type PluginModule,
   type ProjectConfig,
   type Tracker,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import type { Composio } from "@composio/core";
 
 // Module-level guard so we only emit tracker.dep_missing once per process

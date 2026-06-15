@@ -13,8 +13,8 @@ import {
   type PluginModule,
   getObservabilityBaseDir,
   recordActivityEvent,
-} from "@slievr/core";
-import { isRetryableHttpStatus, normalizeRetryConfig, validateUrl } from "@slievr/core/utils";
+} from "@made-by-moonlight/core";
+import { isRetryableHttpStatus, normalizeRetryConfig, validateUrl } from "@made-by-moonlight/core/utils";
 
 /**
  * Read the hooks token from OpenClaw's config. AO treats OpenClaw as the

@@ -11,7 +11,7 @@ import {
   type Workspace,
   type WorkspaceCreateConfig,
   type WorkspaceInfo,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 const execFileAsync = promisify(execFile);
 

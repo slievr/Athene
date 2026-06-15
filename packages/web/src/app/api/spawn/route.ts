@@ -1,5 +1,5 @@
 import { type NextRequest } from "next/server";
-import { recordActivityEvent } from "@slievr/core";
+import { recordActivityEvent } from "@made-by-moonlight/core";
 import { validateIdentifier, validateString, validateConfiguredProject } from "@/lib/validation";
 import { getServices } from "@/lib/services";
 import { sessionToDashboard } from "@/lib/serialize";

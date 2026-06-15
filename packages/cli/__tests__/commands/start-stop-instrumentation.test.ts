@@ -56,9 +56,9 @@ const {
   mockIsWindows: vi.fn(),
 }));
 
-vi.mock("@slievr/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/core", async (importOriginal) => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-  const actual = await importOriginal<typeof import("@slievr/core")>();
+  const actual = await importOriginal<typeof import("@made-by-moonlight/core")>();
   return {
     ...actual,
     findPidByPort: (...args: unknown[]) => mockFindPidByPort(...args),
@@ -194,7 +194,7 @@ vi.mock("../../src/lib/cli-errors.js", () => ({
   formatCommandError: vi.fn((err: unknown) => String(err)),
 }));
 
-import { recordActivityEvent } from "@slievr/core";
+import { recordActivityEvent } from "@made-by-moonlight/core";
 import { registerStart, registerStop } from "../../src/commands/start.js";
 
 const recordedEvents = (): Array<Record<string, unknown>> =>
@@ -243,9 +243,9 @@ describe("athene stop — activity events", () => {
     // Force a fast failure so the action exits quickly after emitting stop_invoked.
     mockGetRunning.mockResolvedValue(null);
     // Make loadConfig throw so we hit the outer catch
-    vi.doMock("@slievr/core", async (importOriginal) => {
+    vi.doMock("@made-by-moonlight/core", async (importOriginal) => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-      const actual = await importOriginal<typeof import("@slievr/core")>();
+      const actual = await importOriginal<typeof import("@made-by-moonlight/core")>();
       return {
         ...actual,
         findPidByPort: (...args: unknown[]) => mockFindPidByPort(...args),
@@ -278,13 +278,13 @@ describe("athene stop — activity events", () => {
       }),
     );
 
-    vi.doUnmock("@slievr/core");
+    vi.doUnmock("@made-by-moonlight/core");
   });
 
   it("emits cli.stop_failed when loadConfig throws", async () => {
-    vi.doMock("@slievr/core", async (importOriginal) => {
+    vi.doMock("@made-by-moonlight/core", async (importOriginal) => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-      const actual = await importOriginal<typeof import("@slievr/core")>();
+      const actual = await importOriginal<typeof import("@made-by-moonlight/core")>();
       return {
         ...actual,
         findPidByPort: (...args: unknown[]) => mockFindPidByPort(...args),
@@ -315,7 +315,7 @@ describe("athene stop — activity events", () => {
       }),
     );
 
-    vi.doUnmock("@slievr/core");
+    vi.doUnmock("@made-by-moonlight/core");
   });
 
   it("emits cli.daemon_killed when SIGTERM is sent to a running daemon", async () => {
@@ -328,9 +328,9 @@ describe("athene stop — activity events", () => {
     });
     mockSessionManager.list.mockResolvedValue([]);
 
-    vi.doMock("@slievr/core", async (importOriginal) => {
+    vi.doMock("@made-by-moonlight/core", async (importOriginal) => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-      const actual = await importOriginal<typeof import("@slievr/core")>();
+      const actual = await importOriginal<typeof import("@made-by-moonlight/core")>();
       return {
         ...actual,
         findPidByPort: (...args: unknown[]) => mockFindPidByPort(...args),
@@ -368,7 +368,7 @@ describe("athene stop — activity events", () => {
     );
     expect(mockKillProcessTree).toHaveBeenCalledWith(99999, "SIGTERM");
 
-    vi.doUnmock("@slievr/core");
+    vi.doUnmock("@made-by-moonlight/core");
   });
 
   it("emits cli.stop_session_failed when sm.kill throws during athene stop", async () => {
@@ -389,9 +389,9 @@ describe("athene stop — activity events", () => {
     mockSessionManager.kill.mockRejectedValue(new Error("kill timeout"));
     vi.spyOn(process, "kill").mockImplementation(() => true);
 
-    vi.doMock("@slievr/core", async (importOriginal) => {
+    vi.doMock("@made-by-moonlight/core", async (importOriginal) => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-      const actual = await importOriginal<typeof import("@slievr/core")>();
+      const actual = await importOriginal<typeof import("@made-by-moonlight/core")>();
       return {
         ...actual,
         findPidByPort: (...args: unknown[]) => mockFindPidByPort(...args),
@@ -432,7 +432,7 @@ describe("athene stop — activity events", () => {
       }),
     );
 
-    vi.doUnmock("@slievr/core");
+    vi.doUnmock("@made-by-moonlight/core");
   });
 
   it("emits cli.last_stop_write_failed when athene stop cannot persist restore state", async () => {
@@ -447,9 +447,9 @@ describe("athene stop — activity events", () => {
     mockSessionManager.kill.mockResolvedValue({ cleaned: true, alreadyTerminated: false });
     mockWriteLastStop.mockRejectedValue(new Error("last-stop lock busy"));
 
-    vi.doMock("@slievr/core", async (importOriginal) => {
+    vi.doMock("@made-by-moonlight/core", async (importOriginal) => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-      const actual = await importOriginal<typeof import("@slievr/core")>();
+      const actual = await importOriginal<typeof import("@made-by-moonlight/core")>();
       return {
         ...actual,
         findPidByPort: (...args: unknown[]) => mockFindPidByPort(...args),
@@ -503,7 +503,7 @@ describe("athene stop — activity events", () => {
     expect(logs.some((line) => line.includes("Could not list sessions"))).toBe(false);
     expect(logs.some((line) => line.includes("Could not write last-stop state"))).toBe(true);
 
-    vi.doUnmock("@slievr/core");
+    vi.doUnmock("@made-by-moonlight/core");
   });
 });
 

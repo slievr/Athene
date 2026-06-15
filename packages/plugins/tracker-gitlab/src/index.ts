@@ -12,9 +12,9 @@ import type {
   IssueUpdate,
   CreateIssueInput,
   ProjectConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
-import { glab, parseJSON, extractHost, stripHost } from "@slievr/plugin-scm-gitlab/glab-utils";
+import { glab, parseJSON, extractHost, stripHost } from "@made-by-moonlight/plugin-scm-gitlab/glab-utils";
 
 // ---------------------------------------------------------------------------
 // Helpers

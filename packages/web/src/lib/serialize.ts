@@ -17,7 +17,7 @@ import {
   type ProjectConfig,
   type OrchestratorConfig,
   type PluginRegistry,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import {
   type DashboardSession,
   type DashboardPR,

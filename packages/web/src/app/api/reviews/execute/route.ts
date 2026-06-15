@@ -4,7 +4,7 @@ import {
   createShellCodeReviewRunner,
   executeCodeReviewRun,
   SessionNotFoundError,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { getCorrelationId, jsonWithCorrelation } from "@/lib/observability";
 import { getServices } from "@/lib/services";
 import { validateConfiguredProject, validateIdentifier } from "@/lib/validation";

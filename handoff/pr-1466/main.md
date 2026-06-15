@@ -103,7 +103,7 @@ pnpm install
 pnpm build
 pnpm typecheck
 pnpm test
-pnpm --filter @slievr/web test
+pnpm --filter @made-by-moonlight/web test
 
 # Commit conventionally — fix:/refactor:/docs:/test:/feat:
 git commit -m "fix(core): address review on X"

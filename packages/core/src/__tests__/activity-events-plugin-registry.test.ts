@@ -102,7 +102,7 @@ describe("activity events: plugin-registry", () => {
     };
 
     await registry.loadBuiltins(undefined, async (pkg: string) => {
-      if (pkg === "@slievr/plugin-runtime-tmux") return fakeRuntime;
+      if (pkg === "@made-by-moonlight/plugin-runtime-tmux") return fakeRuntime;
       throw new Error(`Not found: ${pkg}`);
     });
 
@@ -116,7 +116,7 @@ describe("activity events: plugin-registry", () => {
     const fakePlugin = makePlugin("runtime", "tmux");
 
     await registry.loadBuiltins(undefined, async (pkg: string) => {
-      if (pkg === "@slievr/plugin-runtime-tmux") return fakePlugin;
+      if (pkg === "@made-by-moonlight/plugin-runtime-tmux") return fakePlugin;
       throw new Error(`Not found: ${pkg}`);
     });
 

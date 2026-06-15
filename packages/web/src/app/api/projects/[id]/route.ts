@@ -16,7 +16,7 @@ import {
   type OpenCodeSessionManager,
   type PluginRegistry,
   type LocalProjectConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { revalidatePath } from "next/cache";
 import { getServices, invalidatePortfolioServicesCache } from "@/lib/services";
 import { stopStaleWindowsPtyHosts } from "@/lib/windows-pty-cleanup";

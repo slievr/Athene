@@ -5,8 +5,8 @@
  * Everything else runs for real: config parsing, tool slug routing, message formatting.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { NotifyAction } from "@slievr/core";
-import composioPlugin from "@slievr/plugin-notifier-composio";
+import type { NotifyAction } from "@made-by-moonlight/core";
+import composioPlugin from "@made-by-moonlight/plugin-notifier-composio";
 import { makeEvent } from "./helpers/event-factory.js";
 
 const mockToolsExecute = vi.fn().mockResolvedValue({ successful: true });

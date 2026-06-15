@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import path from "node:path";
-import { isWindows } from "@slievr/core";
+import { isWindows } from "@made-by-moonlight/core";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   PathSecurityError,

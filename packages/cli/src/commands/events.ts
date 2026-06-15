@@ -10,7 +10,7 @@ import {
   type ActivityEventLevel,
   type ActivityEventKind,
   type ActivityEventSource,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 interface JsonEnvelope {
   version: number;

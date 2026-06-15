@@ -240,7 +240,7 @@ check_launcher() {
   fi
 
   if [ "$SCRIPT_LAYOUT" = "package-install" ]; then
-    warn "ao launcher is not in PATH. Fix: reinstall with npm install -g @slievr/athene@latest or run via pnpx @slievr/athene@latest"
+    warn "ao launcher is not in PATH. Fix: reinstall with npm install -g @made-by-moonlight/athene@latest or run via pnpx @made-by-moonlight/athene@latest"
     return
   fi
 
@@ -276,25 +276,25 @@ check_install_layout() {
     if [ -f "$REPO_ROOT/package.json" ]; then
       pass "CLI package metadata is present at $REPO_ROOT/package.json"
     else
-      fail "CLI package metadata is missing at $REPO_ROOT/package.json. Fix: reinstall @slievr/athene"
+      fail "CLI package metadata is missing at $REPO_ROOT/package.json. Fix: reinstall @made-by-moonlight/athene"
     fi
 
     if [ -f "$REPO_ROOT/dist/index.js" ]; then
       pass "packaged CLI entrypoint exists"
     else
-      fail "packaged CLI entrypoint is missing. Fix: reinstall @slievr/athene"
+      fail "packaged CLI entrypoint is missing. Fix: reinstall @made-by-moonlight/athene"
     fi
 
     if [ -f "$REPO_ROOT/dist/assets/scripts/ao-doctor.sh" ]; then
       pass "bundled doctor script is available"
     else
-      fail "bundled doctor script is missing. Fix: reinstall @slievr/athene"
+      fail "bundled doctor script is missing. Fix: reinstall @made-by-moonlight/athene"
     fi
 
     if [ -f "$REPO_ROOT/dist/assets/scripts/ao-update.sh" ]; then
       pass "bundled update script is available"
     else
-      fail "bundled update script is missing. Fix: reinstall @slievr/athene"
+      fail "bundled update script is missing. Fix: reinstall @made-by-moonlight/athene"
     fi
     return
   fi
@@ -308,27 +308,27 @@ check_install_layout() {
   if [ -f "$REPO_ROOT/packages/core/dist/index.js" ]; then
     pass "core package is built"
   else
-    fail "core package is not built. Fix: run pnpm --filter @slievr/core build"
+    fail "core package is not built. Fix: run pnpm --filter @made-by-moonlight/core build"
   fi
 
   if [ -f "$REPO_ROOT/packages/cli/dist/index.js" ]; then
     pass "CLI package is built"
   else
-    fail "CLI package is not built. Fix: run pnpm --filter @slievr/cli build"
+    fail "CLI package is not built. Fix: run pnpm --filter @made-by-moonlight/cli build"
   fi
 }
 
 check_runtime_sanity() {
   if [ "$SCRIPT_LAYOUT" = "package-install" ]; then
     if [ ! -f "$REPO_ROOT/dist/index.js" ]; then
-      fail "packaged CLI entrypoint is missing. Fix: reinstall @slievr/athene"
+      fail "packaged CLI entrypoint is missing. Fix: reinstall @made-by-moonlight/athene"
       return
     fi
 
     if node "$REPO_ROOT/dist/index.js" --version >/dev/null 2>&1; then
       pass "packaged CLI runtime sanity check passed (athene --version)"
     else
-      fail "packaged CLI runtime sanity check failed. Fix: reinstall @slievr/athene"
+      fail "packaged CLI runtime sanity check failed. Fix: reinstall @made-by-moonlight/athene"
     fi
     return
   fi
@@ -447,8 +447,8 @@ function resolveCoreEntrypoint() {
   const sourceCoreDir = path.resolve(repoRoot, "packages", "core");
   const coreDir =
     (fs.existsSync(path.join(sourceCoreDir, "package.json")) ? sourceCoreDir : null) ??
-    findPackageUp(repoRoot, "@slievr", "core") ??
-    resolveNodeModulesPackage(repoRoot, "@slievr", "core");
+    findPackageUp(repoRoot, "@made-by-moonlight", "core") ??
+    resolveNodeModulesPackage(repoRoot, "@made-by-moonlight", "core");
   if (!coreDir) return null;
 
   try {
@@ -480,8 +480,8 @@ async function getNodePtyPrebuildsSubdir() {
       const sourceWebDir = path.resolve(repoRoot, "packages", "web");
       const webDir =
         (fs.existsSync(path.join(sourceWebDir, "package.json")) ? sourceWebDir : null) ??
-        findPackageUp(repoRoot, "@slievr", "web") ??
-        resolveNodeModulesPackage(repoRoot, "@slievr", "web");
+        findPackageUp(repoRoot, "@made-by-moonlight", "web") ??
+        resolveNodeModulesPackage(repoRoot, "@made-by-moonlight", "web");
       if (!webDir) return null;
 
       const webNodePtyDir =

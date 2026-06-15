@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import chalk from "chalk";
-import { migrateStorage, recordActivityEvent, rollbackStorage } from "@slievr/core";
+import { migrateStorage, recordActivityEvent, rollbackStorage } from "@made-by-moonlight/core";
 
 export function registerMigrateStorage(program: Command): void {
   program

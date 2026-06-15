@@ -18,7 +18,7 @@ import {
   type OrchestratorConfig,
   type OrchestratorEvent,
   type PluginRegistry,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 export const NOTIFY_TEST_TEMPLATE_NAMES = [
   "basic",

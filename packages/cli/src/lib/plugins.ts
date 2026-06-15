@@ -1,12 +1,12 @@
-import type { Agent, OrchestratorConfig, PluginRegistry, SCM } from "@slievr/core";
-import claudeCodePlugin from "@slievr/plugin-agent-claude-code";
-import codexPlugin from "@slievr/plugin-agent-codex";
-import aiderPlugin from "@slievr/plugin-agent-aider";
-import cursorPlugin from "@slievr/plugin-agent-cursor";
-import kimicodePlugin from "@slievr/plugin-agent-kimicode";
-import grokPlugin from "@slievr/plugin-agent-grok";
-import opencodePlugin from "@slievr/plugin-agent-opencode";
-import githubSCMPlugin from "@slievr/plugin-scm-github";
+import type { Agent, OrchestratorConfig, PluginRegistry, SCM } from "@made-by-moonlight/core";
+import claudeCodePlugin from "@made-by-moonlight/plugin-agent-claude-code";
+import codexPlugin from "@made-by-moonlight/plugin-agent-codex";
+import aiderPlugin from "@made-by-moonlight/plugin-agent-aider";
+import cursorPlugin from "@made-by-moonlight/plugin-agent-cursor";
+import kimicodePlugin from "@made-by-moonlight/plugin-agent-kimicode";
+import grokPlugin from "@made-by-moonlight/plugin-agent-grok";
+import opencodePlugin from "@made-by-moonlight/plugin-agent-opencode";
+import githubSCMPlugin from "@made-by-moonlight/plugin-scm-github";
 
 const agentPlugins: Record<string, { create(): Agent }> = {
   "claude-code": claudeCodePlugin,

@@ -7,7 +7,7 @@ import {
   getDashboardNotificationStorePath,
   readDashboardNotifications,
   type OrchestratorEvent,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { create, manifest } from "./index.js";
 
 let tempDir: string | null = null;

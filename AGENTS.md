@@ -10,7 +10,7 @@ pnpm build                              # Build all packages
 pnpm dev                                # Web dashboard dev server (Next.js + 2 WS servers)
 pnpm typecheck                          # Type check all packages
 pnpm test                               # All tests (excludes web)
-pnpm --filter @slievr/web test     # Web tests
+pnpm --filter @made-by-moonlight/web test     # Web tests
 pnpm lint                               # ESLint check
 pnpm lint:fix                           # ESLint fix
 pnpm format                             # Prettier format
@@ -72,7 +72,7 @@ Agents working on this repo should use these checked-in skills:
 
 AO ships on macOS, Linux, **and Windows**. All three are first-class.
 
-**Golden Rule:** Never write `process.platform === "win32"` in new code. Use `isWindows()` from `@slievr/core`. If you need branching the helpers don't cover, add it to `packages/core/src/platform.ts` — never inline at the call site. Inline checks bypass the central platform-mock test pattern and become silent regressions.
+**Golden Rule:** Never write `process.platform === "win32"` in new code. Use `isWindows()` from `@made-by-moonlight/core`. If you need branching the helpers don't cover, add it to `packages/core/src/platform.ts` — never inline at the call site. Inline checks bypass the central platform-mock test pattern and become silent regressions.
 
 **Read `docs/CROSS_PLATFORM.md` before merging any change that touches:** process spawning/killing/signalling, file paths, shell commands, network binding, POSIX shell-outs (`tmux`, `lsof`, etc.), runtime/agent/workspace plugins, agent-plugin internals (`setupPathWrapperWorkspace`, `getActivityState`, `formatLaunchCommand`, `isProcessRunning`, `detect()`), the Windows pty-host pipe protocol or registry, or any new `process.platform === "win32"` check.
 

@@ -4,7 +4,7 @@ import {
   isOpenCodeSessionManager,
   readAgentReportAuditTrailAsync,
   updateMetadata,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { getServices } from "@/lib/services";
 import {
   sessionToDashboard,

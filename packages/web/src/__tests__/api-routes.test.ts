@@ -11,7 +11,7 @@ import {
   type OrchestratorConfig,
   type PluginRegistry,
   type SCM,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import * as serialize from "@/lib/serialize";
 import { getSCM } from "@/lib/services";
 
@@ -217,7 +217,7 @@ vi.mock("@/lib/services", () => ({
 // the real module first so the rest of the test file (types, errors, etc.)
 // keeps working. Factory must self-contain its mocks because vi.mock is
 // hoisted above any module-level declarations.
-vi.mock("@slievr/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/core", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,

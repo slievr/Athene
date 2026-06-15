@@ -11,7 +11,7 @@
 Spawn parallel AI coding agents, each in its own git worktree. Agents autonomously fix CI failures, address review comments, and open PRs — you supervise from one dashboard.
 
 [![GitHub stars](https://img.shields.io/github/stars/slievr/Athene?style=flat-square)](https://github.com/slievr/Athene/stargazers)
-[![npm version](https://img.shields.io/npm/v/%40aoagents%2Fao?style=flat-square)](https://www.npmjs.com/package/@slievr/athene)
+[![npm version](https://img.shields.io/npm/v/%40aoagents%2Fao?style=flat-square)](https://www.npmjs.com/package/@made-by-moonlight/athene)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![PRs merged](https://img.shields.io/badge/PRs_merged-61-brightgreen?style=flat-square)](https://github.com/slievr/Athene/pulls?q=is%3Amerged)
 [![Tests](https://img.shields.io/badge/test_cases-3%2C288-blue?style=flat-square)](https://github.com/slievr/Athene/releases/tag/metrics-v1)
@@ -52,11 +52,11 @@ Athene manages fleets of AI coding agents working in parallel on your codebase. 
 ### Install
 
 ```bash
-npm install -g @slievr/athene
+npm install -g @made-by-moonlight/athene
 ```
 
-> **Nightly builds** (latest `main`, daily Fri–Tue): `npm install -g @slievr/athene@nightly`
-> Back to stable: `npm install -g @slievr/athene@latest`
+> **Nightly builds** (latest `main`, daily Fri–Tue): `npm install -g @made-by-moonlight/athene@nightly`
+> Back to stable: `npm install -g @made-by-moonlight/athene@latest`
 
 <details>
 <summary>Permission denied? Install from source?</summary>

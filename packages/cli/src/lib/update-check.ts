@@ -21,7 +21,7 @@ import {
   loadGlobalConfig,
   type UpdateChannel,
   type InstallMethodOverride,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { getCliVersion } from "../options/version.js";
 
 // ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ export interface CacheData {
 // ---------------------------------------------------------------------------
 
 /** Full package document — includes `dist-tags` for channel resolution. */
-const REGISTRY_PACKAGE_URL = "https://registry.npmjs.org/@slievr%2Fathene";
+const REGISTRY_PACKAGE_URL = "https://registry.npmjs.org/@made-by-moonlight%2Fathene";
 const FETCH_TIMEOUT_MS = 3000;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const DEFAULT_GIT_REMOTE = "origin";
@@ -140,7 +140,7 @@ export function isAgentOrchestratorRepoRoot(root: string): boolean {
     return false;
   }
 
-  return readPackageName(resolve(root, "packages", "ao", "package.json")) === "@slievr/athene";
+  return readPackageName(resolve(root, "packages", "ao", "package.json")) === "@made-by-moonlight/athene";
 }
 
 export function isAoCliPackageRoot(root: string): boolean {
@@ -148,7 +148,7 @@ export function isAoCliPackageRoot(root: string): boolean {
     return false;
   }
 
-  return readPackageName(resolve(root, "package.json")) === "@slievr/cli";
+  return readPackageName(resolve(root, "package.json")) === "@made-by-moonlight/cli";
 }
 
 /**
@@ -210,7 +210,7 @@ export function detectInstallMethod(): InstallMethod {
 // ---------------------------------------------------------------------------
 
 /**
- * Resolve the currently-installed `@slievr/athene` version.
+ * Resolve the currently-installed `@made-by-moonlight/athene` version.
  *
  * Delegates to core's `getInstalledAoVersion` (single source of truth shared
  * with the dashboard) and falls back to the CLI's own embedded version when
@@ -264,15 +264,15 @@ export function getUpdateCommand(method: InstallMethod, channel: UpdateChannel =
     case "git":
       return "athene update";
     case "npm-global":
-      return `npm install -g @slievr/athene@${tag}`;
+      return `npm install -g @made-by-moonlight/athene@${tag}`;
     case "pnpm-global":
-      return `pnpm add -g @slievr/athene@${tag}`;
+      return `pnpm add -g @made-by-moonlight/athene@${tag}`;
     case "bun-global":
-      return `bun add -g @slievr/athene@${tag}`;
+      return `bun add -g @made-by-moonlight/athene@${tag}`;
     case "homebrew":
       return "brew upgrade ao";
     case "unknown":
-      return `npm install -g @slievr/athene@${tag}`;
+      return `npm install -g @made-by-moonlight/athene@${tag}`;
   }
 }
 
@@ -428,7 +428,7 @@ export async function fetchGitLatestState(
 // ---------------------------------------------------------------------------
 
 /**
- * Fetch the latest version of @slievr/athene for the given dist-tag.
+ * Fetch the latest version of @made-by-moonlight/athene for the given dist-tag.
  *
  * Hits the full package document (not the per-tag URL) so we get all dist-tags
  * in one round trip. Channels:
@@ -627,7 +627,7 @@ export function scheduleBackgroundRefresh(): void {
 /**
  * Re-export the core implementation so CLI consumers (and the existing test
  * suite) keep importing from this module while the dashboard imports the same
- * function from `@slievr/core` — single source of truth for the prerelease
+ * function from `@made-by-moonlight/core` — single source of truth for the prerelease
  * comparison rules.
  */
 export const isVersionOutdated = coreIsVersionOutdated;

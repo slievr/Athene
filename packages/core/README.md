@@ -1,4 +1,4 @@
-# @slievr/core
+# @made-by-moonlight/core
 
 Core services, types, and configuration for the Athene system.
 
@@ -128,7 +128,7 @@ Loads and validates `agent-orchestrator.yaml`:
 
 1. Edit `src/types.ts` → `Session` interface
 2. Edit `src/services/session-manager.ts` → initialize field in `spawn()`
-3. Rebuild: `pnpm --filter @slievr/core build`
+3. Rebuild: `pnpm --filter @made-by-moonlight/core build`
 
 ### Adding an Event Type
 
@@ -144,7 +144,7 @@ Loads and validates `agent-orchestrator.yaml`:
 
 ### Feedback Tools (v1)
 
-`@slievr/core` exports two structured feedback tool contracts:
+`@made-by-moonlight/core` exports two structured feedback tool contracts:
 
 - `bug_report`
 - `improvement_suggestion`
@@ -161,7 +161,7 @@ Both share the same required input fields:
 Example:
 
 ```ts
-import { FEEDBACK_TOOL_NAMES, FeedbackReportStore, getFeedbackReportsDir } from "@slievr/core";
+import { FEEDBACK_TOOL_NAMES, FeedbackReportStore, getFeedbackReportsDir } from "@made-by-moonlight/core";
 
 const reportsDir = getFeedbackReportsDir(configPath, projectPath);
 const store = new FeedbackReportStore(reportsDir);
@@ -191,13 +191,13 @@ Migration notes:
 
 ```bash
 # Run all core tests
-pnpm --filter @slievr/core test
+pnpm --filter @made-by-moonlight/core test
 
 # Run in watch mode
-pnpm --filter @slievr/core test -- --watch
+pnpm --filter @made-by-moonlight/core test -- --watch
 
 # Run specific test
-pnpm --filter @slievr/core test -- session-manager.test.ts
+pnpm --filter @made-by-moonlight/core test -- session-manager.test.ts
 ```
 
 Tests are in `src/__tests__/`:
@@ -212,10 +212,10 @@ Tests are in `src/__tests__/`:
 
 ```bash
 # Build core
-pnpm --filter @slievr/core build
+pnpm --filter @made-by-moonlight/core build
 
 # Typecheck
-pnpm --filter @slievr/core typecheck
+pnpm --filter @made-by-moonlight/core typecheck
 ```
 
 This package is a dependency of all other packages. Build it first if working on the codebase.

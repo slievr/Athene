@@ -47,7 +47,7 @@ vi.mock("../../src/lib/session-utils.js", () => ({
   findProjectForSession: () => null,
 }));
 
-vi.mock("@slievr/core", () => ({
+vi.mock("@made-by-moonlight/core", () => ({
   loadConfig: () => {
     if (!mockConfigRef.current) {
       throw new Error("no config");

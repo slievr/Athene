@@ -26,7 +26,7 @@ import {
   type WorkspaceHooksConfig,
   type OpenCodeAgentConfig,
   type OpenCodeSessionListEntry,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { execFile, execFileSync } from "node:child_process";
 import { promisify } from "node:util";
 
@@ -56,7 +56,7 @@ function parseUpdatedTimestamp(updated: string | number | undefined): Date | nul
   return new Date(parsedMs);
 }
 
-// Re-export for backward compat — see @slievr/core/opencode-shared.
+// Re-export for backward compat — see @made-by-moonlight/core/opencode-shared.
 export { resetOpenCodeSessionListCache };
 
 /**

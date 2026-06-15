@@ -6,7 +6,7 @@ import {
   findProjectForSession,
   isOrchestratorSessionName,
 } from "../../src/lib/session-utils.js";
-import type { OrchestratorConfig } from "@slievr/core";
+import type { OrchestratorConfig } from "@made-by-moonlight/core";
 
 describe("escapeRegex", () => {
   it("escapes dots, asterisks, plus, question marks", () => {

@@ -1,4 +1,4 @@
-# @slievr/plugin-agent-claude-code
+# @made-by-moonlight/plugin-agent-claude-code
 
 ## 0.9.1
 
@@ -6,7 +6,7 @@
 
 - 2d4c457: Fix canary nightly to include all publishable packages and fix Next.js import.meta.url build path issue
 - Updated dependencies [2d4c457]
-  - @slievr/core@0.9.1
+  - @made-by-moonlight/core@0.9.1
 
 ## 0.9.0
 
@@ -24,7 +24,7 @@
 
   This release pivots:
 
-  **`@slievr/plugin-agent-claude-code`** now installs two scripts per
+  **`@made-by-moonlight/plugin-agent-claude-code`** now installs two scripts per
   workspace:
   - `metadata-updater` — unchanged; PostToolUse(Bash) extracts gh/git
     side-effects (PR URL, branch, merge status).
@@ -46,7 +46,7 @@
   stub for Claude — the JSONL-backed cascade is the only source of truth
   for active / ready / waiting_input / blocked.
 
-  **`@slievr/core`** extends `ActivityLogEntry.source` and
+  **`@made-by-moonlight/core`** extends `ActivityLogEntry.source` and
   `ActivitySignalSource` with a `"hook"` value so the new entries are
   parseable and their provenance is visible in telemetry. No downstream
   consumer needs changes — the cascade has always read whatever source
@@ -82,7 +82,7 @@
 - Updated dependencies [94981dc]
 - Updated dependencies [2980570]
 - Updated dependencies [d5d0f07]
-  - @slievr/core@0.9.0
+  - @made-by-moonlight/core@0.9.0
 
 ## 0.8.0
 
@@ -93,7 +93,7 @@
 ### Patch Changes
 
 - Updated dependencies
-  - @slievr/core@0.8.0
+  - @made-by-moonlight/core@0.8.0
 
 ## 0.7.0
 
@@ -135,7 +135,7 @@
 - Updated dependencies [0f5ae0b]
 - Updated dependencies [fe33bb7]
 - Updated dependencies [7c46dc9]
-  - @slievr/core@0.7.0
+  - @made-by-moonlight/core@0.7.0
 
 ## 0.6.0
 
@@ -145,14 +145,14 @@
 - Updated dependencies [40aeb78]
 - Updated dependencies
 - Updated dependencies
-  - @slievr/core@0.6.0
+  - @made-by-moonlight/core@0.6.0
 
 ## 0.5.0
 
 ### Patch Changes
 
 - Updated dependencies [dd07b6b]
-  - @slievr/core@0.5.0
+  - @made-by-moonlight/core@0.5.0
 
 ## 0.4.0
 
@@ -180,7 +180,7 @@
 - Updated dependencies [a45eb32]
 - Updated dependencies [7072143]
 - Updated dependencies [ed2dcea]
-  - @slievr/core@0.4.0
+  - @made-by-moonlight/core@0.4.0
 
 ## 0.2.0
 

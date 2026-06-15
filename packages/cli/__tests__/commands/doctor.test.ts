@@ -32,14 +32,14 @@ const {
   mockGetCurrentVersion: vi.fn(() => "0.2.2"),
   mockReadCachedUpdateInfo: vi.fn(() => null),
   mockDetectInstallMethod: vi.fn(() => "unknown"),
-  mockGetUpdateCommand: vi.fn(() => "npm install -g @slievr/athene@latest"),
+  mockGetUpdateCommand: vi.fn(() => "npm install -g @made-by-moonlight/athene@latest"),
 }));
 
 vi.mock("../../src/lib/script-runner.js", () => ({
   runRepoScript: (...args: unknown[]) => mockRunRepoScript(...args),
 }));
 
-vi.mock("@slievr/core", () => ({
+vi.mock("@made-by-moonlight/core", () => ({
   buildCIFailureNotificationData: () => ({ schemaVersion: 3 }),
   buildPRStateNotificationData: () => ({ schemaVersion: 3 }),
   buildReactionNotificationData: () => ({ schemaVersion: 3 }),

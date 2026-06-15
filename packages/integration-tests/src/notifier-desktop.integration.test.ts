@@ -5,7 +5,7 @@
  * Everything else runs for real: config parsing, escaping chains, formatting.
  */
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
-import type { NotifyAction } from "@slievr/core";
+import type { NotifyAction } from "@made-by-moonlight/core";
 import { makeEvent } from "./helpers/event-factory.js";
 
 vi.mock("node:child_process", () => ({
@@ -37,7 +37,7 @@ function setProcessPlatform(value: NodeJS.Platform): void {
 }
 
 // Import the full plugin module — config parsing, escaping, formatting all run for real
-import desktopPlugin from "@slievr/plugin-notifier-desktop";
+import desktopPlugin from "@made-by-moonlight/plugin-notifier-desktop";
 
 describe("notifier-desktop integration", () => {
   beforeEach(() => {

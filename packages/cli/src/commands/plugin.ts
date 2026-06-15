@@ -10,7 +10,7 @@ import {
   type PluginSlot,
   type InstalledPluginConfig,
   type OrchestratorConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { parseDocument } from "yaml";
 import {
   buildPluginDescriptor,

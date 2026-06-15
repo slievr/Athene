@@ -9,7 +9,7 @@ import {
   type EventPriority,
   type NotificationDataV3,
   CI_STATUS,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 export const manifest = {
   name: "slack",

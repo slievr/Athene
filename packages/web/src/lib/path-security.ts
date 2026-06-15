@@ -1,7 +1,7 @@
 import { lstatSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
-import { isWindows } from "@slievr/core";
+import { isWindows } from "@made-by-moonlight/core";
 
 const RESTRICTED_SINGLE_SEGMENTS = new Set([
   ".ssh",

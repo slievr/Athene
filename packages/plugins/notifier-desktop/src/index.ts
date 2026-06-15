@@ -12,7 +12,7 @@ import {
   type NotifyAction,
   type EventPriority,
   type NotificationDataV3,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 function xmlEscape(s: string): string {
   return s
@@ -52,7 +52,7 @@ export const manifest = {
 };
 
 // Re-export for backwards compatibility
-export { escapeAppleScript } from "@slievr/core";
+export { escapeAppleScript } from "@made-by-moonlight/core";
 
 type DesktopBackend = "auto" | "ao-app" | "terminal-notifier" | "osascript";
 const PLACEHOLDER_MARKER_NAME = "ao-notifier-placeholder";

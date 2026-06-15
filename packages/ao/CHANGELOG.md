@@ -1,4 +1,4 @@
-# @slievr/athene
+# @made-by-moonlight/athene
 
 ## 0.9.2
 
@@ -6,7 +6,7 @@
 
 - 2f9717f: Load agent-grok package metadata through JSON import attributes so packaged web and CLI runtimes do not keep a publish-host package.json lookup. This also raises the Node.js engine floor to 20.18.3+, where JSON modules with import attributes are non-experimental.
 - Updated dependencies [2f9717f]
-  - @slievr/cli@0.9.2
+  - @made-by-moonlight/cli@0.9.2
 
 ## 0.9.1
 
@@ -14,7 +14,7 @@
 
 - 2d4c457: Fix canary nightly to include all publishable packages and fix Next.js import.meta.url build path issue
 - Updated dependencies [2d4c457]
-  - @slievr/cli@0.9.1
+  - @made-by-moonlight/cli@0.9.1
 
 ## 0.9.0
 
@@ -26,13 +26,13 @@
 - Updated dependencies [fcedb25]
 - Updated dependencies [2980570]
 - Updated dependencies [d5d0f07]
-  - @slievr/cli@0.9.0
+  - @made-by-moonlight/cli@0.9.0
 
 ## 0.8.0
 
 ### Patch Changes
 
-- @slievr/cli@0.8.0
+- @made-by-moonlight/cli@0.8.0
 
 ## 0.7.0
 
@@ -77,9 +77,9 @@
     Bake window (Wed–Thu) pauses scheduled nightlies; the captain re-cuts via
     workflow*dispatch when a fix lands. Stable `release.yml` publishes via
     `changesets/action`. `.changeset/config.json` adds the snapshot template
-    (`{tag}-{commit}`). `@slievr/web` stays in the linked group and ships
-    alongside `@slievr/cli` (it's a workspace:* runtime dep, so marking it
-    private would 404 every `npm install -g @slievr/athene` after publish).
+    (`{tag}-{commit}`). `@made-by-moonlight/web` stays in the linked group and ships
+    alongside `@made-by-moonlight/cli` (it's a workspace:* runtime dep, so marking it
+    private would 404 every `npm install -g @made-by-moonlight/athene` after publish).
     `scripts/check-publishable-deps.mjs` runs in both release.yml and canary.yml
     before the publish step and fails CI if a publishable package depends on a
     `private: true` package via workspace:\_.
@@ -101,7 +101,7 @@ in `POST /api/update` so the dashboard returns a structured 409.
     top of the dashboard when `isOutdated`. Click POSTs to `/api/update`;
     dismissal persists per-version in `localStorage`.
   - **Bun + Homebrew detection.** New install-method classifiers for
-    `~/.bun/install/global/` (auto-installs `bun add -g @slievr/athene@<channel>`)
+    `~/.bun/install/global/` (auto-installs `bun add -g @made-by-moonlight/athene@<channel>`)
     and `/Cellar/ao/` (notice only — `brew upgrade ao` to avoid clobbering
     brew's symlinks). `installMethod` config field overrides path detection.
 
@@ -114,21 +114,21 @@ in `POST /api/update` so the dashboard returns a structured 409.
 - Updated dependencies [0f5ae0b]
 - Updated dependencies [fe33bb7]
 - Updated dependencies [7c46dc9]
-  - @slievr/cli@0.7.0
+  - @made-by-moonlight/cli@0.7.0
 
 ## 0.6.0
 
 ### Patch Changes
 
 - Updated dependencies [0f539a3]
-  - @slievr/cli@0.6.0
+  - @made-by-moonlight/cli@0.6.0
 
 ## 0.5.0
 
 ### Patch Changes
 
 - Updated dependencies [3a69722]
-  - @slievr/cli@0.5.0
+  - @made-by-moonlight/cli@0.5.0
 
 ## 0.4.0
 
@@ -144,7 +144,7 @@ in `POST /api/update` so the dashboard returns a structured 409.
 - Updated dependencies [c8af50f]
 - Updated dependencies [bcdda4b]
 - Updated dependencies [1cbf657]
-  - @slievr/cli@0.4.0
+  - @made-by-moonlight/cli@0.4.0
 
 ## 0.2.2
 

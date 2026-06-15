@@ -1,5 +1,5 @@
 {
-  "name": "@slievr/plugin-tracker-linear",
+  "name": "@made-by-moonlight/plugin-tracker-linear",
   "version": "0.9.1",
   "description": "Tracker plugin: Linear",
   "license": "MIT",
@@ -34,7 +34,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@slievr/core": "workspace:*"
+    "@made-by-moonlight/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.2.3",

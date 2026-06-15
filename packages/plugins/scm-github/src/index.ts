@@ -34,7 +34,7 @@ import {
   type MergeReadiness,
   type PREnrichmentData,
   type BatchObserver,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import {
   enrichSessionsPRBatch as enrichSessionsPRBatchImpl,
   checkReviewCommentsETag,
@@ -44,7 +44,7 @@ import {
   parseWebhookBranchRef,
   parseWebhookJsonObject,
   parseWebhookTimestamp,
-} from "@slievr/core/scm-webhook-utils";
+} from "@made-by-moonlight/core/scm-webhook-utils";
 
 const execFileAsync = promisify(execFile);
 

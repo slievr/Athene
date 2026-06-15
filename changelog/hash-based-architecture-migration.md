@@ -203,7 +203,7 @@ import {
   generateConfigHash,
   generateInstanceId,
   validateAndStoreOrigin,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 // Calculate paths dynamically
 const sessionsDir = getSessionsDir(configPath, projectPath);

@@ -10,7 +10,7 @@ import {
   type OrchestratorConfig,
   type Session,
   type SessionManager,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 const { mockConfig, mockSessionManager } = vi.hoisted(() => ({
   mockConfig: {

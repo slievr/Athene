@@ -17,7 +17,7 @@ import {
   type ActivityState,
   type Session,
   type RuntimeHandle,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 // Mock homedir() so getActivityState looks in our temp dir
 vi.mock("node:os", async (importOriginal) => {

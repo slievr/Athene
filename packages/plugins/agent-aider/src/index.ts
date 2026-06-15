@@ -20,7 +20,7 @@ import {
   type RuntimeHandle,
   type Session,
   type WorkspaceHooksConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { execFile, execFileSync } from "node:child_process";
 import { promisify } from "node:util";
 import { stat, access, readFile } from "node:fs/promises";

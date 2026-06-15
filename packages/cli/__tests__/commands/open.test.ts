@@ -50,7 +50,7 @@ vi.mock("../../src/lib/running-state.js", () => ({
   getRunning: async () => mockRunningRef.current,
 }));
 
-vi.mock("@slievr/core", () => ({
+vi.mock("@made-by-moonlight/core", () => ({
   loadConfig: () => mockConfigRef.current,
   isMac: () => mockIsMacRef.current,
   isWindows: () => mockIsWindowsRef.current,

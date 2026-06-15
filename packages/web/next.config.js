@@ -9,19 +9,19 @@ const homeDir = os.homedir().replace(/\\/g, "/");
 const nextConfig = {
   outputFileTracingRoot: path.join(__dirname, "../.."),
   transpilePackages: [
-    "@slievr/plugin-agent-claude-code",
-    "@slievr/plugin-agent-codex",
-    "@slievr/plugin-agent-opencode",
-    "@slievr/plugin-runtime-tmux",
-    "@slievr/plugin-scm-github",
-    "@slievr/plugin-tracker-github",
-    "@slievr/plugin-tracker-linear",
-    "@slievr/plugin-workspace-worktree",
+    "@made-by-moonlight/plugin-agent-claude-code",
+    "@made-by-moonlight/plugin-agent-codex",
+    "@made-by-moonlight/plugin-agent-opencode",
+    "@made-by-moonlight/plugin-runtime-tmux",
+    "@made-by-moonlight/plugin-scm-github",
+    "@made-by-moonlight/plugin-tracker-github",
+    "@made-by-moonlight/plugin-tracker-linear",
+    "@made-by-moonlight/plugin-workspace-worktree",
   ],
   serverExternalPackages: [
     "yaml",
     "zod",
-    "@slievr/core",
+    "@made-by-moonlight/core",
     "better-sqlite3",
   ],
   webpack: (config, { isServer }) => {

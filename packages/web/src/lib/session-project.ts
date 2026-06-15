@@ -1,4 +1,4 @@
-import type { OrchestratorConfig } from "@slievr/core";
+import type { OrchestratorConfig } from "@made-by-moonlight/core";
 
 export function resolveProjectIdForSessionId(
   config: OrchestratorConfig,

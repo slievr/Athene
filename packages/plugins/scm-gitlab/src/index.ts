@@ -26,13 +26,13 @@ import {
   type ReviewSummary,
   type ReviewThreadsResult,
   type MergeReadiness,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import {
   getWebhookHeader,
   parseWebhookBranchRef,
   parseWebhookJsonObject,
   parseWebhookTimestamp,
-} from "@slievr/core/scm-webhook-utils";
+} from "@made-by-moonlight/core/scm-webhook-utils";
 
 import { glab, parseJSON, stripHost } from "./glab-utils.js";
 

@@ -18,7 +18,7 @@ import {
   markDaemonShutdownHandlerInstalled,
   recordActivityEvent,
   sweepDaemonChildren,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { stopBunTmpJanitor } from "./bun-tmp-janitor.js";
 import { getSessionManager } from "./create-session-manager.js";
 import { stopAllLifecycleWorkers } from "./lifecycle-service.js";

@@ -27,7 +27,7 @@ This document defines intended behavior for Athene when `agent: opencode` is sel
 ## 1) Plugin Resolution
 
 - CLI must resolve `opencode` via `getAgentByName` and `getAgent` without error.
-- Core plugin registry built-ins must include `@slievr/plugin-agent-opencode` under slot `agent`.
+- Core plugin registry built-ins must include `@made-by-moonlight/plugin-agent-opencode` under slot `agent`.
 - Expected failure mode: unknown agent names fail fast with `Unknown agent plugin: <name>`.
 
 ## 2) `athene start` (orchestrator session)
@@ -104,7 +104,7 @@ This document defines intended behavior for Athene when `agent: opencode` is sel
 ## Revalidation Baseline (Current)
 
 - Unit/integration validation that should remain green for OpenCode workflows:
-  - `@slievr/plugin-agent-opencode` tests.
-  - `@slievr/core` tests: `session-manager.test.ts`, `plugin-registry.test.ts`.
-  - `@slievr/cli` tests: `plugins.test.ts`, `start.test.ts`, `session.test.ts`, `send.test.ts`, `status.test.ts`.
-  - `@slievr/integration-tests` with `test:integration` (includes `agent-opencode.integration.test.ts`, conditionally skipped tests where prerequisites are unavailable).
+  - `@made-by-moonlight/plugin-agent-opencode` tests.
+  - `@made-by-moonlight/core` tests: `session-manager.test.ts`, `plugin-registry.test.ts`.
+  - `@made-by-moonlight/cli` tests: `plugins.test.ts`, `start.test.ts`, `session.test.ts`, `send.test.ts`, `status.test.ts`.
+  - `@made-by-moonlight/integration-tests` with `test:integration` (includes `agent-opencode.integration.test.ts`, conditionally skipped tests where prerequisites are unavailable).

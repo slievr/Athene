@@ -23,7 +23,7 @@ import {
   loadConfig,
   normalizeAgentReportedState,
   type AgentReportedState,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { getSessionManager } from "../lib/create-session-manager.js";
 
 function resolveSessionId(explicit: string | undefined): string {

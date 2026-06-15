@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { recordActivityEvent } from "@slievr/core";
+import { recordActivityEvent } from "@made-by-moonlight/core";
 import {
   DesktopSetupError,
   runDesktopSetupAction,

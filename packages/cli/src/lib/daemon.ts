@@ -20,7 +20,7 @@
  */
 
 import chalk from "chalk";
-import { killProcessTree, sweepDaemonChildren } from "@slievr/core";
+import { killProcessTree, sweepDaemonChildren } from "@made-by-moonlight/core";
 import { unregister, waitForExit, type RunningState } from "./running-state.js";
 
 /**

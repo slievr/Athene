@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { LifecycleManager, OrchestratorConfig } from "@slievr/core";
+import type { LifecycleManager, OrchestratorConfig } from "@made-by-moonlight/core";
 
 const mockGetLifecycleManager = vi.fn();
 

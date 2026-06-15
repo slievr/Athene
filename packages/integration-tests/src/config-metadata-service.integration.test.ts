@@ -21,7 +21,7 @@ import {
   deleteMetadata,
   listMetadata,
   validateAndStoreOrigin,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 describe("config → metadata service integration (real filesystem)", () => {
   const storageKeyA = "111111111111";

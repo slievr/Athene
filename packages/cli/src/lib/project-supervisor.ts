@@ -7,7 +7,7 @@ import {
   ConfigNotFoundError,
   type OrchestratorConfig,
   type ProjectObserver,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { getSessionManager } from "./create-session-manager.js";
 import {
   ensureLifecycleWorker,

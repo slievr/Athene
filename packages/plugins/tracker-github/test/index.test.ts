@@ -17,7 +17,7 @@ import {
   _clearProcessCacheForTests,
   type PreflightContext,
   type ProjectConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 // ---------------------------------------------------------------------------
 // Fixtures

@@ -10,7 +10,7 @@ import { readdirSync, existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { isWindows } from "@slievr/core";
+import { isWindows } from "@made-by-moonlight/core";
 
 const execFileAsync = promisify(execFile);
 

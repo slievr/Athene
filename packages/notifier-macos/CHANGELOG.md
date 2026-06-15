@@ -1,4 +1,4 @@
-# @slievr/notifier-macos
+# @made-by-moonlight/notifier-macos
 
 ## 0.9.1
 

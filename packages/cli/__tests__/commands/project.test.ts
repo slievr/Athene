@@ -19,7 +19,7 @@ const {
   mockLoadLocalProjectConfig: vi.fn(),
 }));
 
-vi.mock("@slievr/core", () => ({
+vi.mock("@made-by-moonlight/core", () => ({
   isPortfolioEnabled: () => true,
   getPortfolio: mockGetPortfolio,
   getPortfolioSessionCounts: mockGetPortfolioSessionCounts,

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { recordActivityEvent } from "@slievr/core";
+import { recordActivityEvent } from "@made-by-moonlight/core";
 import { getServices } from "@/lib/services";
 import {
   buildWebhookRequest,

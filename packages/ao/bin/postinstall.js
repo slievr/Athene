@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Postinstall script for @slievr/athene (npm/yarn global installs).
+ * Postinstall script for @made-by-moonlight/athene (npm/yarn global installs).
  *
  * 1. Fixes node-pty's spawn-helper binary missing the execute bit.
  *    node-pty@1.1.0 ships spawn-helper without +x; the monorepo works around
@@ -50,23 +50,23 @@ export function resolveNodeModulesPackage(fromDir, ...segments) {
 }
 
 export function findWebDir() {
-  const directWebDir = findPackageUp(__dirname, "@slievr", "web");
+  const directWebDir = findPackageUp(__dirname, "@made-by-moonlight", "web");
   if (directWebDir) return directWebDir;
 
-  const cliDir = findPackageUp(__dirname, "@slievr", "cli");
+  const cliDir = findPackageUp(__dirname, "@made-by-moonlight", "cli");
   if (!cliDir) return null;
 
-  return resolveNodeModulesPackage(cliDir, "@slievr", "web");
+  return resolveNodeModulesPackage(cliDir, "@made-by-moonlight", "web");
 }
 
 export function findBetterSqlite3Dir() {
   const directBetterSqlite3Dir = findPackageUp(__dirname, "better-sqlite3");
   if (directBetterSqlite3Dir) return directBetterSqlite3Dir;
 
-  const cliDir = findPackageUp(__dirname, "@slievr", "cli");
+  const cliDir = findPackageUp(__dirname, "@made-by-moonlight", "cli");
   if (!cliDir) return null;
 
-  const coreDir = resolveNodeModulesPackage(cliDir, "@slievr", "core");
+  const coreDir = resolveNodeModulesPackage(cliDir, "@made-by-moonlight", "core");
   if (!coreDir) return null;
 
   return (

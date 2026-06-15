@@ -1,5 +1,5 @@
 {
-  "name": "@slievr/athene",
+  "name": "@made-by-moonlight/athene",
   "version": "0.9.2",
   "description": "Orchestrate parallel AI coding agents — global CLI wrapper",
   "keywords": [
@@ -42,7 +42,7 @@
     "node": ">=20.18.3"
   },
   "dependencies": {
-    "@slievr/cli": "workspace:*"
+    "@made-by-moonlight/cli": "workspace:*"
   },
   "publishConfig": {
     "access": "public",

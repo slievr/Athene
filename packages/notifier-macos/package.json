@@ -1,5 +1,5 @@
 {
-  "name": "@slievr/notifier-macos",
+  "name": "@made-by-moonlight/notifier-macos",
   "version": "0.9.1",
   "description": "Native macOS notification helper app for Athene",
   "license": "MIT",

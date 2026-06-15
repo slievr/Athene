@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { AgentLaunchConfig, RuntimeHandle, Session } from "@slievr/core";
+import type { AgentLaunchConfig, RuntimeHandle, Session } from "@made-by-moonlight/core";
 import packageJson from "../../package.json" with { type: "json" };
 
-const PACKAGE_NAME_PREFIX = "@slievr/plugin-agent-";
+const PACKAGE_NAME_PREFIX = "@made-by-moonlight/plugin-agent-";
 const pluginName = packageJson.name.startsWith(PACKAGE_NAME_PREFIX)
   ? packageJson.name.slice(PACKAGE_NAME_PREFIX.length)
   : packageJson.name;
@@ -23,7 +23,7 @@ const {
   mockIsWindows: vi.fn(() => false),
 }));
 
-vi.mock("@slievr/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/core", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,

@@ -4,7 +4,7 @@ import {
   type Session,
   type RuntimeHandle,
   type AgentLaunchConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 // Mock fs/promises for getSessionInfo tests (readFile for .aider.chat.history.md)
 vi.mock("node:fs/promises", async (importOriginal) => {
@@ -30,7 +30,7 @@ const {
   mockReadFileSync: vi.fn(() => ""),
 }));
 
-vi.mock("@slievr/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/core", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,

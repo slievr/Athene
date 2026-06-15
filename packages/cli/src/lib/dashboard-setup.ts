@@ -9,7 +9,7 @@ import {
   findConfigFile,
   normalizeDashboardNotificationLimit,
   readDashboardNotificationsFromFile,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import {
   applyNotifierRoutingPreset,
   getNotifierRoutingState,

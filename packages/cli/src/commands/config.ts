@@ -19,7 +19,7 @@ import {
   type GlobalConfig,
   type UpdateChannel,
   type InstallMethodOverride,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { existsSync } from "node:fs";
 
 const SUPPORTED_KEYS = ["updateChannel", "installMethod"] as const;

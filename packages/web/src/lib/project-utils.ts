@@ -1,4 +1,4 @@
-import { isOrchestratorSession } from "@slievr/core/types";
+import { isOrchestratorSession } from "@made-by-moonlight/core/types";
 import { matchesSessionPrefix } from "./session-utils";
 
 type ProjectWithPrefix = { sessionPrefix?: string };

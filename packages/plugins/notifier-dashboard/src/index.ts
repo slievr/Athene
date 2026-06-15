@@ -5,7 +5,7 @@ import {
   type NotifyAction,
   type OrchestratorEvent,
   type PluginModule,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 export const manifest = {
   name: "dashboard",

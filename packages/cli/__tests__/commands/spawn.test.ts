@@ -7,7 +7,7 @@ import {
   type Session,
   type SessionManager,
   getProjectBaseDir,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 const { mockExec, mockConfigRef, mockSessionManager, mockGetRunning } = vi.hoisted(() => ({
   mockExec: vi.fn(),
@@ -46,9 +46,9 @@ vi.mock("ora", () => ({
   default: () => mockSpinner,
 }));
 
-vi.mock("@slievr/core", async (importOriginal) => {
+vi.mock("@made-by-moonlight/core", async (importOriginal) => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-  const actual = await importOriginal<typeof import("@slievr/core")>();
+  const actual = await importOriginal<typeof import("@made-by-moonlight/core")>();
   return {
     ...actual,
     loadConfig: () => mockConfigRef.current,

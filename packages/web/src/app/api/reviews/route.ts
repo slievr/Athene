@@ -2,7 +2,7 @@ import {
   CodeReviewInvalidSessionError,
   SessionNotFoundError,
   triggerCodeReviewForSession,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 import { getReviewPageData, resolveReviewProjectFilter } from "@/lib/review-page-data";
 import { getCorrelationId, jsonWithCorrelation } from "@/lib/observability";
 import { getServices } from "@/lib/services";

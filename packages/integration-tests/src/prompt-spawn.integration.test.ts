@@ -24,7 +24,7 @@ import {
   type OrchestratorConfig,
   getProjectSessionsDir,
   type Session,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 // ── Shared setup ─────────────────────────────────────────────────────
 

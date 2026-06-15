@@ -57,7 +57,7 @@ function createHealthyPackageInstall(tempRoot: string): string {
   mkdirSync(join(fakeInstall, "dist", "assets", "scripts"), { recursive: true });
   writeFileSync(
     join(fakeInstall, "package.json"),
-    JSON.stringify({ name: "@slievr/cli", version: "0.2.5" }, null, 2),
+    JSON.stringify({ name: "@made-by-moonlight/cli", version: "0.2.5" }, null, 2),
   );
   writeFileSync(join(fakeInstall, "dist", "index.js"), 'console.log("0.2.5");\n');
   writeFileSync(join(fakeInstall, "dist", "assets", "scripts", "ao-doctor.sh"), "#!/bin/bash\n");

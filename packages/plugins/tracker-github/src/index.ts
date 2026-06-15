@@ -14,7 +14,7 @@ import {
   type IssueUpdate,
   type CreateIssueInput,
   type ProjectConfig,
-} from "@slievr/core";
+} from "@made-by-moonlight/core";
 
 // ---------------------------------------------------------------------------
 // Helpers
