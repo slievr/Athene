@@ -279,7 +279,7 @@ async function resolveProject(
     return { projectId, project: config.projects[projectId], config };
   } else {
     throw new Error(
-      `Multiple projects configured. Specify which one to ${action}:\n  ${projectIds.map((id) => `ao ${action} ${id}`).join("\n  ")}`,
+      `Multiple projects configured. Specify which one to ${action}:\n  ${projectIds.map((id) => `athene ${action} ${id}`).join("\n  ")}`,
     );
   }
 }
@@ -506,7 +506,7 @@ export async function autoCreateConfig(workingDir: string): Promise<Orchestrator
   if (!env.isGitRepo) {
     throw new Error(
       `"${workingDir}" is not a git repository.\n` +
-        `  ao requires a git repo to manage worktrees and branches.\n` +
+        `  athene requires a git repo to manage worktrees and branches.\n` +
         `  Run \`git init\` first, then try again.`,
     );
   }

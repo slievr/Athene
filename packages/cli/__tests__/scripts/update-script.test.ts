@@ -30,7 +30,7 @@ describe("athene-update.sh", () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "ao-update-script-"));
     const fakeRepo = join(tempRoot, "repo");
     mkdirSync(join(fakeRepo, "packages", "cli"), { recursive: true });
-    mkdirSync(join(fakeRepo, "packages", "ao"), { recursive: true });
+    mkdirSync(join(fakeRepo, "packages", "athene"), { recursive: true });
 
     const binDir = join(tempRoot, "bin");
     mkdirSync(binDir, { recursive: true });
@@ -98,7 +98,7 @@ esac\nexit 0`,
       const tempRoot = mkdtempSync(join(tmpdir(), "ao-update-upstream-script-"));
       const fakeRepo = join(tempRoot, "repo");
       mkdirSync(join(fakeRepo, "packages", "cli"), { recursive: true });
-      mkdirSync(join(fakeRepo, "packages", "ao"), { recursive: true });
+      mkdirSync(join(fakeRepo, "packages", "athene"), { recursive: true });
 
       const binDir = join(tempRoot, "bin");
       mkdirSync(binDir, { recursive: true });
@@ -166,7 +166,7 @@ esac\nexit 0`,
     const tempRoot = mkdtempSync(join(tmpdir(), "ao-update-stale-shim-"));
     const fakeRepo = join(tempRoot, "repo");
     mkdirSync(join(fakeRepo, "packages", "cli"), { recursive: true });
-    mkdirSync(join(fakeRepo, "packages", "ao"), { recursive: true });
+    mkdirSync(join(fakeRepo, "packages", "athene"), { recursive: true });
 
     const binDir = join(tempRoot, "bin");
     mkdirSync(binDir, { recursive: true });
@@ -231,8 +231,8 @@ exit 0`,
   it.skipIf(process.platform === "win32")("runs the built-in smoke commands in smoke-only mode", () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "ao-update-smoke-"));
     const fakeRepo = join(tempRoot, "repo");
-    mkdirSync(join(fakeRepo, "packages", "ao", "bin"), { recursive: true });
-    writeFileSync(join(fakeRepo, "packages", "ao", "bin", "athene.js"), "#!/usr/bin/env node\n");
+    mkdirSync(join(fakeRepo, "packages", "athene", "bin"), { recursive: true });
+    writeFileSync(join(fakeRepo, "packages", "athene", "bin", "athene.js"), "#!/usr/bin/env node\n");
 
     const binDir = join(tempRoot, "bin");
     mkdirSync(binDir, { recursive: true });
@@ -259,13 +259,13 @@ exit 0`,
 
     expect(result.status).toBe(0);
     expect(commands).toContain(
-      `node ${join(fakeRepo, "packages", "ao", "bin", "athene.js")} --version`,
+      `node ${join(fakeRepo, "packages", "athene", "bin", "athene.js")} --version`,
     );
     expect(commands).toContain(
-      `node ${join(fakeRepo, "packages", "ao", "bin", "athene.js")} doctor --help`,
+      `node ${join(fakeRepo, "packages", "athene", "bin", "athene.js")} doctor --help`,
     );
     expect(commands).toContain(
-      `node ${join(fakeRepo, "packages", "ao", "bin", "athene.js")} update --help`,
+      `node ${join(fakeRepo, "packages", "athene", "bin", "athene.js")} update --help`,
     );
   });
 
@@ -301,7 +301,7 @@ exit 0`,
       const repoRoot = resolve(packageRoot, "../..");
       expect(result.status).toBe(0);
       expect(commands).toContain(
-        `node ${join(repoRoot, "packages", "ao", "bin", "athene.js")} --version`,
+        `node ${join(repoRoot, "packages", "athene", "bin", "athene.js")} --version`,
       );
     },
   );
@@ -356,8 +356,8 @@ exit 0`,
     const tempRoot = mkdtempSync(join(tmpdir(), "ao-update-already-latest-"));
     const fakeRepo = join(tempRoot, "repo");
     mkdirSync(join(fakeRepo, "packages", "cli"), { recursive: true });
-    mkdirSync(join(fakeRepo, "packages", "ao", "bin"), { recursive: true });
-    writeFileSync(join(fakeRepo, "packages", "ao", "bin", "athene.js"), "#!/usr/bin/env node\n");
+    mkdirSync(join(fakeRepo, "packages", "athene", "bin"), { recursive: true });
+    writeFileSync(join(fakeRepo, "packages", "athene", "bin", "athene.js"), "#!/usr/bin/env node\n");
 
     const binDir = join(tempRoot, "bin");
     mkdirSync(binDir, { recursive: true });
@@ -419,10 +419,10 @@ exit 0`,
     expect(commands).not.toContain("git pull --ff-only origin main");
     // Smoke tests SHOULD still have run
     expect(commands).toContain(
-      `node ${join(fakeRepo, "packages", "ao", "bin", "athene.js")} --version`,
+      `node ${join(fakeRepo, "packages", "athene", "bin", "athene.js")} --version`,
     );
     expect(commands).toContain(
-      `node ${join(fakeRepo, "packages", "ao", "bin", "athene.js")} doctor --help`,
+      `node ${join(fakeRepo, "packages", "athene", "bin", "athene.js")} doctor --help`,
     );
   });
 
@@ -439,7 +439,7 @@ exit 0`,
     const tempRoot = mkdtempSync(join(tmpdir(), "ao-update-post-dirty-"));
     const fakeRepo = join(tempRoot, "repo");
     mkdirSync(join(fakeRepo, "packages", "cli"), { recursive: true });
-    mkdirSync(join(fakeRepo, "packages", "ao"), { recursive: true });
+    mkdirSync(join(fakeRepo, "packages", "athene"), { recursive: true });
 
     const binDir = join(tempRoot, "bin");
     mkdirSync(binDir, { recursive: true });
