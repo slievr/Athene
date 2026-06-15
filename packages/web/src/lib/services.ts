@@ -15,6 +15,7 @@ import "server-only";
 import {
   getGlobalConfigPath,
   loadConfig,
+  validateConfig,
   ConfigNotFoundError,
   createPluginRegistry,
   createSessionManager,
@@ -142,13 +143,35 @@ function loadDashboardConfig(): LoadedConfig {
     // The dashboard prefers the global portfolio config, but users may still
     // launch it from a single repo that only has a local agent-orchestrator.yaml.
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return loadConfig();
+      try {
+        return loadConfig();
+      } catch (innerError) {
+        if (innerError instanceof ConfigNotFoundError) {
+          return emptyConfig();
+        }
+        throw innerError;
+      }
     }
     if (error instanceof ConfigNotFoundError) {
-      return loadConfig();
+      try {
+        return loadConfig();
+      } catch (innerError) {
+        if (innerError instanceof ConfigNotFoundError) {
+          return emptyConfig();
+        }
+        throw innerError;
+      }
     }
     throw error;
   }
+}
+
+/** Minimal valid config returned when no agent-orchestrator.yaml is found anywhere. */
+function emptyConfig(): LoadedConfig {
+  const config = validateConfig({ projects: {} }) as LoadedConfig;
+  config.configPath = "";
+  config.degradedProjects = {};
+  return config;
 }
 
 // ---------------------------------------------------------------------------
