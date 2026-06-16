@@ -145,6 +145,38 @@ export function getSessionPath(projectId: string, sessionId: string): string {
   return join(getProjectSessionsDir(projectId), `${sessionId}.json`);
 }
 
+/**
+ * Meta orchestrator sessions live under a reserved `_meta` project scope:
+ * .../projects/_meta/{name}/sessions. The session id equals the meta name.
+ *
+ * `_meta` is a constant directory segment (not a real project ID — config
+ * rejects a project keyed `_meta`), so it bypasses `assertSafeProjectId` which
+ * forbids the leading underscore. The user-controlled `name` is still validated
+ * against path traversal.
+ */
+export function getMetaSessionsDir(name: string): string {
+  assertSafeMetaName(name);
+  return join(getAoBaseDir(), "projects", "_meta", name, "sessions");
+}
+
+/** Validate a meta orchestrator name is safe for use as a directory segment. */
+function assertSafeMetaName(name: string): void {
+  if (
+    !name ||
+    name === "." ||
+    name === ".." ||
+    name.length > MAX_PROJECT_ID_LENGTH ||
+    !/^[a-zA-Z0-9_-]+$/.test(name)
+  ) {
+    throw new Error(`Unsafe meta orchestrator name: "${name}"`);
+  }
+}
+
+/** Get the meta orchestrator session metadata file path (.json). */
+export function getMetaSessionPath(name: string): string {
+  return join(getMetaSessionsDir(name), `${name}.json`);
+}
+
 // =============================================================================
 // LEGACY PATH FUNCTIONS (deprecated — used by migration only)
 // =============================================================================
