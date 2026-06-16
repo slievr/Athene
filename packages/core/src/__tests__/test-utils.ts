@@ -501,6 +501,11 @@ export function createMockSessionManager(): OpenCodeSessionManager {
       .mockResolvedValue(
         makeSession({ id: "app-orchestrator", metadata: { role: "orchestrator" } }),
       ),
+    ensureMetaOrchestrator: vi
+      .fn()
+      .mockResolvedValue(
+        makeSession({ id: "meta-1", projectId: "_meta", metadata: { role: "meta-orchestrator" } }),
+      ),
     relaunchOrchestrator: vi
       .fn()
       .mockResolvedValue(

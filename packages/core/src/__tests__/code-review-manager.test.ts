@@ -116,6 +116,9 @@ function makeSessionManager(
     ensureOrchestrator: async () => {
       throw new Error("not implemented");
     },
+    ensureMetaOrchestrator: async () => {
+      throw new Error("not implemented");
+    },
     relaunchOrchestrator: async () => {
       throw new Error("not implemented");
     },

@@ -30,6 +30,7 @@ import {
   type SessionId,
   type SessionSpawnConfig,
   type OrchestratorSpawnConfig,
+  type MetaOrchestratorSpawnConfig,
   type CleanupResult,
   type ClaimPROptions,
   type ClaimPRResult,
@@ -51,6 +52,7 @@ import {
   PR_STATE,
 } from "./types.js";
 import {
+  readMetadata,
   readMetadataRaw,
   writeMetadata,
   updateMetadata,
@@ -74,6 +76,8 @@ import {
   getProjectSessionsDir,
   getProjectWorktreesDir,
   getProjectDir,
+  getMetaSessionsDir,
+  getMetaWorkspaceDir,
   generateSessionName,
 } from "./paths.js";
 import { asValidOpenCodeSessionId } from "./opencode-session-id.js";
@@ -2259,6 +2263,242 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     return promise;
   }
 
+  /**
+   * Ensure a meta orchestrator session exists for `name`. Reuses a live one if
+   * present (read from the reserved `_meta` scope), else spawns fresh.
+   *
+   * Meta orchestrators are NOT scoped to a single project, so they live under
+   * `projects/_meta/<name>/sessions/<name>.json` and are reconstructed by
+   * reading that file directly — `get()`/`list()` only walk configured projects.
+   */
+  async function ensureMetaOrchestrator(metaConfig: MetaOrchestratorSpawnConfig): Promise<Session> {
+    const name = metaConfig.name;
+    const sessionsDir = getMetaSessionsDir(name);
+    const existing = readMetadataRaw(sessionsDir, name);
+    if (existing) {
+      const existingSession = sessionFromMetadata(name, existing, {
+        sessionKind: "meta-orchestrator",
+      });
+      if (!isTerminalSession(existingSession)) {
+        return existingSession;
+      }
+    }
+    return _spawnMetaOrchestratorInner(metaConfig);
+  }
+
+  async function _spawnMetaOrchestratorInner(
+    metaConfig: MetaOrchestratorSpawnConfig,
+  ): Promise<Session> {
+    const name = metaConfig.name;
+    const sessionId = name;
+    const sessionsDir = getMetaSessionsDir(name);
+    const workspacePath = getMetaWorkspaceDir(name);
+
+    recordActivityEvent({
+      projectId: "_meta",
+      source: "session-manager",
+      kind: "session.spawn_started",
+      summary: "meta orchestrator spawn started",
+      data: { agent: metaConfig.agent ?? undefined, role: "meta-orchestrator" },
+    });
+
+    // Synthetic project context for the reserved `_meta` scope. The meta
+    // orchestrator has no repo and no git worktree (it routes and reads; deep
+    // reads go through scout workers). `workspacePath` is a plain scratch dir
+    // used only as the agent's cwd and PATH-wrapper home — never a worktree, so
+    // the workspace plugin's create() is intentionally not called.
+    const metaProject: ProjectConfig = {
+      name: `${name} (meta)`,
+      path: workspacePath,
+      defaultBranch: "main",
+      sessionPrefix: name,
+    };
+
+    const selection = resolveAgentSelection({
+      role: "orchestrator",
+      project: metaProject,
+      defaults: config.defaults,
+      spawnAgentOverride: metaConfig.agent,
+    });
+    const plugins = resolvePlugins(metaProject, selection.agentName);
+    if (!plugins.runtime) {
+      throw new Error(`Runtime plugin '${config.defaults.runtime}' not found`);
+    }
+    if (!plugins.agent) {
+      throw new Error(`Agent plugin '${selection.agentName}' not found`);
+    }
+
+    mkdirSync(workspacePath, { recursive: true });
+    mkdirSync(sessionsDir, { recursive: true });
+
+    const cleanup = async (handle?: RuntimeHandle): Promise<void> => {
+      if (handle) {
+        try {
+          await plugins.runtime!.destroy(handle);
+        } catch {
+          /* best effort */
+        }
+      }
+      try {
+        deleteMetadata(sessionsDir, sessionId);
+      } catch {
+        /* best effort */
+      }
+    };
+
+    // Install metadata hooks / PATH wrappers so the meta orchestrator can run
+    // `athene` commands autonomously. Mirrors the orchestrator/worker paths.
+    try {
+      if (plugins.agent.setupWorkspaceHooks) {
+        await plugins.agent.setupWorkspaceHooks(workspacePath, { dataDir: sessionsDir });
+      }
+      if (plugins.agent.name !== "claude-code") {
+        await setupPathWrapperWorkspace(workspacePath);
+      }
+    } catch (err) {
+      await cleanup();
+      throw err;
+    }
+
+    let systemPromptFile: string | undefined;
+    if (metaConfig.systemPrompt) {
+      systemPromptFile = join(workspacePath, `meta-orchestrator-prompt-${sessionId}.md`);
+      writeFileSync(systemPromptFile, metaConfig.systemPrompt, "utf-8");
+    }
+
+    // Meta orchestrator ALWAYS runs permissionless — it must run ao CLI commands.
+    const agentLaunchConfig = {
+      sessionId,
+      projectConfig: {
+        ...metaProject,
+        agentConfig: {
+          ...selection.agentConfig,
+          permissions: "permissionless" as const,
+        },
+      },
+      workspacePath,
+      permissions: "permissionless" as const,
+      model: selection.model,
+      systemPromptFile,
+      subagent: selection.subagent,
+    };
+
+    const launchCommand = plugins.agent.getLaunchCommand(agentLaunchConfig);
+    const environment = plugins.agent.getEnvironment(agentLaunchConfig);
+
+    if (plugins.agent.preLaunchSetup) {
+      await plugins.agent.preLaunchSetup(workspacePath);
+    }
+
+    let handle: RuntimeHandle;
+    try {
+      handle = await plugins.runtime.create({
+        sessionId,
+        workspacePath,
+        launchCommand,
+        environment: {
+          ...environment,
+          PATH: buildAgentPath(environment["PATH"] ?? process.env["PATH"]),
+          GH_PATH: PREFERRED_GH_PATH,
+          AO_SESSION: sessionId,
+          AO_DATA_DIR: sessionsDir,
+          AO_SESSION_NAME: sessionId,
+          AO_CALLER_TYPE: "meta-orchestrator",
+          AO_PROJECT_ID: "_meta",
+          AO_META_NAME: name,
+          AO_CONFIG_PATH: config.configPath,
+          ...(config.port !== undefined &&
+            config.port !== null && { AO_PORT: String(config.port) }),
+        },
+      });
+    } catch (err) {
+      await cleanup();
+      throw err;
+    }
+
+    const createdAt = new Date();
+    const lifecycle = createInitialCanonicalLifecycle("meta-orchestrator", createdAt);
+    lifecycle.session.state = "working";
+    lifecycle.session.reason = "task_in_progress";
+    lifecycle.session.startedAt = createdAt.toISOString();
+    lifecycle.session.lastTransitionAt = createdAt.toISOString();
+    lifecycle.runtime.handle = handle;
+
+    const displayName = `${name} (meta)`;
+
+    const session: Session = {
+      id: sessionId,
+      projectId: "_meta",
+      status: deriveLegacyStatus(lifecycle),
+      activity: "active",
+      activitySignal: createActivitySignal("valid", {
+        activity: "active",
+        timestamp: createdAt,
+        source: "runtime",
+      }),
+      lifecycle,
+      branch: null,
+      issueId: null,
+      pr: null,
+      prs: [],
+      workspacePath,
+      runtimeHandle: handle,
+      agentInfo: null,
+      createdAt,
+      lastActivityAt: createdAt,
+      metadata: {
+        role: "meta-orchestrator",
+        metaName: name,
+        ...(displayName ? { displayName } : {}),
+      },
+    };
+
+    try {
+      writeMetadata(sessionsDir, sessionId, {
+        worktree: workspacePath,
+        // Meta orchestrators have no git branch (no worktree). Persist an empty
+        // string to satisfy the metadata contract; session.branch stays null.
+        branch: "",
+        status: deriveLegacyStatus(lifecycle),
+        ...buildLifecycleMetadataPatch(lifecycle),
+        // Object overrides for the typed writeMetadata path — see the worker
+        // spawn site for the rationale.
+        lifecycle,
+        role: "meta-orchestrator",
+        project: "_meta",
+        agent: selection.agentName,
+        createdAt: createdAt.toISOString(),
+        runtimeHandle: handle,
+        displayName,
+      });
+
+      if (plugins.agent.postLaunchSetup) {
+        await plugins.agent.postLaunchSetup(session);
+      }
+      if (plugins.agent.promptDelivery === "post-launch" && metaConfig.systemPrompt) {
+        await plugins.runtime.sendMessage(handle, "Begin.");
+      }
+      if (Object.keys(session.metadata || {}).length > 0) {
+        updateMetadata(sessionsDir, sessionId, session.metadata);
+      }
+      invalidateCache();
+    } catch (err) {
+      await cleanup(handle);
+      throw err;
+    }
+
+    recordActivityEvent({
+      projectId: "_meta",
+      sessionId,
+      source: "session-manager",
+      kind: "session.spawned",
+      summary: `spawned: ${sessionId}`,
+      data: { agent: plugins.agent.name, role: "meta-orchestrator" },
+    });
+
+    return session;
+  }
+
   async function relaunchOrchestratorInternal(
     orchestratorConfig: OrchestratorSpawnConfig,
   ): Promise<Session> {
@@ -3736,6 +3976,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     spawn,
     spawnOrchestrator,
     ensureOrchestrator,
+    ensureMetaOrchestrator,
     relaunchOrchestrator,
     restore,
     list,

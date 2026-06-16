@@ -190,6 +190,13 @@ export type { PromptBuildConfig } from "./prompt-builder.js";
 export { generateOrchestratorPrompt } from "./orchestrator-prompt.js";
 export type { OrchestratorPromptConfig } from "./orchestrator-prompt.js";
 
+// Meta orchestrator prompt + scope resolution + spawn collision guard
+export { generateMetaOrchestratorPrompt } from "./meta-orchestrator-prompt.js";
+export type { MetaOrchestratorPromptConfig } from "./meta-orchestrator-prompt.js";
+export { resolveInScopeProjects, resolveInScopeProjectIds } from "./meta-scope.js";
+export { checkSpawnCollision, formatHardRefusal } from "./spawn-collision.js";
+export type { SpawnCollisionResult, SpawnCollisionIntent } from "./spawn-collision.js";
+
 // Shared utilities
 export {
   shellEscape,
@@ -347,6 +354,9 @@ export {
   getProjectFeedbackReportsDir,
   getOrchestratorPath,
   getSessionPath,
+  getMetaSessionsDir,
+  getMetaSessionPath,
+  getMetaWorkspaceDir,
   parseTmuxNameV2,
   // Legacy path functions (deprecated — migration only)
   generateConfigHash,
