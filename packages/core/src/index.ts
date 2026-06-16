@@ -201,6 +201,9 @@ export {
 export { checkSpawnCollision, formatHardRefusal } from "./spawn-collision.js";
 export type { SpawnCollisionResult, SpawnCollisionIntent } from "./spawn-collision.js";
 
+// Meta orchestrator config writer
+export { appendMetaOrchestrator, type MetaOrchestratorWriteInput } from "./meta-orchestrator-config-writer.js";
+
 // Shared utilities
 export {
   shellEscape,
