@@ -50,10 +50,10 @@ function ActivityDot({ session }: { session: DashboardSession | null }) {
 }
 
 /**
- * The ORCHESTRATORS sidebar section: meta orchestrators (◆) on top, a divider,
- * then per-project orchestrators (project-color dot). Each row carries a
- * right-aligned activity-state dot reusing the existing dot system. Renders a
- * compact glyph/dot cluster when the sidebar is collapsed.
+ * The Parliament sidebar section: meta orchestrators (◆) in a "Meta" sub-group,
+ * then per-project orchestrators (project-color dot) in a "Project" sub-group.
+ * Each row carries a right-aligned activity-state dot. Renders a compact
+ * glyph/dot cluster when the sidebar is collapsed.
  */
 export function SidebarOrchestrators({
   collapsed,
@@ -110,62 +110,81 @@ export function SidebarOrchestrators({
     );
   }
 
+  const showMeta = metaOrchestrators.length > 0;
+  const showProject = orchestrators.length > 0;
+  const showBothGroups = showMeta && showProject;
+
   return (
     <div className="project-sidebar__orchestrators">
       <div className="project-sidebar__nav-label">
-        <span>Orchestrators</span>
+        <span>Parliament</span>
       </div>
-      {metaOrchestrators.map((m) => {
-        const href = metaDashboardPath(m.name);
-        return (
-          <a
-            key={m.name}
-            href={href}
-            onClick={handleClick(href, m.session ?? undefined)}
-            className={cn(
-              "project-sidebar__orch-row",
-              activeSessionId === m.name && "project-sidebar__orch-row--active",
-            )}
-            aria-label={`Open ${m.name} meta dashboard`}
-          >
-            <span className="project-sidebar__orch-glyph" aria-hidden="true">
-              ◆
-            </span>
-            <span className="project-sidebar__orch-name min-w-0 flex-1">{m.name}</span>
-            <ActivityDot session={m.session} />
-          </a>
-        );
-      })}
-      {metaOrchestrators.length > 0 && orchestrators.length > 0 ? (
-        <div className="project-sidebar__orch-divider" aria-hidden="true" />
+      {showMeta ? (
+        <>
+          {showBothGroups ? (
+            <div className="project-sidebar__orch-group-label" aria-hidden="true">
+              Meta
+            </div>
+          ) : null}
+          {metaOrchestrators.map((m) => {
+            const href = metaDashboardPath(m.name);
+            return (
+              <a
+                key={m.name}
+                href={href}
+                onClick={handleClick(href, m.session ?? undefined)}
+                className={cn(
+                  "project-sidebar__orch-row",
+                  activeSessionId === m.name && "project-sidebar__orch-row--active",
+                )}
+                aria-label={`Open ${m.name} meta dashboard`}
+              >
+                <span className="project-sidebar__orch-glyph" aria-hidden="true">
+                  ◆
+                </span>
+                <span className="project-sidebar__orch-name min-w-0 flex-1">{m.name}</span>
+                <ActivityDot session={m.session} />
+              </a>
+            );
+          })}
+        </>
       ) : null}
-      {orchestrators.map((o) => {
-        const { slot } = getProjectColor(o.projectId, registeredProjectIds);
-        const session = o.session ?? null;
-        const href = projectSessionPath(o.projectId, o.id);
-        return (
-          <a
-            key={o.id}
-            href={href}
-            onClick={handleClick(href, session ?? undefined)}
-            className={cn(
-              "project-sidebar__orch-row",
-              activeSessionId === o.id && "project-sidebar__orch-row--active",
-            )}
-            aria-label={`Open ${o.projectId} orchestrator`}
-          >
-            <span
-              className={cn(
-                "project-sidebar__orch-dot shrink-0 rounded-full",
-                projectColorBgClass(slot),
-              )}
-              aria-hidden="true"
-            />
-            <span className="project-sidebar__orch-name min-w-0 flex-1">{o.projectId}</span>
-            <ActivityDot session={session} />
-          </a>
-        );
-      })}
+      {showProject ? (
+        <>
+          {showBothGroups ? (
+            <div className="project-sidebar__orch-group-label" aria-hidden="true">
+              Project
+            </div>
+          ) : null}
+          {orchestrators.map((o) => {
+            const { slot } = getProjectColor(o.projectId, registeredProjectIds);
+            const session = o.session ?? null;
+            const href = projectSessionPath(o.projectId, o.id);
+            return (
+              <a
+                key={o.id}
+                href={href}
+                onClick={handleClick(href, session ?? undefined)}
+                className={cn(
+                  "project-sidebar__orch-row",
+                  activeSessionId === o.id && "project-sidebar__orch-row--active",
+                )}
+                aria-label={`Open ${o.projectId} orchestrator`}
+              >
+                <span
+                  className={cn(
+                    "project-sidebar__orch-dot shrink-0 rounded-full",
+                    projectColorBgClass(slot),
+                  )}
+                  aria-hidden="true"
+                />
+                <span className="project-sidebar__orch-name min-w-0 flex-1">{o.projectId}</span>
+                <ActivityDot session={session} />
+              </a>
+            );
+          })}
+        </>
+      ) : null}
     </div>
   );
 }

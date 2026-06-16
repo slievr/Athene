@@ -18,7 +18,7 @@ const orchSession = {
 } as unknown as DashboardSession;
 
 describe("SidebarOrchestrators", () => {
-  it("renders meta rows with a diamond glyph and project orchestrators with a color dot", () => {
+  it("renders Parliament label and meta/project sub-groups when both types present", () => {
     const { container } = render(
       <SidebarOrchestrators
         collapsed={false}
@@ -30,6 +30,9 @@ describe("SidebarOrchestrators", () => {
       />,
     );
 
+    expect(screen.getByText("Parliament")).toBeInTheDocument();
+    expect(screen.getByText("Meta")).toBeInTheDocument();
+    expect(screen.getByText("Project")).toBeInTheDocument();
     expect(screen.getByText("meta-1")).toBeInTheDocument();
     expect(container.querySelector('a[href="/meta/meta-1"]')).toBeTruthy();
     expect(screen.getByText("◆")).toBeInTheDocument();
@@ -37,6 +40,23 @@ describe("SidebarOrchestrators", () => {
     expect(container.querySelector('[class*="var(--project-color-1)"]')).toBeTruthy();
     // No inline styles.
     expect(container.querySelector("[style]")).toBeNull();
+  });
+
+  it("renders Parliament label without sub-group headers when only one type present", () => {
+    render(
+      <SidebarOrchestrators
+        collapsed={false}
+        metaOrchestrators={[{ name: "meta-1", session: metaSession }]}
+        orchestrators={[]}
+        registeredProjectIds={[]}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+
+    expect(screen.getByText("Parliament")).toBeInTheDocument();
+    expect(screen.queryByText("Meta")).toBeNull();
+    expect(screen.queryByText("Project")).toBeNull();
   });
 
   it("renders the per-project orchestrator activity dot from its CARRIED session", () => {
