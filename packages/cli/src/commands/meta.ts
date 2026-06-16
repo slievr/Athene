@@ -1,15 +1,31 @@
 import chalk from "chalk";
+import { existsSync } from "node:fs";
 import type { Command } from "commander";
 import {
   loadConfig,
+  getGlobalConfigPath,
   generateMetaOrchestratorPrompt,
   getSessionMetaOwner,
   isTerminalSession,
   resolveInScopeProjectIds,
+  type LoadedConfig,
   type OrchestratorConfig,
   type Session,
 } from "@made-by-moonlight/athene-core";
 import { getSessionManager } from "../lib/create-session-manager.js";
+
+/**
+ * Load the GLOBAL registry config for cross-project meta commands. Meta
+ * orchestrators are configured in (and span) the global registry, so loading the
+ * nearest flat-local `agent-orchestrator.yaml` would collapse `config.projects`
+ * (and thus the meta catalog/scope) to just the cwd project — defeating
+ * scope:all/discover from a project dir. Falls back to the local config only when
+ * no global registry exists. Mirrors `athene stop`.
+ */
+export function loadMetaRegistryConfig(): LoadedConfig {
+  const globalPath = getGlobalConfigPath();
+  return existsSync(globalPath) ? loadConfig(globalPath) : loadConfig();
+}
 
 /**
  * Resolve which meta orchestrator a command targets. Pure — throws with an
@@ -77,7 +93,7 @@ export function registerMeta(program: Command): void {
     .command("meta-start <name>")
     .description("Start the named meta orchestrator (portfolio-scoped coordinator)")
     .action(async (name: string) => {
-      const config = loadConfig();
+      const config = loadMetaRegistryConfig();
       const meta = config.metaOrchestrators?.[name];
       if (!meta) {
         console.error(
@@ -109,7 +125,7 @@ export function registerMeta(program: Command): void {
     .command("meta-status [name]")
     .description("Show the worker fleet owned by a meta orchestrator")
     .action(async (name?: string) => {
-      const config = loadConfig();
+      const config = loadMetaRegistryConfig();
       let resolved: string;
       try {
         resolved = resolveMetaName(metaNames(config), name);

@@ -1,5 +1,13 @@
-import { describe, it, expect } from "vitest";
-import { resolveMetaName, partitionMetaSessions } from "../../src/commands/meta.js";
+import { afterEach, beforeEach, describe, it, expect } from "vitest";
+import { mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { randomUUID } from "node:crypto";
+import {
+  resolveMetaName,
+  partitionMetaSessions,
+  loadMetaRegistryConfig,
+} from "../../src/commands/meta.js";
 import type { Session } from "@made-by-moonlight/athene-core";
 
 const sess = (over: Partial<Session>): Session =>
@@ -63,5 +71,40 @@ describe("partitionMetaSessions", () => {
     ];
     const { peers } = partitionMetaSessions(sessions, "meta-1", ["web"]);
     expect(peers).toEqual([]);
+  });
+});
+
+describe("loadMetaRegistryConfig", () => {
+  let tempRoot: string;
+  let globalPath: string;
+  let originalAoGlobalConfig: string | undefined;
+
+  beforeEach(() => {
+    tempRoot = join(tmpdir(), `ao-meta-registry-${randomUUID()}`);
+    mkdirSync(tempRoot, { recursive: true });
+    globalPath = join(tempRoot, "config.yaml");
+    // Point getGlobalConfigPath() at our temp global config (independent of cwd /
+    // the worktree's own agent-orchestrator.yaml).
+    originalAoGlobalConfig = process.env["AO_GLOBAL_CONFIG"];
+    process.env["AO_GLOBAL_CONFIG"] = globalPath;
+  });
+
+  afterEach(() => {
+    if (originalAoGlobalConfig === undefined) delete process.env["AO_GLOBAL_CONFIG"];
+    else process.env["AO_GLOBAL_CONFIG"] = originalAoGlobalConfig;
+    rmSync(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  });
+
+  it("loads the GLOBAL registry (with metaOrchestrators), not a cwd flat-local projection", () => {
+    writeFileSync(
+      globalPath,
+      ["projects: {}", "metaOrchestrators:", "  platform:", "    scope: all", ""].join("\n"),
+    );
+
+    const config = loadMetaRegistryConfig();
+    // Meta orchestrators live only in the global registry — a flat-local config
+    // would not carry them. Their presence proves we loaded the global config.
+    expect(config.metaOrchestrators?.platform).toBeDefined();
+    expect(config.configPath).toBe(globalPath);
   });
 });
