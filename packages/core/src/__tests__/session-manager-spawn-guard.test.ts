@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { mkdirSync, writeFileSync, existsSync, utimesSync } from "node:fs";
+import { join } from "node:path";
 import { createSessionManager } from "../session-manager.js";
 import { readMetadataRaw, writeMetadata } from "../metadata.js";
+import { getProjectDir } from "../paths.js";
 import { setupTestContext, teardownTestContext, makeHandle, type TestContext } from "./test-utils.js";
 
 vi.mock("../activity-events.js", () => ({
@@ -121,6 +124,28 @@ describe("spawn collision guard", () => {
     expect(fulfilled).toHaveLength(1);
     expect(rejected).toHaveLength(1);
     expect(String(rejected[0]!.reason)).toMatch(/SPAWN REFUSED/);
+  });
+
+  it("reaps an orphaned spawn.lock older than the stale threshold and proceeds", async () => {
+    // Simulate a crashed prior spawn that left spawn.lock behind, with an mtime
+    // older than staleMs (15s). The next spawn must reap it and succeed within
+    // the acquire timeout, not hang/throw "Timed out acquiring spawn lock".
+    const projectDir = getProjectDir("my-app");
+    mkdirSync(projectDir, { recursive: true });
+    const lockPath = join(projectDir, "spawn.lock");
+    writeFileSync(lockPath, "");
+    const twentySecondsAgo = new Date(Date.now() - 20_000);
+    utimesSync(lockPath, twentySecondsAgo, twentySecondsAgo);
+
+    vi.useFakeTimers();
+    const sm = createSessionManager({ config: ctx.config, registry: ctx.mockRegistry });
+    const spawnPromise = sm.spawn({ projectId: "my-app", prompt: "after a crash" });
+    await vi.runAllTimersAsync();
+    const session = await spawnPromise;
+
+    expect(session.id).toBeTruthy();
+    // The stale lock was reaped (and the new spawn's own lock released on exit).
+    expect(existsSync(lockPath)).toBe(false);
   });
 
   it("defaults to project ownership when no owner flags are given", async () => {
