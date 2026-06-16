@@ -23,8 +23,7 @@ describe("SidebarOrchestrators", () => {
       <SidebarOrchestrators
         collapsed={false}
         metaOrchestrators={[{ name: "meta-1", session: metaSession }]}
-        orchestrators={[{ id: "web-orchestrator", projectId: "web" }]}
-        sessions={[orchSession]}
+        orchestrators={[{ id: "web-orchestrator", projectId: "web", session: orchSession }]}
         registeredProjectIds={["web", "api"]}
         activeSessionId={undefined}
         onNavigate={() => {}}
@@ -36,10 +35,43 @@ describe("SidebarOrchestrators", () => {
     expect(screen.getByText("◆")).toBeInTheDocument();
     // web is registration index 0 → slot 1
     expect(container.querySelector('[class*="var(--project-color-1)"]')).toBeTruthy();
-    // Reuses the existing activity dot system (data-level present).
-    expect(container.querySelector("[data-level]")).toBeTruthy();
     // No inline styles.
     expect(container.querySelector("[style]")).toBeNull();
+  });
+
+  it("renders the per-project orchestrator activity dot from its CARRIED session", () => {
+    // No meta orchestrators — only a project orchestrator. Its activity dot must
+    // render from the carried session (not via the orchestrator-stripped list).
+    const { container } = render(
+      <SidebarOrchestrators
+        collapsed={false}
+        metaOrchestrators={[]}
+        orchestrators={[{ id: "web-orchestrator", projectId: "web", session: orchSession }]}
+        registeredProjectIds={["web"]}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+    const row = container.querySelector(".project-sidebar__orch-row");
+    expect(row).toBeTruthy();
+    // The activity dot (reusing the existing data-level system) is present.
+    expect(row!.querySelector(".sidebar-session-dot[data-level]")).toBeTruthy();
+  });
+
+  it("renders no activity dot for a project orchestrator without a carried session", () => {
+    const { container } = render(
+      <SidebarOrchestrators
+        collapsed={false}
+        metaOrchestrators={[]}
+        orchestrators={[{ id: "web-orchestrator", projectId: "web", session: null }]}
+        registeredProjectIds={["web"]}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+    const row = container.querySelector(".project-sidebar__orch-row");
+    expect(row).toBeTruthy();
+    expect(row!.querySelector(".sidebar-session-dot")).toBeNull();
   });
 
   it("renders nothing when there are no orchestrators", () => {
@@ -48,7 +80,6 @@ describe("SidebarOrchestrators", () => {
         collapsed={false}
         metaOrchestrators={[]}
         orchestrators={[]}
-        sessions={[]}
         registeredProjectIds={[]}
         activeSessionId={undefined}
         onNavigate={() => {}}
@@ -62,8 +93,7 @@ describe("SidebarOrchestrators", () => {
       <SidebarOrchestrators
         collapsed
         metaOrchestrators={[{ name: "meta-1", session: metaSession }]}
-        orchestrators={[{ id: "web-orchestrator", projectId: "web" }]}
-        sessions={[orchSession]}
+        orchestrators={[{ id: "web-orchestrator", projectId: "web", session: orchSession }]}
         registeredProjectIds={["web"]}
         activeSessionId={undefined}
         onNavigate={() => {}}
@@ -80,7 +110,6 @@ describe("SidebarOrchestrators", () => {
         collapsed={false}
         metaOrchestrators={[{ name: "meta-1", session: metaSession }]}
         orchestrators={[]}
-        sessions={[]}
         registeredProjectIds={[]}
         activeSessionId={undefined}
         onNavigate={onNavigate}

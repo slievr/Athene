@@ -12,17 +12,23 @@ export interface SidebarMetaOrchestrator {
   session: DashboardSession | null;
 }
 
-/** A per-project orchestrator link, same shape ProjectSidebar already sources. */
+/**
+ * A per-project orchestrator for the sidebar. Carries its ENRICHED session so the
+ * activity dot can render — orchestrator sessions are stripped from the worker
+ * `/api/sessions` stream, so they cannot be looked up there.
+ */
 export interface SidebarProjectOrchestrator {
   id: string;
   projectId: string;
+  /** Enriched orchestrator session (for the activity dot); absent on surfaces
+   *  that only have the link (e.g. the session-detail sidebar). */
+  session?: DashboardSession | null;
 }
 
 interface SidebarOrchestratorsProps {
   collapsed: boolean;
   metaOrchestrators: SidebarMetaOrchestrator[];
   orchestrators: SidebarProjectOrchestrator[];
-  sessions: DashboardSession[] | null;
   registeredProjectIds: string[];
   activeSessionId: string | undefined;
   onNavigate: (href: string, session?: DashboardSession) => void;
@@ -53,14 +59,12 @@ export function SidebarOrchestrators({
   collapsed,
   metaOrchestrators,
   orchestrators,
-  sessions,
   registeredProjectIds,
   activeSessionId,
   onNavigate,
 }: SidebarOrchestratorsProps) {
   if (metaOrchestrators.length === 0 && orchestrators.length === 0) return null;
 
-  const findSession = (id: string) => sessions?.find((s) => s.id === id) ?? null;
   const handleClick =
     (href: string, session?: DashboardSession) => (e: React.MouseEvent) => {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
@@ -91,7 +95,8 @@ export function SidebarOrchestrators({
             <a
               key={o.id}
               href={href}
-              onClick={handleClick(href, findSession(o.id) ?? undefined)}
+              onClick={handleClick(href, o.session ?? undefined)}
+              data-level={o.session ? getAttentionLevel(o.session) : undefined}
               className={cn(
                 "project-sidebar__orch-collapsed-dot shrink-0 rounded-full",
                 projectColorBgClass(slot),
@@ -136,7 +141,7 @@ export function SidebarOrchestrators({
       ) : null}
       {orchestrators.map((o) => {
         const { slot } = getProjectColor(o.projectId, registeredProjectIds);
-        const session = findSession(o.id);
+        const session = o.session ?? null;
         const href = projectSessionPath(o.projectId, o.id);
         return (
           <a

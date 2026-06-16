@@ -21,6 +21,8 @@ import { getProjectColor, projectColorBgClass } from "@/lib/project-color";
 export interface ProjectSidebarOrchestrator {
   id: string;
   projectId: string;
+  /** Enriched orchestrator session (for the activity dot). Null when not running. */
+  session?: DashboardSession | null;
 }
 
 interface ProjectSidebarProps {
@@ -730,7 +732,6 @@ function ProjectSidebarInner({
           collapsed
           metaOrchestrators={metaOrchestrators}
           orchestrators={orchestrators ?? []}
-          sessions={sessions}
           registeredProjectIds={colorProjectIds}
           activeSessionId={activeSessionId}
           onNavigate={navigate}
@@ -804,7 +805,6 @@ function ProjectSidebarInner({
         collapsed={false}
         metaOrchestrators={metaOrchestrators}
         orchestrators={orchestrators ?? []}
-        sessions={sessions}
         registeredProjectIds={colorProjectIds}
         activeSessionId={activeSessionId}
         onNavigate={navigate}

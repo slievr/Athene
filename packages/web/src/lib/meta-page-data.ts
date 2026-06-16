@@ -11,11 +11,18 @@ import {
   sessionToDashboard,
   enrichSessionPR,
   enrichSessionsMetadataFast,
+  listDashboardOrchestrators,
 } from "@/lib/serialize";
 import { getAllProjects, type ProjectInfo } from "@/lib/project-name";
 import { settlesWithin } from "@/lib/async-utils";
-import { listSidebarMetaOrchestrators } from "@/lib/meta-orchestrators";
-import type { SidebarMetaOrchestrator } from "@/components/SidebarOrchestrators";
+import {
+  listSidebarMetaOrchestrators,
+  buildSidebarProjectOrchestrators,
+} from "@/lib/meta-orchestrators";
+import type {
+  SidebarMetaOrchestrator,
+  SidebarProjectOrchestrator,
+} from "@/components/SidebarOrchestrators";
 import {
   DEFAULT_ATTENTION_ZONE_MODE,
   formatDashboardLoadError,
@@ -34,6 +41,8 @@ export interface MetaPageData {
   projects: ProjectInfo[];
   /** Configured meta orchestrators (with their _meta session if running). */
   metaOrchestrators: SidebarMetaOrchestrator[];
+  /** Per-project orchestrators (enriched sessions) for the sidebar section. */
+  sidebarOrchestrators: SidebarProjectOrchestrator[];
   attentionZones: DashboardAttentionZoneMode;
   dashboardLoadError?: string;
 }
@@ -58,6 +67,7 @@ export const getMetaPageData = cache(async function getMetaPageData(
     sessions: [],
     projects,
     metaOrchestrators: [],
+    sidebarOrchestrators: [],
     attentionZones: DEFAULT_ATTENTION_ZONE_MODE,
   };
 
@@ -69,7 +79,7 @@ export const getMetaPageData = cache(async function getMetaPageData(
       return null;
     }
     pageData.attentionZones = config.dashboard?.attentionZones ?? DEFAULT_ATTENTION_ZONE_MODE;
-    pageData.metaOrchestrators = listSidebarMetaOrchestrators(config);
+    pageData.metaOrchestrators = await listSidebarMetaOrchestrators(config, registry);
     try {
       allSessions = await services.sessionManager.listCached();
     } catch (listErr) {
@@ -80,6 +90,13 @@ export const getMetaPageData = cache(async function getMetaPageData(
     pageData.dashboardLoadError = formatDashboardLoadError(err);
     return pageData;
   }
+
+  // Per-project orchestrators (with enriched sessions) for the sidebar — all
+  // projects (the sidebar is unscoped).
+  pageData.sidebarOrchestrators = buildSidebarProjectOrchestrators(
+    allSessions,
+    listDashboardOrchestrators(allSessions, config.projects),
+  );
 
   // The meta's fleet = worker sessions stamped with this meta owner. Coordinator
   // sessions are excluded defensively (meta-orchestrator sessions live under the

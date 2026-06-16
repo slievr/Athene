@@ -22,6 +22,7 @@ export default async function MetaPage(props: {
         projects={data.projects}
         orchestrators={[]}
         metaOrchestrators={data.metaOrchestrators}
+        sidebarOrchestrators={data.sidebarOrchestrators}
         metaOwner={name}
         attentionZones={data.attentionZones}
         dashboardLoadError={data.dashboardLoadError}

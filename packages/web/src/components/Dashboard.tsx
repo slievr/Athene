@@ -27,11 +27,13 @@ import { CopyDebugBundleButton } from "./CopyDebugBundleButton";
 import { DashboardNotificationButton } from "./DashboardNotificationButton";
 import { SidebarContext, useSidebarContext } from "./workspace/SidebarContext";
 import { ProjectSidebar } from "./ProjectSidebar";
-import type { SidebarMetaOrchestrator } from "./SidebarOrchestrators";
+import type {
+  SidebarMetaOrchestrator,
+  SidebarProjectOrchestrator,
+} from "./SidebarOrchestrators";
 import type { ProjectAccent } from "./SessionCard";
 import { ProjectChip } from "./SessionCard.parts";
 import { getProjectColor } from "@/lib/project-color";
-import { isOrchestratorSession } from "@made-by-moonlight/athene-core/types";
 import { projectDashboardPath, projectReviewPath, projectSessionPath } from "@/lib/routes";
 import { BottomSheet } from "./BottomSheet";
 
@@ -43,6 +45,8 @@ interface DashboardProps {
   orchestrators?: DashboardOrchestratorLink[];
   /** Configured meta orchestrators (◆ rows in the sidebar ORCHESTRATORS section). */
   metaOrchestrators?: SidebarMetaOrchestrator[];
+  /** Per-project orchestrators (with enriched sessions) for the sidebar section. */
+  sidebarOrchestrators?: SidebarProjectOrchestrator[];
   /**
    * When set, scope the kanban board to the fleet owned by this meta
    * orchestrator (sessions with metaOwner === this value). The sidebar still
@@ -168,6 +172,7 @@ function DashboardInner({
   projects = [],
   orchestrators,
   metaOrchestrators,
+  sidebarOrchestrators,
   metaOwner,
   attentionZones = "simple",
   dashboardLoadError,
@@ -202,11 +207,6 @@ function DashboardInner({
     return sessions.filter((s) => s.projectId === projectId);
   }, [sessions, projectId, metaOwner]);
 
-  const allSessionPrefixes = useMemo(
-    () => projects.map((p) => p.sessionPrefix ?? p.id),
-    [projects],
-  );
-
   // Per-project color accent for cards — only in multi-project views (the meta
   // dashboard and the all-projects view), where distinguishing projects matters.
   // Single-project boards skip it to avoid redundant noise.
@@ -223,19 +223,6 @@ function DashboardInner({
     };
   }, [projects]);
 
-  const sidebarOrchestrators = useMemo(
-    () =>
-      sessions
-        .filter((s) =>
-          isOrchestratorSession(
-            s,
-            projects.find((p) => p.id === s.projectId)?.sessionPrefix ?? s.projectId,
-            allSessionPrefixes,
-          ),
-        )
-        .map((s) => ({ id: s.id, projectId: s.projectId })),
-    [sessions, projects, allSessionPrefixes],
-  );
   const connectionStatus: "connected" | "reconnecting" | "disconnected" =
     mux?.status === "disconnected"
       ? "disconnected"

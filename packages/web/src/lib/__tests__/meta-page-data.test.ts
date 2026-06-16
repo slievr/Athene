@@ -18,6 +18,7 @@ vi.mock("@/lib/serialize", () => ({
   sessionToDashboard: (s: { id: string; projectId: string }) => ({ id: s.id, projectId: s.projectId }),
   enrichSessionsMetadataFast: vi.fn().mockResolvedValue(undefined),
   enrichSessionPR: vi.fn(),
+  listDashboardOrchestrators: () => [],
 }));
 
 import { getMetaPageData } from "@/lib/meta-page-data";
