@@ -87,6 +87,27 @@
   --color-ci-pass: #16a34a;
   --color-ci-fail: #dc2626;
 
+  /* Per-project identity palette — a separate axis from semantic status color.
+     Hues deliberately sit OUTSIDE the six reserved status hues
+     (blue/orange/amber/red/green/neutral) to avoid meaning collision. Always
+     paired with the project name/dot — never used as the sole signal. */
+  --project-color-1: #7c3aed; /* violet */
+  --project-color-2: #0891b2; /* cyan */
+  --project-color-3: #db2777; /* pink */
+  --project-color-4: #65a30d; /* lime */
+  --project-color-5: #0284c7; /* sky */
+  --project-color-6: #e11d48; /* rose */
+  --project-color-7: #4f46e5; /* indigo */
+  --project-color-8: #d97706; /* gold */
+  --project-tint-1: color-mix(in srgb, var(--project-color-1) 12%, transparent);
+  --project-tint-2: color-mix(in srgb, var(--project-color-2) 12%, transparent);
+  --project-tint-3: color-mix(in srgb, var(--project-color-3) 12%, transparent);
+  --project-tint-4: color-mix(in srgb, var(--project-color-4) 12%, transparent);
+  --project-tint-5: color-mix(in srgb, var(--project-color-5) 12%, transparent);
+  --project-tint-6: color-mix(in srgb, var(--project-color-6) 12%, transparent);
+  --project-tint-7: color-mix(in srgb, var(--project-color-7) 12%, transparent);
+  --project-tint-8: color-mix(in srgb, var(--project-color-8) 12%, transparent);
+
   /* Semantic aliases */
   --color-accent-blue: #2563eb;
   --color-accent-green: #16a34a;
@@ -270,6 +291,26 @@
   --color-accent-violet: var(--blue-soft);
   --color-accent-purple: var(--blue-soft);
 
+  /* Per-project identity palette (dark) — brighter for legibility on the dark
+     canvas. Hues sit outside the reserved status hues; paired with the project
+     name/dot, never the sole signal. */
+  --project-color-1: #a78bfa; /* violet */
+  --project-color-2: #22d3ee; /* cyan */
+  --project-color-3: #f472b6; /* pink */
+  --project-color-4: #a3e635; /* lime */
+  --project-color-5: #38bdf8; /* sky */
+  --project-color-6: #fb7185; /* rose */
+  --project-color-7: #818cf8; /* indigo */
+  --project-color-8: #fbbf24; /* gold */
+  --project-tint-1: color-mix(in srgb, var(--project-color-1) 16%, transparent);
+  --project-tint-2: color-mix(in srgb, var(--project-color-2) 16%, transparent);
+  --project-tint-3: color-mix(in srgb, var(--project-color-3) 16%, transparent);
+  --project-tint-4: color-mix(in srgb, var(--project-color-4) 16%, transparent);
+  --project-tint-5: color-mix(in srgb, var(--project-color-5) 16%, transparent);
+  --project-tint-6: color-mix(in srgb, var(--project-color-6) 16%, transparent);
+  --project-tint-7: color-mix(in srgb, var(--project-color-7) 16%, transparent);
+  --project-tint-8: color-mix(in srgb, var(--project-color-8) 16%, transparent);
+
   /* Theme-adaptive tints (bg behind status pills/badges) */
   --color-tint-blue: rgba(77, 141, 255, 0.12);
   --color-tint-green: rgba(116, 185, 138, 0.13);
@@ -450,6 +491,25 @@
   --color-accent-red: var(--red);
   --color-accent-violet: var(--teal-soft);
   --color-accent-purple: var(--teal-soft);
+
+  /* Per-project identity palette (ocean) — bright hues outside the reserved
+     status hues; paired with the project name/dot, never the sole signal. */
+  --project-color-1: #a78bfa; /* violet */
+  --project-color-2: #22d3ee; /* cyan */
+  --project-color-3: #f472b6; /* pink */
+  --project-color-4: #a3e635; /* lime */
+  --project-color-5: #38bdf8; /* sky */
+  --project-color-6: #fb7185; /* rose */
+  --project-color-7: #818cf8; /* indigo */
+  --project-color-8: #fbbf24; /* gold */
+  --project-tint-1: color-mix(in srgb, var(--project-color-1) 16%, transparent);
+  --project-tint-2: color-mix(in srgb, var(--project-color-2) 16%, transparent);
+  --project-tint-3: color-mix(in srgb, var(--project-color-3) 16%, transparent);
+  --project-tint-4: color-mix(in srgb, var(--project-color-4) 16%, transparent);
+  --project-tint-5: color-mix(in srgb, var(--project-color-5) 16%, transparent);
+  --project-tint-6: color-mix(in srgb, var(--project-color-6) 16%, transparent);
+  --project-tint-7: color-mix(in srgb, var(--project-color-7) 16%, transparent);
+  --project-tint-8: color-mix(in srgb, var(--project-color-8) 16%, transparent);
 
   /* Theme-adaptive tints */
   --color-tint-blue: rgba(45, 212, 191, 0.12);
