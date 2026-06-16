@@ -13,6 +13,27 @@ import { getSessionTitle } from "@/lib/format";
 import { CICheckList } from "./CIBadge";
 import { getSizeLabel } from "./PRStatus";
 import { projectSessionPath } from "@/lib/routes";
+import { projectColorBgClass } from "@/lib/project-color";
+
+/**
+ * Per-project identity chip: a project-color dot + the project name. The color
+ * is an identity axis only (never status); always paired with the name so it is
+ * never the sole signal.
+ */
+export function ProjectChip({ slot, name }: { slot: number; name: string }) {
+  return (
+    <span className="session-card__project-chip" title={name}>
+      <span
+        className={cn(
+          "session-card__project-dot shrink-0 rounded-full",
+          projectColorBgClass(slot),
+        )}
+        aria-hidden="true"
+      />
+      <span className="session-card__project-name">{name}</span>
+    </span>
+  );
+}
 
 /**
  * Determine the status display info for done cards.
@@ -108,13 +129,14 @@ function getDoneStatusInfo(session: DashboardSession): {
 interface DoneSessionCardProps {
   session: DashboardSession;
   onRestore?: (sessionId: string) => void;
+  projectAccent?: { slot: number; name: string };
 }
 
 /**
  * Done / Terminated card variant — kept intact from the original SessionCard.
  * Click to expand a detail panel (summary, issue, CI checks, PR metrics).
  */
-export function DoneSessionCard({ session, onRestore }: DoneSessionCardProps) {
+export function DoneSessionCard({ session, onRestore, projectAccent }: DoneSessionCardProps) {
   const [expanded, setExpanded] = useState(false);
   const pr = session.pr;
   const rateLimited = pr ? isPRRateLimited(pr) : false;
@@ -140,6 +162,9 @@ export function DoneSessionCard({ session, onRestore }: DoneSessionCardProps) {
         <span className="font-[var(--font-mono)] text-[10px] tracking-wide text-[var(--color-text-muted)]">
           {session.id}
         </span>
+        {projectAccent ? (
+          <ProjectChip slot={projectAccent.slot} name={projectAccent.name} />
+        ) : null}
         <div className="flex-1" />
         {isRestorable && (
           <button

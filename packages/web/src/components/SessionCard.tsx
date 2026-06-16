@@ -15,8 +15,15 @@ import {
 import { cn } from "@/lib/cn";
 import { getSessionTitle } from "@/lib/format";
 import { StatusBadge } from "./StatusBadge";
-import { DoneSessionCard } from "./SessionCard.parts";
+import { DoneSessionCard, ProjectChip } from "./SessionCard.parts";
+import { projectColorBorderClass } from "@/lib/project-color";
 import { projectSessionHashPath } from "@/lib/routes";
+
+/** Per-project identity accent: palette slot + project display name. */
+export interface ProjectAccent {
+  slot: number;
+  name: string;
+}
 
 /**
  * Tracks which session IDs have already played their entrance animation.
@@ -30,6 +37,8 @@ interface SessionCardProps {
   onKill?: (sessionId: string) => void;
   onMerge?: (prNumber: number, owner?: string, repo?: string) => void;
   onRestore?: (sessionId: string) => void;
+  /** Optional per-project color accent (identity axis). Shown in multi-project views. */
+  projectAccent?: ProjectAccent;
 }
 
 function getPRDotClass(p: DashboardPR): string {
@@ -83,7 +92,7 @@ function getRepoInitials(repo: string): string {
     .slice(0, 3);
 }
 
-function SessionCardView({ session, onKill, onMerge, onRestore }: SessionCardProps) {
+function SessionCardView({ session, onKill, onMerge, onRestore, projectAccent }: SessionCardProps) {
   const [killConfirming, setKillConfirming] = useState(false);
 
   // Only play the entrance animation on the very first mount of this session.
@@ -136,14 +145,24 @@ function SessionCardView({ session, onKill, onMerge, onRestore }: SessionCardPro
 
   /* ── Done card variant (split out into SessionCard.parts) ───────── */
   if (isDone) {
-    return <DoneSessionCard session={session} onRestore={onRestore} />;
+    return <DoneSessionCard session={session} onRestore={onRestore} projectAccent={projectAccent} />;
   }
 
   /* ── Standard card (non-done) — compact / informational ──────────── */
   return (
-    <div className={cn("session-card border", !hasEntered && "kanban-card-enter")}>
+    <div
+      className={cn(
+        "session-card border",
+        !hasEntered && "kanban-card-enter",
+        projectAccent && "border-l-2",
+        projectAccent && projectColorBorderClass(projectAccent.slot),
+      )}
+    >
       <div className="session-card__header">
         <StatusBadge session={session} />
+        {projectAccent ? (
+          <ProjectChip slot={projectAccent.slot} name={projectAccent.name} />
+        ) : null}
         <div className="flex-1" />
         <span className="card__id">{session.id}</span>
         {isRestorable && (

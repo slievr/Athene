@@ -2,7 +2,7 @@
 
 import { memo, useEffect, useState } from "react";
 import { type DashboardSession, type AttentionLevel, isPRMergeReady } from "@/lib/types";
-import { SessionCard } from "./SessionCard";
+import { SessionCard, type ProjectAccent } from "./SessionCard";
 import { getSessionTitle } from "@/lib/format";
 import { projectSessionPath } from "@/lib/routes";
 
@@ -22,6 +22,8 @@ interface AttentionZoneProps {
   onPreview?: (session: DashboardSession) => void;
   /** Reset internal "show all" state when this value changes */
   resetKey?: string | number | null;
+  /** Resolve a per-project color accent for a card (multi-project / meta views). */
+  resolveProjectAccent?: (projectId: string) => ProjectAccent | undefined;
 }
 
 const zoneConfig: Record<
@@ -81,6 +83,7 @@ function AttentionZoneView({
   compactMobile,
   onPreview,
   resetKey,
+  resolveProjectAccent,
 }: AttentionZoneProps) {
   const config = zoneConfig[level];
   const isAccordion = onToggle !== undefined;
@@ -138,6 +141,7 @@ function AttentionZoneView({
                     onKill={onKill}
                     onMerge={onMerge}
                     onRestore={onRestore}
+                    projectAccent={resolveProjectAccent?.(session.projectId)}
                   />
                 ),
               )}
@@ -181,6 +185,7 @@ function AttentionZoneView({
                 onKill={onKill}
                 onMerge={onMerge}
                 onRestore={onRestore}
+                projectAccent={resolveProjectAccent?.(session.projectId)}
               />
             ))}
           </div>

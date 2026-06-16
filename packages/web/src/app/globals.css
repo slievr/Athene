@@ -5414,6 +5414,28 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   margin-right: 1px;
 }
 
+/* Per-project identity chip on session cards (dot + name, never status color) */
+.session-card__project-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+}
+
+.session-card__project-dot {
+  width: 7px;
+  height: 7px;
+}
+
+.session-card__project-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 96px;
+}
+
 .project-sidebar__orch-divider {
   height: 1px;
   margin: 4px 12px;

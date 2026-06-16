@@ -27,6 +27,8 @@ import { CopyDebugBundleButton } from "./CopyDebugBundleButton";
 import { DashboardNotificationButton } from "./DashboardNotificationButton";
 import { SidebarContext, useSidebarContext } from "./workspace/SidebarContext";
 import { ProjectSidebar } from "./ProjectSidebar";
+import type { ProjectAccent } from "./SessionCard";
+import { getProjectColor } from "@/lib/project-color";
 import { isOrchestratorSession } from "@made-by-moonlight/athene-core/types";
 import { projectDashboardPath, projectReviewPath, projectSessionPath } from "@/lib/routes";
 import { BottomSheet } from "./BottomSheet";
@@ -182,6 +184,22 @@ function DashboardInner({
     () => projects.map((p) => p.sessionPrefix ?? p.id),
     [projects],
   );
+
+  // Per-project color accent for cards — only in multi-project views (the meta
+  // dashboard and the all-projects view), where distinguishing projects matters.
+  // Single-project boards skip it to avoid redundant noise.
+  const resolveProjectAccent = useMemo<
+    ((projectId: string) => ProjectAccent | undefined) | undefined
+  >(() => {
+    if (projects.length <= 1) return undefined;
+    const ids = projects.map((p) => p.id);
+    const nameById = new Map(projects.map((p) => [p.id, p.name] as const));
+    return (projectId: string) => {
+      const name = nameById.get(projectId);
+      if (!name) return undefined;
+      return { slot: getProjectColor(projectId, ids).slot, name };
+    };
+  }, [projects]);
 
   const sidebarOrchestrators = useMemo(
     () =>
@@ -726,6 +744,7 @@ function DashboardInner({
                       collapsed={isMobile && collapsedZones.has(level)}
                       onToggle={isMobile ? handleZoneToggle : undefined}
                       onPreview={isMobile ? handlePreview : undefined}
+                      resolveProjectAccent={resolveProjectAccent}
                     />
                   ))}
                 </div>
