@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { fireEvent, render } from "@testing-library/react";
 import { Dashboard } from "@/components/Dashboard";
 import { makeSession } from "@/__tests__/helpers";
 
@@ -62,5 +62,39 @@ describe("Dashboard meta-board scope", () => {
     expect(boardText).toContain("web-1");
     expect(boardText).not.toContain("api-9");
     expect(boardText).not.toContain("web-2");
+  });
+
+  it("gives done/terminated cards a per-project accent on the meta board", () => {
+    const { container } = render(
+      <Dashboard
+        metaOwner="meta-1"
+        projects={[
+          { id: "web", name: "Web", sessionPrefix: "web" },
+          { id: "api", name: "Api", sessionPrefix: "api" },
+        ]}
+        initialSessions={[
+          makeSession({
+            id: "api-3",
+            projectId: "api", // registration index 1 → palette slot 2
+            ownerKind: "meta",
+            metaOwner: "meta-1",
+            status: "merged",
+            activity: "exited",
+            summary: "Finished api work",
+          }),
+        ]}
+      />,
+    );
+
+    // The Done / Terminated section is collapsed by default — expand it.
+    const toggle = container.querySelector(".done-bar__toggle");
+    expect(toggle).toBeTruthy();
+    fireEvent.click(toggle!);
+
+    const doneCard = container.querySelector(".done-card");
+    expect(doneCard).toBeTruthy();
+    // Project name chip + slot-2 color var (api is registration index 1).
+    expect(doneCard!.textContent).toContain("Api");
+    expect(doneCard!.querySelector('[class*="var(--project-color-2)"]')).toBeTruthy();
   });
 });

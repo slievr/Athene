@@ -29,6 +29,7 @@ import { SidebarContext, useSidebarContext } from "./workspace/SidebarContext";
 import { ProjectSidebar } from "./ProjectSidebar";
 import type { SidebarMetaOrchestrator } from "./SidebarOrchestrators";
 import type { ProjectAccent } from "./SessionCard";
+import { ProjectChip } from "./SessionCard.parts";
 import { getProjectColor } from "@/lib/project-color";
 import { isOrchestratorSession } from "@made-by-moonlight/athene-core/types";
 import { projectDashboardPath, projectReviewPath, projectSessionPath } from "@/lib/routes";
@@ -94,9 +95,11 @@ function mergeOrchestrators(
 function DoneCard({
   session,
   onRestore,
+  projectAccent,
 }: {
   session: DashboardSession;
   onRestore: (id: string) => void;
+  projectAccent?: ProjectAccent;
 }) {
   const title =
     (!session.summaryIsFallback && session.summary) ||
@@ -114,6 +117,9 @@ function DoneCard({
       <p className="done-card__title">{title}</p>
       <div className="done-card__meta">
         <span className={badgeClass}>{badgeLabel}</span>
+        {projectAccent ? (
+          <ProjectChip slot={projectAccent.slot} name={projectAccent.name} />
+        ) : null}
         {session.pr ? (
           <a
             href={session.pr.url}
@@ -814,7 +820,12 @@ function DashboardInner({
                 {doneExpanded && (
                   <div className="done-bar__cards">
                     {grouped.done.map((session) => (
-                      <DoneCard key={session.id} session={session} onRestore={handleRestore} />
+                      <DoneCard
+                        key={session.id}
+                        session={session}
+                        onRestore={handleRestore}
+                        projectAccent={resolveProjectAccent?.(session.projectId)}
+                      />
                     ))}
                   </div>
                 )}
