@@ -38,11 +38,20 @@ describe("resolveInScopeProjects", () => {
 });
 
 describe("reconcileMetaScopeIds", () => {
-  it("adds a newly-registered project to a discover:true list scope", () => {
-    const cfg = makeConfig(["web", "api"]); // api registered after meta started
+  it("adds a project registered after startup to a discover:true list scope", () => {
+    // Startup baseline was just [web]; api registered later.
+    const cfg = makeConfig(["web", "api"]);
     const result = reconcileMetaScopeIds(cfg, list(["web"], true), ["web"]);
     expect(result).toContain("web");
     expect(result).toContain("api");
+  });
+
+  it("does NOT pull pre-existing out-of-list projects into scope (full baseline)", () => {
+    // api already existed at startup (in the baseline) but is NOT in the allow-list,
+    // so discover must not add it — the allow-list is preserved.
+    const cfg = makeConfig(["web", "api"]);
+    const result = reconcileMetaScopeIds(cfg, list(["web"], true), ["web", "api"]);
+    expect(result).toEqual(["web"]);
   });
 
   it("does NOT add new projects when discover is off", () => {

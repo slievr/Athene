@@ -11,7 +11,7 @@
  * Reference: scripts/claude-ao-session, scripts/send-to-session
  */
 
-import { statSync, existsSync, writeFileSync, mkdirSync, utimesSync, unlinkSync } from "node:fs";
+import { statSync, existsSync, writeFileSync, mkdirSync, utimesSync, unlinkSync, openSync, closeSync, rmSync } from "node:fs";
 import { recordActivityEvent } from "./activity-events.js";
 import { execFile } from "node:child_process";
 import { basename, join, resolve } from "node:path";
@@ -899,6 +899,60 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     }
   }
 
+  /**
+   * Serialize the spawn collision-check + id-reservation window per project,
+   * ACROSS processes (the project orchestrator and a meta orchestrator each run
+   * their own `athene spawn` process). Without this, two concurrent spawns could
+   * both pass the issue-collision guard before either persists its claim, and
+   * both create live sessions owning the same issue. The lock is held only for
+   * the brief guard+reserve+claim window, never across worktree/runtime creation.
+   */
+  async function withProjectSpawnLock<T>(projectId: string, fn: () => Promise<T>): Promise<T> {
+    const projectDir = getProjectDir(projectId);
+    mkdirSync(projectDir, { recursive: true });
+    const lockPath = join(projectDir, "spawn.lock");
+    const timeoutMs = 30_000;
+    const staleMs = 60_000;
+    const deadline = Date.now() + timeoutMs;
+    let fd: number | null = null;
+    let waitMs = 10;
+    while (fd === null) {
+      try {
+        fd = openSync(lockPath, "wx");
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== "EEXIST") {
+          throw new Error(`Failed to acquire spawn lock: ${lockPath}`, { cause: err });
+        }
+        // Reap a stale lock left by a crashed spawn.
+        try {
+          if (Date.now() - statSync(lockPath).mtimeMs > staleMs) {
+            rmSync(lockPath, { force: true });
+            continue;
+          }
+        } catch {
+          continue;
+        }
+        if (Date.now() > deadline) {
+          throw new Error(`Timed out acquiring spawn lock for project '${projectId}'`, {
+            cause: err,
+          });
+        }
+        await sleep(waitMs);
+        waitMs = Math.min(waitMs * 2, 250);
+      }
+    }
+    try {
+      return await fn();
+    } finally {
+      try {
+        closeSync(fd);
+        rmSync(lockPath, { force: true });
+      } catch {
+        /* best effort */
+      }
+    }
+  }
+
   async function reserveNextSessionIdentity(
     project: ProjectConfig,
     sessionsDir: string,
@@ -1317,23 +1371,6 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
       }
     }
 
-    // Anti-collision guard — runs BEFORE any resource creation so a refusal
-    // leaves no orphaned worktree/runtime. Lives in the shared spawn path so it
-    // protects BOTH coordinators symmetrically: a meta orchestrator and a
-    // per-project orchestrator are equally blocked from duplicating an issue.
-    // Issue-keyed work is a HARD refusal; freeform work is advisory (surfaced
-    // by the CLI, not blocked here).
-    const liveInProject = (await list(spawnConfig.projectId)).filter(
-      (s) => !isTerminalSession(s),
-    );
-    const collision = checkSpawnCollision(liveInProject, {
-      projectId: spawnConfig.projectId,
-      issueId: spawnConfig.issueId,
-    });
-    if (collision.hard) {
-      throw new Error(formatHardRefusal(collision.hard));
-    }
-
     // Get the sessions directory for this project
     const sessionsDir = getProjectSessionsDir(spawnConfig.projectId);
 
@@ -1344,12 +1381,48 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     // ones.
     const cleanupStack = new CleanupStack();
     let sessionId: string | undefined;
-    try {
-      // Determine session ID — atomically reserve to prevent concurrent collisions
-      let tmuxName: string | undefined;
+    let tmuxName: string | undefined;
+
+    // Anti-collision guard + id reservation run together under a per-project
+    // spawn lock so the check-then-reserve window is atomic ACROSS processes
+    // (the project orchestrator and a meta orchestrator each spawn from their own
+    // process). The guard runs BEFORE any worktree/runtime creation so a refusal
+    // orphans nothing, and is the single authority protecting BOTH coordinators
+    // symmetrically. Issue-keyed work is a HARD refusal; freeform work is
+    // advisory (surfaced by the CLI, not blocked here).
+    await withProjectSpawnLock(spawnConfig.projectId, async () => {
+      const liveInProject = (await list(spawnConfig.projectId)).filter(
+        (s) => !isTerminalSession(s),
+      );
+      const collision = checkSpawnCollision(liveInProject, {
+        projectId: spawnConfig.projectId,
+        issueId: spawnConfig.issueId,
+      });
+      if (collision.hard) {
+        throw new Error(formatHardRefusal(collision.hard));
+      }
+      // Atomically reserve the session id, then immediately persist the issue
+      // claim so a concurrent spawn (next to acquire the lock) sees it via
+      // list() and hard-refuses — the empty reservation file carries no issueId.
       ({ sessionId, tmuxName } = await reserveNextSessionIdentity(project, sessionsDir));
-      const reservedSessionId = sessionId;
-      cleanupStack.push(() => deleteMetadata(sessionsDir, reservedSessionId));
+      if (spawnConfig.issueId) {
+        updateMetadata(sessionsDir, sessionId, {
+          issue: spawnConfig.issueId,
+          project: spawnConfig.projectId,
+          status: "spawning",
+        });
+      }
+    });
+
+    if (!sessionId) {
+      // reserveNextSessionIdentity throws on exhaustion, so this is unreachable;
+      // the guard narrows `sessionId` to string for the rest of the function.
+      throw new Error("Failed to reserve a session id");
+    }
+    const reservedSessionId = sessionId;
+    cleanupStack.push(() => deleteMetadata(sessionsDir, reservedSessionId));
+
+    try {
 
       // Determine branch name — explicit branch always takes priority
       let branch: string;

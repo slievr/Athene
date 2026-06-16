@@ -36,23 +36,27 @@ export function resolveInScopeProjectIds(
  * - scope "all": always the full current project set (discover is redundant).
  * - explicit list, discover off: just the listed projects that still exist.
  * - explicit list, discover on: the listed projects PLUS any project registered
- *   since the last reconcile (i.e. present in config but absent from
- *   `previousIds`). This is the documented "discover also adds newly-registered
- *   projects" behavior.
+ *   *since startup* — i.e. present in `config.projects` now but absent from
+ *   `baselineProjectIds`.
  *
- * Pure — callers pass `previousIds` (the last reconciled set) and persist the
- * returned set as the new baseline.
+ * IMPORTANT — `baselineProjectIds` MUST be the FULL set of project IDs that were
+ * registered when the meta orchestrator started (e.g. `Object.keys(startupConfig.
+ * projects)`), NOT the in-scope subset. Seeding it with the in-scope subset would
+ * make every already-registered out-of-list project look "newly registered" on
+ * the first reconcile and silently defeat the explicit allow-list. With the full
+ * startup baseline, the first reconcile finds no new projects and returns exactly
+ * the configured in-scope list. Pure — no I/O.
  */
 export function reconcileMetaScopeIds(
   config: OrchestratorConfig,
   meta: MetaOrchestratorConfig,
-  previousIds: string[],
+  baselineProjectIds: string[],
 ): string[] {
   const base = resolveInScopeProjectIds(config, meta);
   if (meta.scope === "all" || !meta.discover) {
     return base;
   }
-  const known = new Set(previousIds);
-  const newlyRegistered = Object.keys(config.projects).filter((id) => !known.has(id));
+  const baseline = new Set(baselineProjectIds);
+  const newlyRegistered = Object.keys(config.projects).filter((id) => !baseline.has(id));
   return Array.from(new Set([...base, ...newlyRegistered]));
 }

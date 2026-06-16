@@ -66,6 +66,23 @@ describe("spawn collision guard", () => {
     expect(persisted?.["metaOwner"]).toBe("meta-1");
   });
 
+  it("serializes concurrent same-issue spawns — exactly one wins, the other is refused", async () => {
+    const sm = createSessionManager({ config: ctx.config, registry: ctx.mockRegistry });
+
+    const results = await Promise.allSettled([
+      sm.spawn({ projectId: "my-app", issueId: "ENG-77" }),
+      sm.spawn({ projectId: "my-app", issueId: "ENG-77" }),
+    ]);
+
+    const fulfilled = results.filter((r) => r.status === "fulfilled");
+    const rejected = results.filter(
+      (r): r is PromiseRejectedResult => r.status === "rejected",
+    );
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+    expect(String(rejected[0]!.reason)).toMatch(/SPAWN REFUSED/);
+  });
+
   it("defaults to project ownership when no owner flags are given", async () => {
     vi.useFakeTimers();
     const sm = createSessionManager({ config: ctx.config, registry: ctx.mockRegistry });
