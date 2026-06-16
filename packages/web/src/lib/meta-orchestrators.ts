@@ -87,8 +87,19 @@ export async function listSidebarMetaOrchestrators(
       const dash = sessionToDashboard(core);
       if (!(await runtimeNotDefinitelyMissing(core, agent, probeTimeoutMs))) {
         // Runtime is gone — show a non-live dot, not a stale "working" one.
+        // The sidebar dot level comes from getAttentionLevel → getDetailedAttentionLevel,
+        // which reads `lifecycle.sessionState` FIRST and falls through to "working"
+        // for any non-terminal lifecycle — so the activity/status overrides alone do
+        // NOT stop the glow (the persisted `sessionState` stays "working" because
+        // _meta sessions aren't lifecycle-supervised). Neutralize the lifecycle too:
+        // `terminated` → isDashboardSessionDone → "done" level (no glow), and
+        // `runtimeState = "exited"` truthfully reflects the dead runtime.
         dash.activity = "idle";
         dash.status = "idle";
+        if (dash.lifecycle) {
+          dash.lifecycle.sessionState = "terminated";
+          dash.lifecycle.runtimeState = "exited";
+        }
       }
       return { name, session: dash };
     }),
