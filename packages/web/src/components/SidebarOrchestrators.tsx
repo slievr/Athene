@@ -1,6 +1,6 @@
 "use client";
 
-import { getProjectColor } from "@/lib/project-color";
+import { getProjectColor, projectColorBgClass } from "@/lib/project-color";
 import { getAttentionLevel, type DashboardSession } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { metaDashboardPath, projectSessionPath } from "@/lib/routes";
@@ -27,19 +27,6 @@ interface SidebarOrchestratorsProps {
   activeSessionId: string | undefined;
   onNavigate: (href: string, session?: DashboardSession) => void;
 }
-
-// Project-color dot classes keyed by palette slot. Spelled out (not interpolated)
-// so the CSS var references are statically present for the bundler.
-const PROJECT_DOT_CLASS: Record<number, string> = {
-  1: "bg-[var(--project-color-1)]",
-  2: "bg-[var(--project-color-2)]",
-  3: "bg-[var(--project-color-3)]",
-  4: "bg-[var(--project-color-4)]",
-  5: "bg-[var(--project-color-5)]",
-  6: "bg-[var(--project-color-6)]",
-  7: "bg-[var(--project-color-7)]",
-  8: "bg-[var(--project-color-8)]",
-};
 
 /** Reuses the existing sidebar dot styling (same classes + data-level). */
 function ActivityDot({ session }: { session: DashboardSession | null }) {
@@ -107,7 +94,7 @@ export function SidebarOrchestrators({
               onClick={handleClick(href, findSession(o.id) ?? undefined)}
               className={cn(
                 "project-sidebar__orch-collapsed-dot shrink-0 rounded-full",
-                PROJECT_DOT_CLASS[slot],
+                projectColorBgClass(slot),
               )}
               title={`${o.projectId} orchestrator`}
               aria-label={`Open ${o.projectId} orchestrator`}
@@ -165,7 +152,7 @@ export function SidebarOrchestrators({
             <span
               className={cn(
                 "project-sidebar__orch-dot shrink-0 rounded-full",
-                PROJECT_DOT_CLASS[slot],
+                projectColorBgClass(slot),
               )}
               aria-hidden="true"
             />

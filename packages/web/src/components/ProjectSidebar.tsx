@@ -15,6 +15,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { AddProjectModal } from "./AddProjectModal";
 import { ProjectSettingsModal } from "./ProjectSettingsModal";
 import { SidebarOrchestrators, type SidebarMetaOrchestrator } from "./SidebarOrchestrators";
+import { getProjectColor, projectColorBgClass } from "@/lib/project-color";
 
 /** Minimal shape needed to render an orchestrator link in the sidebar. */
 export interface ProjectSidebarOrchestrator {
@@ -934,6 +935,15 @@ function ProjectSidebarInner({
                     >
                       <path d="m9 18 6-6-6-6" />
                     </svg>
+                    <span
+                      className={cn(
+                        "project-sidebar__proj-dot shrink-0 rounded-full",
+                        projectColorBgClass(
+                          getProjectColor(project.id, visibleProjects.map((p) => p.id)).slot,
+                        ),
+                      )}
+                      aria-hidden="true"
+                    />
                     <span className="project-sidebar__proj-name">{project.name}</span>
                     <span className="project-sidebar__proj-count">
                       {sessionsByProject.get(project.id)?.length ?? 0}

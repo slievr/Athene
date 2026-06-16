@@ -5407,6 +5407,13 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   height: 7px;
 }
 
+/* Per-project color dot on project rows (identity axis, paired with the name) */
+.project-sidebar__proj-dot {
+  width: 7px;
+  height: 7px;
+  margin-right: 1px;
+}
+
 .project-sidebar__orch-divider {
   height: 1px;
   margin: 4px 12px;

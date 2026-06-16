@@ -29,3 +29,38 @@ export function getProjectColor(
     tintVar: `var(--project-tint-${slot})`,
   };
 }
+
+/**
+ * Tailwind background-color class for a palette slot. Spelled out (not
+ * interpolated) so the CSS var reference is statically present for the bundler.
+ */
+const PROJECT_BG_CLASS: Record<number, string> = {
+  1: "bg-[var(--project-color-1)]",
+  2: "bg-[var(--project-color-2)]",
+  3: "bg-[var(--project-color-3)]",
+  4: "bg-[var(--project-color-4)]",
+  5: "bg-[var(--project-color-5)]",
+  6: "bg-[var(--project-color-6)]",
+  7: "bg-[var(--project-color-7)]",
+  8: "bg-[var(--project-color-8)]",
+};
+
+export function projectColorBgClass(slot: number): string {
+  return PROJECT_BG_CLASS[slot] ?? PROJECT_BG_CLASS[1]!;
+}
+
+/** Tailwind left-border class for a palette slot (used for card rails). */
+const PROJECT_BORDER_CLASS: Record<number, string> = {
+  1: "border-l-[color:var(--project-color-1)]",
+  2: "border-l-[color:var(--project-color-2)]",
+  3: "border-l-[color:var(--project-color-3)]",
+  4: "border-l-[color:var(--project-color-4)]",
+  5: "border-l-[color:var(--project-color-5)]",
+  6: "border-l-[color:var(--project-color-6)]",
+  7: "border-l-[color:var(--project-color-7)]",
+  8: "border-l-[color:var(--project-color-8)]",
+};
+
+export function projectColorBorderClass(slot: number): string {
+  return PROJECT_BORDER_CLASS[slot] ?? PROJECT_BORDER_CLASS[1]!;
+}
