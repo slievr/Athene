@@ -5359,6 +5359,75 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   padding-left: 24px;
 }
 
+/* ORCHESTRATORS section (meta orchestrators + per-project orchestrators) */
+.project-sidebar__orchestrators {
+  display: flex;
+  flex-direction: column;
+}
+
+.project-sidebar__orch-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 12px 2px 14px;
+  width: 100%;
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  font-size: 11.5px;
+  transition: background 80ms;
+}
+
+.project-sidebar__orch-row:hover {
+  background: var(--sidebar-row-hover);
+  text-decoration: none;
+  color: var(--color-text-secondary);
+}
+
+.project-sidebar__orch-row--active {
+  border-left: 2px solid var(--color-accent-amber);
+  padding-left: 12px;
+}
+
+.project-sidebar__orch-glyph {
+  font-size: 9px;
+  line-height: 1;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.project-sidebar__orch-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-sidebar__orch-dot {
+  width: 7px;
+  height: 7px;
+}
+
+.project-sidebar__orch-divider {
+  height: 1px;
+  margin: 4px 12px;
+  background: var(--color-border-subtle);
+}
+
+/* Collapsed-rail orchestrator cluster */
+.project-sidebar__orch-collapsed {
+  width: 100%;
+}
+
+.project-sidebar__orch-collapsed .project-sidebar__orch-glyph {
+  font-size: 11px;
+  padding: 2px 0;
+}
+
+.project-sidebar__orch-collapsed-dot {
+  width: 8px;
+  height: 8px;
+}
+
 /* Session label */
 .project-sidebar__sess-label {
   flex: 1;
