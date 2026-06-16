@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { mkdirSync, writeFileSync, existsSync, utimesSync } from "node:fs";
+import { mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { createSessionManager } from "../session-manager.js";
 import { readMetadataRaw, writeMetadata } from "../metadata.js";
@@ -126,16 +126,14 @@ describe("spawn collision guard", () => {
     expect(String(rejected[0]!.reason)).toMatch(/SPAWN REFUSED/);
   });
 
-  it("reaps an orphaned spawn.lock older than the stale threshold and proceeds", async () => {
-    // Simulate a crashed prior spawn that left spawn.lock behind, with an mtime
-    // older than staleMs (15s). The next spawn must reap it and succeed within
-    // the acquire timeout, not hang/throw "Timed out acquiring spawn lock".
+  it("reaps a spawn.lock whose holder PID is dead and proceeds", async () => {
+    // Simulate a crashed prior spawn that left spawn.lock behind, recording a PID
+    // that is no longer alive. The next spawn must reap it (liveness-based) and
+    // succeed, not hang/throw "Timed out acquiring spawn lock".
     const projectDir = getProjectDir("my-app");
     mkdirSync(projectDir, { recursive: true });
     const lockPath = join(projectDir, "spawn.lock");
-    writeFileSync(lockPath, "");
-    const twentySecondsAgo = new Date(Date.now() - 20_000);
-    utimesSync(lockPath, twentySecondsAgo, twentySecondsAgo);
+    writeFileSync(lockPath, "2147483646"); // PID far beyond any live process → dead
 
     vi.useFakeTimers();
     const sm = createSessionManager({ config: ctx.config, registry: ctx.mockRegistry });
@@ -144,7 +142,7 @@ describe("spawn collision guard", () => {
     const session = await spawnPromise;
 
     expect(session.id).toBeTruthy();
-    // The stale lock was reaped (and the new spawn's own lock released on exit).
+    // The dead-holder lock was reaped (and the new spawn's own lock released on exit).
     expect(existsSync(lockPath)).toBe(false);
   });
 

@@ -11,7 +11,7 @@
  * Reference: scripts/claude-ao-session, scripts/send-to-session
  */
 
-import { statSync, existsSync, writeFileSync, mkdirSync, utimesSync, unlinkSync, openSync, closeSync, rmSync } from "node:fs";
+import { statSync, existsSync, readFileSync, writeFileSync, mkdirSync, utimesSync, unlinkSync, openSync, closeSync, rmSync } from "node:fs";
 import { recordActivityEvent } from "./activity-events.js";
 import { execFile } from "node:child_process";
 import { basename, join, resolve } from "node:path";
@@ -328,6 +328,55 @@ function listProjectSessionsFromDisk(projectId: string): Session[] {
 function isSpawnTerminal(session: Session): boolean {
   const state = session.lifecycle.session.state;
   return state === "done" || state === "terminated" || session.lifecycle.pr.state === "merged";
+}
+
+/**
+ * Cross-platform process-liveness probe via signal 0. `process.kill(pid, 0)` is
+ * portable (Windows included). Per docs/CROSS_PLATFORM.md: a throw with code
+ * `ESRCH` means the process is gone (dead); `EPERM` means it EXISTS but we can't
+ * signal it (alive). Any other throw is treated as not-alive.
+ */
+function isPidAlive(pid: number): boolean {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return (err as NodeJS.ErrnoException).code === "EPERM";
+  }
+}
+
+/**
+ * Backstop for a spawn.lock whose holder PID can't be read/parsed (legacy format,
+ * mid-write, or corruption) — only such a lock is reaped by age, and only after a
+ * long window no real disk-only critical section could ever reach. A lock with a
+ * readable PID is reaped ONLY when that PID is dead, never by age, so an
+ * alive-but-slow holder is never reaped.
+ */
+const SPAWN_LOCK_CORRUPT_BACKSTOP_MS = 300_000;
+
+/**
+ * Whether a waiter may reap an existing spawn.lock. Liveness-based, not
+ * time-based: reap iff the recorded holder PID is provably dead, or the lock has
+ * no parseable PID and is older than the corrupt-lock backstop. Exported for tests.
+ */
+export function isSpawnLockReapable(lockPath: string, now: number = Date.now()): boolean {
+  let content: string;
+  let mtimeMs: number;
+  try {
+    content = readFileSync(lockPath, "utf8").trim();
+    mtimeMs = statSync(lockPath).mtimeMs;
+  } catch {
+    // Vanished/unreadable between the open attempt and here — safe to retry.
+    return true;
+  }
+  const pid = Number.parseInt(content, 10);
+  if (Number.isInteger(pid) && pid > 0 && String(pid) === content) {
+    // Reap only if that holder process is provably gone.
+    return !isPidAlive(pid);
+  }
+  // No parseable PID (legacy/mid-write/corrupt) — age backstop only.
+  return now - mtimeMs > SPAWN_LOCK_CORRUPT_BACKSTOP_MS;
 }
 
 async function isAgentProcessNotDefinitelyMissing(
@@ -943,11 +992,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     const projectDir = getProjectDir(projectId);
     mkdirSync(projectDir, { recursive: true });
     const lockPath = join(projectDir, "spawn.lock");
-    // staleMs MUST be < timeoutMs so a single waiter can both wait out a live
-    // holder AND reap a lock orphaned by a crashed spawn within one acquisition,
-    // rather than timing out before the orphan becomes reapable.
     const timeoutMs = 30_000;
-    const staleMs = 15_000;
     const deadline = Date.now() + timeoutMs;
     let fd: number | null = null;
     let waitMs = 10;
@@ -958,26 +1003,33 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
         if ((err as NodeJS.ErrnoException).code !== "EEXIST") {
           throw new Error(`Failed to acquire spawn lock: ${lockPath}`, { cause: err });
         }
-        // Checked every iteration (before any `continue`) so an ENOENT race on
-        // statSync can't spin past the timeout.
+        // Checked every iteration (before any `continue`) so a vanished-lock
+        // race can't spin past the timeout.
         if (Date.now() > deadline) {
           throw new Error(`Timed out acquiring spawn lock for project '${projectId}'`, {
             cause: err,
           });
         }
-        // Reap a stale lock left by a crashed spawn.
-        try {
-          if (Date.now() - statSync(lockPath).mtimeMs > staleMs) {
-            rmSync(lockPath, { force: true });
-            continue;
-          }
-        } catch {
-          // Lock vanished (ENOENT) between openSync and statSync — retry now.
+        // Liveness-based reaping: reap ONLY when the recorded holder PID is
+        // provably dead (or the lock is corrupt and past the backstop). A live
+        // but slow holder is never reaped, so the cross-process collision
+        // guarantee holds regardless of critical-section duration.
+        if (isSpawnLockReapable(lockPath)) {
+          rmSync(lockPath, { force: true });
           continue;
         }
         await sleep(waitMs);
         waitMs = Math.min(waitMs * 2, 250);
       }
+    }
+    // Record our PID so other waiters can probe our liveness rather than guess
+    // from mtime. Written immediately after the exclusive create; the brief
+    // empty-file window reads as "no parseable PID" and is protected by the
+    // corrupt-lock backstop (never reaped while fresh).
+    try {
+      writeFileSync(lockPath, String(process.pid));
+    } catch {
+      /* best effort — a missing PID just falls back to the corrupt backstop */
     }
     try {
       return await fn();
