@@ -139,6 +139,8 @@ describe("workspace.branch_collision (SHOULD emit)", () => {
     mockExecFileAsync.mockRejectedValueOnce(
       new Error("fatal: a branch named 'feat/TEST-1' already exists"),
     );
+    // git worktree prune (collision recovery — clears stale rmSync-fallback registrations)
+    mockExecFileAsync.mockResolvedValueOnce({ stdout: "", stderr: "" });
     // rev-parse baseRef for stale-branch comparison
     mockExecFileAsync.mockResolvedValueOnce({ stdout: "abc\n", stderr: "" });
     // refExists(branchRef) -> true
