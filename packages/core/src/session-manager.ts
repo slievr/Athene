@@ -364,10 +364,28 @@ function isPidAlive(pid: number): boolean {
 const SPAWN_LOCK_MAX_AGE_MS = 300_000;
 
 /**
+ * Per-acquisition owner token written into spawn.lock: `${pid}:${nonce}`. The pid
+ * prefix drives liveness reaping; the nonce makes the token UNIQUE per
+ * acquisition (pid alone is not — PIDs are reused), so release can verify the
+ * lock is still ours and never delete one re-acquired by another process.
+ */
+let spawnLockNonceCounter = 0;
+function nextSpawnLockToken(): string {
+  return `${process.pid}:${process.hrtime.bigint().toString(36)}-${(spawnLockNonceCounter++).toString(36)}`;
+}
+
+/** Extract the holder PID from a lock token (`${pid}:${nonce}` or a bare pid). */
+function spawnLockPid(content: string): number | null {
+  const pidStr = content.split(":", 1)[0] ?? "";
+  const pid = Number.parseInt(pidStr, 10);
+  return Number.isInteger(pid) && pid > 0 && String(pid) === pidStr ? pid : null;
+}
+
+/**
  * Whether a waiter may reap an existing spawn.lock:
  *  - over the absolute age ceiling → always reapable (any lock); or
- *  - PID-bearing with a provably-dead holder → reapable immediately.
- * A fresh lock held by a live PID (or in its brief no-PID mid-write window) is
+ *  - holder PID is parseable and provably dead → reapable immediately.
+ * A fresh lock held by a live PID (or in its brief no-token mid-write window) is
  * NOT reaped. Exported for tests.
  */
 export function isSpawnLockReapable(lockPath: string, now: number = Date.now()): boolean {
@@ -385,13 +403,30 @@ export function isSpawnLockReapable(lockPath: string, now: number = Date.now()):
   if (now - mtimeMs > SPAWN_LOCK_MAX_AGE_MS) {
     return true;
   }
-  const pid = Number.parseInt(content, 10);
-  if (Number.isInteger(pid) && pid > 0 && String(pid) === content) {
+  const pid = spawnLockPid(content);
+  if (pid !== null) {
     // Within the ceiling — reap only if the holder process is provably gone.
     return !isPidAlive(pid);
   }
   // No parseable PID and still fresh (legacy/mid-write/corrupt) — keep waiting.
   return false;
+}
+
+/**
+ * Release a spawn.lock ONLY if it still records our owner token. If the file is
+ * missing or holds a different token — meaning we were reaped (age ceiling) and
+ * another process now owns it — leave it alone. This closes the lock-steal race
+ * where a holder that overran the ceiling would otherwise delete the new owner's
+ * lock. Exported for tests.
+ */
+export function releaseSpawnLockIfOwned(lockPath: string, ownerToken: string): void {
+  try {
+    if (readFileSync(lockPath, "utf8").trim() === ownerToken) {
+      rmSync(lockPath, { force: true });
+    }
+  } catch {
+    // Missing/unreadable — nothing of ours to release.
+  }
 }
 
 async function isAgentProcessNotDefinitelyMissing(
@@ -1037,24 +1072,28 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
         waitMs = Math.min(waitMs * 2, 250);
       }
     }
-    // Record our PID so other waiters can probe our liveness rather than guess
-    // from mtime. Written immediately after the exclusive create; the brief
-    // empty-file window reads as "no parseable PID" and is protected by the
-    // corrupt-lock backstop (never reaped while fresh).
+    // Record our unique owner token (pid:nonce). The pid lets other waiters probe
+    // our liveness; the nonce lets release verify the lock is still ours. The
+    // brief empty-file window before this write reads as "no parseable token" and
+    // is protected by the age ceiling (never reaped while fresh).
+    const ownerToken = nextSpawnLockToken();
     try {
-      writeFileSync(lockPath, String(process.pid));
+      writeFileSync(lockPath, ownerToken);
     } catch {
-      /* best effort — a missing PID just falls back to the corrupt backstop */
+      /* best effort — a missing token just falls back to the age ceiling */
     }
     try {
       return await fn();
     } finally {
       try {
         closeSync(fd);
-        rmSync(lockPath, { force: true });
       } catch {
         /* best effort */
       }
+      // Only delete the lock if it is STILL ours — if we overran the age ceiling
+      // and were reaped, another process may now own it; deleting it then would
+      // break mutual exclusion.
+      releaseSpawnLockIfOwned(lockPath, ownerToken);
     }
   }
 

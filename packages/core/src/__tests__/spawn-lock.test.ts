@@ -1,8 +1,8 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { isSpawnLockReapable } from "../session-manager.js";
+import { isSpawnLockReapable, releaseSpawnLockIfOwned } from "../session-manager.js";
 
 const dirs: string[] = [];
 function lockWith(content: string): string {
@@ -49,5 +49,31 @@ describe("isSpawnLockReapable", () => {
 
   it("treats a missing lock as reapable (vanished between checks)", () => {
     expect(isSpawnLockReapable(join(tmpdir(), "ao-no-such-lock-xyz", "spawn.lock"))).toBe(true);
+  });
+
+  it("reaps a pid:nonce-token lock whose pid is dead", () => {
+    const lockPath = lockWith("2147483646:abc-0"); // token form, dead pid
+    expect(isSpawnLockReapable(lockPath)).toBe(true);
+  });
+});
+
+describe("releaseSpawnLockIfOwned", () => {
+  it("deletes the lock when it still holds our token (normal release)", () => {
+    const lockPath = lockWith("12345:mine-0");
+    releaseSpawnLockIfOwned(lockPath, "12345:mine-0");
+    expect(existsSync(lockPath)).toBe(false);
+  });
+
+  it("does NOT delete a lock re-acquired by another owner after a reap", () => {
+    // We held "A"; we were reaped and B re-acquired (lock now holds B's token).
+    const lockPath = lockWith("99999:ownerB-7");
+    releaseSpawnLockIfOwned(lockPath, "12345:ownerA-3");
+    // B's lock survives — mutual exclusion preserved.
+    expect(existsSync(lockPath)).toBe(true);
+  });
+
+  it("is a no-op when the lock is already gone", () => {
+    const lockPath = join(tmpdir(), "ao-no-such", "spawn.lock");
+    expect(() => releaseSpawnLockIfOwned(lockPath, "12345:x-0")).not.toThrow();
   });
 });

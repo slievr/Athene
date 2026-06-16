@@ -58,9 +58,10 @@ export function partitionMetaSessions(
   const owned: Session[] = [];
   const peers: Session[] = [];
   for (const s of sessions) {
+    if (isTerminalSession(s)) continue; // exclude dead/done from both, like peers
     if (getSessionMetaOwner(s) === metaName) {
       owned.push(s);
-    } else if (inScope.has(s.projectId) && !isTerminalSession(s)) {
+    } else if (inScope.has(s.projectId)) {
       peers.push(s);
     }
   }
