@@ -426,23 +426,40 @@ const OrchestratorConfigSchema = z
           "'_meta' is a reserved project ID used for meta orchestrator storage; rename this project.",
       });
     }
+    // NOTE: meta-orchestrator explicit-scope project existence is intentionally
+    // NOT checked here — `value.projects` may be a partial projection (the
+    // flat-local path narrows to the single cwd project; the global path drops
+    // degraded projects), which would spuriously reject valid multi-project
+    // scopes. That check runs against the FULL registered project set via
+    // `assertMetaScopeProjectsExist` in the global-config load path.
+  });
 
-    // Fail loudly on a meta orchestrator whose explicit scope references an
-    // unknown project — otherwise the scope is silently narrowed (or empty) and
-    // the meta orchestrator routes into nothing.
-    for (const [metaName, meta] of Object.entries(value.metaOrchestrators ?? {})) {
-      if (meta.scope === "all") continue;
-      for (const projectId of meta.scope.projects) {
-        if (!Object.prototype.hasOwnProperty.call(projects, projectId)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["metaOrchestrators", metaName, "scope", "projects"],
-            message: `Meta orchestrator '${metaName}' references unknown project '${projectId}'. Known projects: ${Object.keys(projects).join(", ") || "(none)"}.`,
-          });
-        }
+/**
+ * Fail loudly when a meta orchestrator's explicit scope references a project ID
+ * that is not in the registered set. Evaluated against the FULL global project
+ * registry (not a partial effective projection), so valid multi-project scopes
+ * load while genuine typos are rejected. Throws on the first unknown reference.
+ */
+export function assertMetaScopeProjectsExist(
+  metaOrchestrators: Record<string, { scope?: unknown }> | undefined,
+  knownProjectIds: string[],
+): void {
+  if (!metaOrchestrators) return;
+  const known = new Set(knownProjectIds);
+  for (const [metaName, meta] of Object.entries(metaOrchestrators)) {
+    const scope = meta?.scope;
+    if (!scope || scope === "all" || typeof scope !== "object") continue;
+    const scoped = (scope as { projects?: unknown }).projects;
+    if (!Array.isArray(scoped)) continue;
+    for (const projectId of scoped) {
+      if (typeof projectId === "string" && !known.has(projectId)) {
+        throw new Error(
+          `Meta orchestrator '${metaName}' references unknown project '${projectId}'. Known projects: ${knownProjectIds.join(", ") || "(none)"}.`,
+        );
       }
     }
-  });
+  }
+}
 
 // =============================================================================
 // CONFIG LOADING
@@ -895,6 +912,11 @@ function buildEffectiveConfigFromFlatLocalPath(
   const globalConfig = loadGlobalConfig(globalConfigPath);
   if (!globalConfig) return null;
 
+  // Validate meta scopes against the FULL registry before projecting down to the
+  // single cwd project below (otherwise valid multi-project scopes would be
+  // rejected by validateConfig against the partial projects map).
+  assertMetaScopeProjectsExist(globalConfig.metaOrchestrators, Object.keys(globalConfig.projects));
+
   const canonicalProjectDir = (() => {
     try {
       return realpathSync(resolve(dirname(configPath)));
@@ -937,6 +959,11 @@ function buildEffectiveConfigFromFlatLocalPath(
 function buildEffectiveConfigFromGlobalConfigPath(configPath: string): LoadedConfig | null {
   const globalConfig = loadGlobalConfig(configPath);
   if (!globalConfig) return null;
+
+  // Validate meta scopes against the FULL registry — including projects that may
+  // degrade (and thus be excluded from the effective `projects` map below) — so a
+  // scope referencing a temporarily-degraded but registered project still loads.
+  assertMetaScopeProjectsExist(globalConfig.metaOrchestrators, Object.keys(globalConfig.projects));
 
   const projects: Record<string, OrchestratorConfig["projects"][string]> = {};
   const degradedProjects: Record<string, DegradedProjectEntry> = {};

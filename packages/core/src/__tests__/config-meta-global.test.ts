@@ -58,4 +58,50 @@ describe("metaOrchestrators via the global config path", () => {
     expect(prompt).toContain("meta-1");
     expect(prompt).toContain("prefer api for billing");
   });
+
+  it("loads a multi-project explicit scope (validated against the full registry, not a projection)", () => {
+    mkdirSync(join(tempRoot, "web"), { recursive: true });
+    mkdirSync(join(tempRoot, "api"), { recursive: true });
+    const configPath = join(tempRoot, ".agent-orchestrator", "config.yaml");
+    writeFileSync(
+      configPath,
+      [
+        "projects:",
+        "  web:",
+        `    path: ${join(tempRoot, "web")}`,
+        "  api:",
+        `    path: ${join(tempRoot, "api")}`,
+        "metaOrchestrators:",
+        "  meta-1:",
+        "    scope:",
+        "      projects: [web, api]",
+        "",
+      ].join("\n"),
+    );
+
+    // Both web and api are registered, so the explicit scope must NOT throw even
+    // if individual projects degrade during effective resolution.
+    const config = loadConfig(configPath);
+    expect(config.metaOrchestrators?.["meta-1"]).toBeDefined();
+  });
+
+  it("still fails loud when an explicit scope references a truly-unregistered project", () => {
+    mkdirSync(join(tempRoot, "web"), { recursive: true });
+    const configPath = join(tempRoot, ".agent-orchestrator", "config.yaml");
+    writeFileSync(
+      configPath,
+      [
+        "projects:",
+        "  web:",
+        `    path: ${join(tempRoot, "web")}`,
+        "metaOrchestrators:",
+        "  meta-1:",
+        "    scope:",
+        "      projects: [web, ghost]",
+        "",
+      ].join("\n"),
+    );
+
+    expect(() => loadConfig(configPath)).toThrow(/unknown project 'ghost'/);
+  });
 });

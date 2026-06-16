@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateConfig } from "../config.js";
+import { validateConfig, assertMetaScopeProjectsExist } from "../config.js";
 
 const base = {
   projects: {
@@ -37,13 +37,34 @@ describe("metaOrchestrators config", () => {
     expect(() => validateConfig({ projects: { _meta: { path: "/tmp/x" } } })).toThrow(/_meta/);
   });
 
-  it("rejects an explicit scope referencing an unknown project", () => {
+  it("does NOT reject explicit scopes during validateConfig (may be a partial projection)", () => {
+    // validateConfig runs on the (possibly partial) effective projects map, so it
+    // must not reject scope project IDs absent from it — that check is done against
+    // the full registry by assertMetaScopeProjectsExist in the global-config path.
     expect(() =>
       validateConfig({
         ...base,
         metaOrchestrators: { "meta-1": { scope: { projects: ["web", "ghost"] } } },
       }),
+    ).not.toThrow();
+  });
+
+  it("assertMetaScopeProjectsExist fails loud on a truly-unknown project (full registry)", () => {
+    expect(() =>
+      assertMetaScopeProjectsExist(
+        { "meta-1": { scope: { projects: ["web", "ghost"] } } },
+        ["web", "api"],
+      ),
     ).toThrow(/unknown project 'ghost'/);
+  });
+
+  it("assertMetaScopeProjectsExist accepts a valid multi-project scope and scope:all", () => {
+    expect(() =>
+      assertMetaScopeProjectsExist(
+        { m1: { scope: { projects: ["web", "api"] } }, m2: { scope: "all" } },
+        ["web", "api"],
+      ),
+    ).not.toThrow();
   });
 
   it("accepts scope:all without project validation", () => {
