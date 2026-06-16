@@ -17,6 +17,17 @@ describe("checkSpawnCollision", () => {
     expect(checkSpawnCollision(live, { projectId: "web", issueId: "ENG-42" }).hard).toBeNull();
   });
 
+  it("hard-refuses case-variant issue IDs (ENG-42 vs eng-42)", () => {
+    const live = [session({ id: "web-2", issueId: "ENG-42" })];
+    expect(checkSpawnCollision(live, { projectId: "web", issueId: "eng-42" }).hard?.id).toBe(
+      "web-2",
+    );
+    const live2 = [session({ id: "web-3", issueId: "eng-42" })];
+    expect(checkSpawnCollision(live2, { projectId: "web", issueId: "ENG-42" }).hard?.id).toBe(
+      "web-3",
+    );
+  });
+
   it("returns advisory peers for freeform work (no issueId)", () => {
     const live = [session({ id: "web-3" }), session({ id: "web-4" })];
     const r = checkSpawnCollision(live, { projectId: "web" });

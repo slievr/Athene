@@ -25,8 +25,11 @@ export function checkSpawnCollision(
   intent: SpawnCollisionIntent,
 ): SpawnCollisionResult {
   const peers = liveSessions.filter((s) => s.projectId === intent.projectId);
-  const hard = intent.issueId
-    ? (peers.find((s) => s.issueId === intent.issueId) ?? null)
+  // Compare issue IDs case-insensitively to match the dedup batch-spawn uses
+  // (it lowercases issue keys), so ENG-42 and eng-42 cannot both go live.
+  const wantedIssue = intent.issueId?.toLowerCase();
+  const hard = wantedIssue
+    ? (peers.find((s) => s.issueId?.toLowerCase() === wantedIssue) ?? null)
     : null;
   return { hard, advisory: peers };
 }
