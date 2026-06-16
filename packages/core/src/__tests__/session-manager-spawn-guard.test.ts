@@ -45,6 +45,46 @@ describe("spawn collision guard", () => {
     expect(ctx.mockRuntime.create).not.toHaveBeenCalled();
   });
 
+  it("still hard-refuses when the issue owner is runtime-lost (detecting, not terminal)", async () => {
+    // A worker that owns ENG-50 but is transiently runtime-lost: canonical
+    // session.state is `detecting` (a pending decision per #1735), NOT terminal.
+    // It must still block a duplicate same-issue spawn.
+    writeMetadata(sessionsDir, "app-7", {
+      worktree: "/tmp/ws",
+      branch: "feat/eng-50",
+      status: "detecting",
+      project: "my-app",
+      agent: "mock-agent",
+      issue: "ENG-50",
+      runtimeHandle: makeHandle("rt-detecting"),
+      lifecycle: {
+        version: 2,
+        session: {
+          kind: "worker",
+          state: "detecting",
+          reason: "runtime_lost",
+          startedAt: new Date().toISOString(),
+          completedAt: null,
+          terminatedAt: null,
+          lastTransitionAt: new Date().toISOString(),
+        },
+        pr: { state: "none", reason: "not_created", number: null, url: null, lastObservedAt: null },
+        runtime: {
+          state: "probe_failed",
+          reason: "probe_error",
+          lastObservedAt: null,
+          handle: makeHandle("rt-detecting"),
+          tmuxName: null,
+        },
+      },
+    });
+
+    const sm = createSessionManager({ config: ctx.config, registry: ctx.mockRegistry });
+    await expect(sm.spawn({ projectId: "my-app", issueId: "ENG-50" })).rejects.toThrow(
+      /SPAWN REFUSED: app-7 already owns ENG-50/,
+    );
+  });
+
   it("stamps ownerKind=meta and metaOwner on a meta-dispatched worker", async () => {
     vi.useFakeTimers();
     const sm = createSessionManager({ config: ctx.config, registry: ctx.mockRegistry });

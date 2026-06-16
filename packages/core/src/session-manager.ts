@@ -299,6 +299,37 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Read a project's sessions directly from metadata files — NO enrichment (no
+ * runtime liveness probes, no agent getSessionInfo execFile calls). Used by the
+ * spawn collision guard so the per-project spawn lock is held only for a brief,
+ * disk-only window, and so the read reflects in-flight issue claims immediately.
+ */
+function listProjectSessionsFromDisk(projectId: string): Session[] {
+  const dir = getProjectSessionsDir(projectId);
+  const sessions: Session[] = [];
+  for (const id of listMetadata(dir)) {
+    const raw = readMetadataRaw(dir, id);
+    if (!raw) continue;
+    sessions.push(sessionFromMetadata(id, raw, { projectId }));
+  }
+  return sessions;
+}
+
+/**
+ * Whether a session is TRULY terminal for spawn-dedup purposes: only
+ * done/terminated (covers manually_killed) or a merged PR. A runtime-lost /
+ * `detecting` session is a PENDING decision (#1735), NOT terminal — its in-memory
+ * enriched view may show runtime.state==='missing', but on disk it is `detecting`
+ * and it still OWNS its issue, so it must keep blocking a duplicate same-issue
+ * spawn for BOTH coordinators. Deliberately does not use `isTerminalSession`,
+ * which treats runtime.state==='missing'/'exited' as terminal.
+ */
+function isSpawnTerminal(session: Session): boolean {
+  const state = session.lifecycle.session.state;
+  return state === "done" || state === "terminated" || session.lifecycle.pr.state === "merged";
+}
+
 async function isAgentProcessNotDefinitelyMissing(
   agent: Agent,
   handle: RuntimeHandle,
@@ -539,6 +570,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
   } | null = null;
   const ensureOrchestratorPromises = new Map<string, Promise<Session>>();
   const relaunchOrchestratorPromises = new Map<string, Promise<Session>>();
+  const ensureMetaOrchestratorPromises = new Map<string, Promise<Session>>();
 
   function invalidateCache(): void {
     sessionCache = null;
@@ -1391,8 +1423,12 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     // symmetrically. Issue-keyed work is a HARD refusal; freeform work is
     // advisory (surfaced by the CLI, not blocked here).
     await withProjectSpawnLock(spawnConfig.projectId, async () => {
-      const liveInProject = (await list(spawnConfig.projectId)).filter(
-        (s) => !isTerminalSession(s),
+      // Minimal disk-only read (no enrichment/probes) so the lock window stays
+      // brief and reflects in-flight issue claims. Detecting/runtime-lost peers
+      // are intentionally NOT excluded (isSpawnTerminal, not isTerminalSession):
+      // they still own their issue and must block a duplicate (#1735).
+      const liveInProject = listProjectSessionsFromDisk(spawnConfig.projectId).filter(
+        (s) => !isSpawnTerminal(s),
       );
       const collision = checkSpawnCollision(liveInProject, {
         projectId: spawnConfig.projectId,
@@ -2343,19 +2379,39 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
    * `projects/_meta/<name>/sessions/<name>.json` and are reconstructed by
    * reading that file directly — `get()`/`list()` only walk configured projects.
    */
-  async function ensureMetaOrchestrator(metaConfig: MetaOrchestratorSpawnConfig): Promise<Session> {
-    const name = metaConfig.name;
-    const sessionsDir = getMetaSessionsDir(name);
-    const existing = readMetadataRaw(sessionsDir, name);
-    if (existing) {
-      const existingSession = sessionFromMetadata(name, existing, {
-        sessionKind: "meta-orchestrator",
-      });
-      if (!isTerminalSession(existingSession)) {
-        return existingSession;
-      }
+  function readExistingMetaSession(name: string): Session | null {
+    const existing = readMetadataRaw(getMetaSessionsDir(name), name);
+    if (!existing) return null;
+    // projectId "_meta" for parity with the freshly-spawned path (meta["project"]
+    // is also persisted as "_meta", but pass it explicitly to be unambiguous).
+    return sessionFromMetadata(name, existing, {
+      projectId: "_meta",
+      sessionKind: "meta-orchestrator",
+    });
+  }
+
+  async function ensureMetaOrchestratorInternal(
+    metaConfig: MetaOrchestratorSpawnConfig,
+  ): Promise<Session> {
+    const existing = readExistingMetaSession(metaConfig.name);
+    if (existing && !isTerminalSession(existing)) {
+      return existing;
     }
     return _spawnMetaOrchestratorInner(metaConfig);
+  }
+
+  async function ensureMetaOrchestrator(metaConfig: MetaOrchestratorSpawnConfig): Promise<Session> {
+    // In-flight dedup keyed by meta name — mirrors ensureOrchestrator, so two
+    // concurrent calls in the same process share one spawn rather than racing.
+    const name = metaConfig.name;
+    const existingPromise = ensureMetaOrchestratorPromises.get(name);
+    if (existingPromise) return existingPromise;
+
+    const promise = ensureMetaOrchestratorInternal(metaConfig).finally(() => {
+      ensureMetaOrchestratorPromises.delete(name);
+    });
+    ensureMetaOrchestratorPromises.set(name, promise);
+    return promise;
   }
 
   async function _spawnMetaOrchestratorInner(
@@ -2402,6 +2458,23 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
 
     mkdirSync(workspacePath, { recursive: true });
     mkdirSync(sessionsDir, { recursive: true });
+
+    // Atomic cross-process reservation — mirrors reserveFixedOrchestratorIdentity.
+    // O_EXCL creates the metadata file iff it does not exist, so two concurrent
+    // `meta-start` processes for the same name cannot both proceed to runtime
+    // creation (the loser would otherwise overwrite metadata and orphan the
+    // winner's runtime). On conflict, reuse a live session or reclaim a stale one.
+    if (!reserveSessionId(sessionsDir, sessionId)) {
+      const existing = readExistingMetaSession(name);
+      if (existing && !isTerminalSession(existing)) {
+        return existing;
+      }
+      // Stale or terminal record left behind — reclaim the id.
+      deleteMetadata(sessionsDir, sessionId);
+      if (!reserveSessionId(sessionsDir, sessionId)) {
+        throw new Error(`Meta orchestrator '${name}' is already being created`);
+      }
+    }
 
     const cleanup = async (handle?: RuntimeHandle): Promise<void> => {
       if (handle) {

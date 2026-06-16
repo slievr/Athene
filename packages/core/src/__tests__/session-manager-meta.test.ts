@@ -47,6 +47,27 @@ describe("ensureMetaOrchestrator", () => {
     expect(ctx.mockRuntime.create).toHaveBeenCalledTimes(1);
   });
 
+  it("dedups concurrent ensureMetaOrchestrator calls — single runtime, no orphan", async () => {
+    const sm = createSessionManager({ config: ctx.config, registry: ctx.mockRegistry });
+
+    const [a, b] = await Promise.all([
+      sm.ensureMetaOrchestrator({ name: "meta-1", systemPrompt: "p" }),
+      sm.ensureMetaOrchestrator({ name: "meta-1", systemPrompt: "p" }),
+    ]);
+
+    expect(a.id).toBe("meta-1");
+    expect(b.id).toBe("meta-1");
+    // Exactly one runtime created — the second call shared the in-flight promise.
+    expect(ctx.mockRuntime.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns projectId _meta on the reuse path (parity with spawn)", async () => {
+    const sm = createSessionManager({ config: ctx.config, registry: ctx.mockRegistry });
+    await sm.ensureMetaOrchestrator({ name: "meta-1", systemPrompt: "p" });
+    const reused = await sm.ensureMetaOrchestrator({ name: "meta-1", systemPrompt: "p" });
+    expect(reused.projectId).toBe("_meta");
+  });
+
   it("reuses a live meta orchestrator session instead of spawning again", async () => {
     const sm = createSessionManager({ config: ctx.config, registry: ctx.mockRegistry });
 
