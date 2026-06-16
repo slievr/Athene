@@ -6,6 +6,7 @@ import {
   loadConfig,
   recordActivityEvent,
   resolveSpawnTarget,
+  isTerminalSession,
   TERMINAL_STATUSES,
   type OrchestratorConfig,
   type PreflightContext,
@@ -196,6 +197,33 @@ async function runSpawnPreflight(
   }
 }
 
+/** Owner metadata stamped onto meta-dispatched worker sessions. */
+export interface SpawnOwner {
+  ownerKind?: "meta" | "project";
+  metaOwner?: string;
+}
+
+/**
+ * Validate the internal `--owner-kind` / `--meta-owner` flags used by a meta
+ * orchestrator to attribute the workers it dispatches. Pure — throws on misuse.
+ */
+export function parseSpawnOwner(opts: { ownerKind?: string; metaOwner?: string }): SpawnOwner {
+  const { ownerKind, metaOwner } = opts;
+  if (ownerKind !== undefined && ownerKind !== "meta" && ownerKind !== "project") {
+    throw new Error(`--owner-kind must be "meta" or "project" (got "${ownerKind}")`);
+  }
+  if (ownerKind === "meta" && !metaOwner) {
+    throw new Error("--owner-kind meta requires --meta-owner <name>");
+  }
+  if (metaOwner && ownerKind !== "meta") {
+    throw new Error("--meta-owner requires --owner-kind meta");
+  }
+  return {
+    ownerKind: ownerKind as "meta" | "project" | undefined,
+    metaOwner: ownerKind === "meta" ? metaOwner : undefined,
+  };
+}
+
 async function spawnSession(
   config: OrchestratorConfig,
   projectId: string,
@@ -204,6 +232,7 @@ async function spawnSession(
   agent?: string,
   claimOptions?: SpawnClaimOptions,
   prompt?: string,
+  owner?: SpawnOwner,
 ): Promise<void> {
   const spinner = ora("Creating session").start();
 
@@ -236,7 +265,31 @@ async function spawnSession(
       issueId,
       agent,
       prompt: sanitizedPrompt,
+      ...(owner?.ownerKind ? { ownerKind: owner.ownerKind } : {}),
+      ...(owner?.metaOwner ? { metaOwner: owner.metaOwner } : {}),
     });
+
+    // Advisory for freeform (no issue key) work: surface live peers in the
+    // target project so the coordinator can spot potential duplication. The
+    // hard guard for issue-keyed work is enforced in core (sm.spawn throws).
+    if (!issueId) {
+      try {
+        const peers = (await sm.list(projectId)).filter(
+          (s) => s.id !== session.id && !isTerminalSession(s),
+        );
+        if (peers.length > 0) {
+          console.log(
+            chalk.dim(
+              `  Note: ${peers.length} other live session(s) in ${projectId}: ${peers
+                .map((s) => s.id)
+                .join(", ")}`,
+            ),
+          );
+        }
+      } catch {
+        // Advisory only — never fail the spawn over it.
+      }
+    }
 
     let claimedPrUrl: string | null = null;
 
@@ -308,6 +361,8 @@ export function registerSpawn(program: Command): void {
       "--prompt <text>",
       "Initial prompt/instructions for the agent (use instead of an issue)",
     )
+    .option("--owner-kind <kind>", "Internal: dispatching coordinator (meta|project)")
+    .option("--meta-owner <name>", "Internal: name of the dispatching meta orchestrator")
     .action(
       async (
         issue: string | undefined,
@@ -317,6 +372,8 @@ export function registerSpawn(program: Command): void {
           claimPr?: string;
           assignOnGithub?: boolean;
           prompt?: string;
+          ownerKind?: string;
+          metaOwner?: string;
         },
         command: Command,
       ) => {
@@ -343,6 +400,14 @@ export function registerSpawn(program: Command): void {
 
         if (!opts.claimPr && opts.assignOnGithub) {
           console.error(chalk.red("--assign-on-github requires --claim-pr on `athene spawn`."));
+          process.exit(1);
+        }
+
+        let owner: SpawnOwner;
+        try {
+          owner = parseSpawnOwner(opts);
+        } catch (err) {
+          console.error(chalk.red(err instanceof Error ? err.message : String(err)));
           process.exit(1);
         }
 
@@ -381,6 +446,7 @@ export function registerSpawn(program: Command): void {
             opts.agent,
             claimOptions,
             opts.prompt,
+            owner,
           );
         } catch (err) {
           console.error(chalk.red(`✗ ${err instanceof Error ? err.message : String(err)}`));
