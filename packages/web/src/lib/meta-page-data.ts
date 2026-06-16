@@ -84,7 +84,7 @@ export const getMetaPageData = cache(async function getMetaPageData(
   // The meta's fleet = worker sessions stamped with this meta owner. Coordinator
   // sessions are excluded defensively (meta-orchestrator sessions live under the
   // _meta scope and are not in this project-scoped list, but the guard is cheap).
-  const allPrefixes = Object.values(config.projects).map((p) => p.sessionPrefix);
+  const allPrefixes = Object.entries(config.projects).map(([id, p]) => p.sessionPrefix ?? id);
   const coreSessions = allSessions.filter(
     (s) =>
       getSessionMetaOwner(s) === name &&

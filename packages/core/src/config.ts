@@ -413,8 +413,12 @@ const OrchestratorConfigSchema = z
   .superRefine((value, ctx) => {
     // `_meta` is the reserved on-disk parent for meta orchestrator sessions
     // (projects/_meta/<name>/sessions/<name>.json). A real project keyed `_meta`
-    // would collide with that storage scope.
-    if (Object.prototype.hasOwnProperty.call(value.projects, "_meta")) {
+    // would collide with that storage scope. `projects` is required but Zod runs
+    // object refinements even when a required key is absent, so guard against
+    // `undefined` — otherwise an omitted `projects:` would crash with a TypeError
+    // instead of surfacing Zod's clean "Required" error.
+    const projects = value.projects ?? {};
+    if (Object.prototype.hasOwnProperty.call(projects, "_meta")) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["projects", "_meta"],
@@ -429,11 +433,11 @@ const OrchestratorConfigSchema = z
     for (const [metaName, meta] of Object.entries(value.metaOrchestrators ?? {})) {
       if (meta.scope === "all") continue;
       for (const projectId of meta.scope.projects) {
-        if (!Object.prototype.hasOwnProperty.call(value.projects, projectId)) {
+        if (!Object.prototype.hasOwnProperty.call(projects, projectId)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ["metaOrchestrators", metaName, "scope", "projects"],
-            message: `Meta orchestrator '${metaName}' references unknown project '${projectId}'. Known projects: ${Object.keys(value.projects).join(", ") || "(none)"}.`,
+            message: `Meta orchestrator '${metaName}' references unknown project '${projectId}'. Known projects: ${Object.keys(projects).join(", ") || "(none)"}.`,
           });
         }
       }
