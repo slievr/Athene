@@ -990,9 +990,302 @@ git commit -m "feat(web): add /meta/[name] dashboard route"
 
 ---
 
+### Task 16: `metaDashboardPath` route helper
+
+**Files:**
+- Modify: `packages/web/src/lib/routes.ts`
+- Test: `packages/web/src/lib/__tests__/routes.test.ts` (extend existing or create)
+
+- [ ] **Step 1: Write the failing test**
+
+```ts
+import { describe, it, expect } from "vitest";
+import { metaDashboardPath } from "../routes";
+
+describe("metaDashboardPath", () => {
+  it("builds /meta/<name> and encodes the name", () => {
+    expect(metaDashboardPath("meta-1")).toBe("/meta/meta-1");
+    expect(metaDashboardPath("a b")).toBe("/meta/a%20b");
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails** — Run: `pnpm --filter @made-by-moonlight/athene-web test -- routes` → FAIL (helper not exported).
+
+- [ ] **Step 3: Implement**
+
+In `packages/web/src/lib/routes.ts`, add alongside `projectDashboardPath` / `projectSessionPath`:
+```ts
+export function metaDashboardPath(name: string): string {
+  return `/meta/${encodeURIComponent(name)}`;
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes** — Run: `pnpm --filter @made-by-moonlight/athene-web test -- routes` → PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add packages/web/src/lib/routes.ts packages/web/src/lib/__tests__/routes.test.ts
+git commit -m "feat(web): add metaDashboardPath route helper"
+```
+
+---
+
+### Task 17: Sidebar ORCHESTRATORS section (extracted `SidebarOrchestrators` component)
+
+**Files:**
+- Create: `packages/web/src/components/SidebarOrchestrators.tsx`
+- Modify: `packages/web/src/components/ProjectSidebar.tsx` (add `metaOrchestrators` prop; render `SidebarOrchestrators` above the PROJECTS list, in both expanded and collapsed branches)
+- Test: `packages/web/src/components/__tests__/SidebarOrchestrators.test.tsx` (create)
+
+**Why a new component (C-04):** `ProjectSidebar.tsx` is already ~1260 lines (pre-existing, well over the 400-line cap). The ORCHESTRATORS section is extracted into its own file so the new code stays under 400 lines and is independently testable; `ProjectSidebar` only gains a prop and two render sites.
+
+**Layout (§11.5):** meta orchestrators on top (each prefixed with `◆`), a divider, then per-project orchestrators (each prefixed with a project-color dot via `getProjectColor`). Right-aligned activity-state dot reuses `getAttentionLevel(session)` + the existing `sidebar-session-dot` / `data-level` styling — **no new dot component**. Meta row → `metaDashboardPath(name)`; project orchestrator row → `projectSessionPath(projectId, id)`. Collapsed variant renders a compact glyph/dot cluster.
+
+- [ ] **Step 1: Write the failing test**
+
+```tsx
+// packages/web/src/components/__tests__/SidebarOrchestrators.test.tsx
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { SidebarOrchestrators } from "../SidebarOrchestrators";
+import type { DashboardSession } from "@/lib/types";
+
+const metaSession = { id: "meta-1", projectId: "_meta", status: "working", activity: "active" } as unknown as DashboardSession;
+const orchSession = { id: "web-orchestrator", projectId: "web", status: "working", activity: "active" } as unknown as DashboardSession;
+
+describe("SidebarOrchestrators", () => {
+  it("renders meta rows with a diamond glyph and project orchestrators with a color dot", () => {
+    const { container } = render(
+      <SidebarOrchestrators
+        collapsed={false}
+        metaOrchestrators={[{ name: "meta-1", session: metaSession }]}
+        orchestrators={[{ id: "web-orchestrator", projectId: "web" }]}
+        sessions={[orchSession]}
+        registeredProjectIds={["web", "api"]}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+    // Meta glyph + name + link to /meta/meta-1
+    expect(screen.getByText("meta-1")).toBeInTheDocument();
+    expect(container.querySelector('a[href="/meta/meta-1"]')).toBeTruthy();
+    expect(screen.getByText("◆")).toBeInTheDocument();
+    // Project orchestrator: color dot class references the palette var for slot 1 (web = index 0)
+    expect(container.querySelector('[class*="var(--project-color-1)"]')).toBeTruthy();
+    // Activity dot reuses the existing system (data-level present), no inline style
+    expect(container.querySelector("[data-level]")).toBeTruthy();
+    expect(container.querySelector("[style]")).toBeNull();
+  });
+
+  it("renders the collapsed glyph/dot cluster", () => {
+    const { container } = render(
+      <SidebarOrchestrators
+        collapsed
+        metaOrchestrators={[{ name: "meta-1", session: metaSession }]}
+        orchestrators={[{ id: "web-orchestrator", projectId: "web" }]}
+        sessions={[orchSession]}
+        registeredProjectIds={["web"]}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+    expect(container.querySelector('a[href="/meta/meta-1"]')).toBeTruthy();
+    expect(container.querySelector("[style]")).toBeNull();
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails** — Run: `pnpm --filter @made-by-moonlight/athene-web test -- SidebarOrchestrators` → FAIL (module not found).
+
+- [ ] **Step 3: Implement**
+
+Create `SidebarOrchestrators.tsx`:
+```tsx
+"use client";
+
+import { getProjectColor } from "@/lib/project-color";
+import { getAttentionLevel, type DashboardSession } from "@/lib/types";
+import { cn } from "@/lib/cn";
+import { metaDashboardPath, projectSessionPath } from "@/lib/routes";
+
+export interface SidebarMetaOrchestrator {
+  name: string;
+  session: DashboardSession | null;
+}
+
+export interface SidebarProjectOrchestrator {
+  id: string;
+  projectId: string;
+}
+
+interface SidebarOrchestratorsProps {
+  collapsed: boolean;
+  metaOrchestrators: SidebarMetaOrchestrator[];
+  orchestrators: SidebarProjectOrchestrator[];
+  sessions: DashboardSession[] | null;
+  registeredProjectIds: string[];
+  activeSessionId: string | undefined;
+  onNavigate: (href: string, session?: DashboardSession) => void;
+}
+
+// Reuse the existing dot styling: same classes + data-level as ProjectSidebar's SessionDot.
+function ActivityDot({ session }: { session: DashboardSession | null }) {
+  if (!session) return null;
+  const level = getAttentionLevel(session);
+  return (
+    <div
+      className={cn("sidebar-session-dot shrink-0 rounded-full", level === "working" && "sidebar-session-dot--glow")}
+      data-level={level}
+    />
+  );
+}
+
+// Project-color dot — class built per slot so the palette var is statically present
+// for Tailwind/CSS (no inline style). Map slot 1..8 to a fixed class.
+const PROJECT_DOT_CLASS: Record<number, string> = {
+  1: "bg-[var(--project-color-1)]",
+  2: "bg-[var(--project-color-2)]",
+  3: "bg-[var(--project-color-3)]",
+  4: "bg-[var(--project-color-4)]",
+  5: "bg-[var(--project-color-5)]",
+  6: "bg-[var(--project-color-6)]",
+  7: "bg-[var(--project-color-7)]",
+  8: "bg-[var(--project-color-8)]",
+};
+
+export function SidebarOrchestrators({
+  collapsed,
+  metaOrchestrators,
+  orchestrators,
+  sessions,
+  registeredProjectIds,
+  activeSessionId,
+  onNavigate,
+}: SidebarOrchestratorsProps) {
+  if (metaOrchestrators.length === 0 && orchestrators.length === 0) return null;
+
+  const findSession = (id: string) => sessions?.find((s) => s.id === id) ?? null;
+
+  if (collapsed) {
+    return (
+      <div className="project-sidebar__orch-collapsed flex flex-col items-center gap-1">
+        {metaOrchestrators.map((m) => (
+          <a
+            key={m.name}
+            href={metaDashboardPath(m.name)}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+              e.preventDefault();
+              onNavigate(metaDashboardPath(m.name), m.session ?? undefined);
+            }}
+            className="project-sidebar__orch-glyph"
+            data-level={m.session ? getAttentionLevel(m.session) : undefined}
+            title={m.name}
+            aria-label={`Open ${m.name} meta dashboard`}
+          >
+            ◆
+          </a>
+        ))}
+        {orchestrators.map((o) => {
+          const { slot } = getProjectColor(o.projectId, registeredProjectIds);
+          const href = projectSessionPath(o.projectId, o.id);
+          return (
+            <a
+              key={o.id}
+              href={href}
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+                e.preventDefault();
+                onNavigate(href, findSession(o.id) ?? undefined);
+              }}
+              className={cn("project-sidebar__orch-collapsed-dot rounded-full", PROJECT_DOT_CLASS[slot])}
+              title={`${o.projectId} orchestrator`}
+              aria-label={`Open ${o.projectId} orchestrator`}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <div className="project-sidebar__orchestrators">
+      <div className="project-sidebar__nav-label"><span>Orchestrators</span></div>
+      {metaOrchestrators.map((m) => {
+        const href = metaDashboardPath(m.name);
+        return (
+          <a
+            key={m.name}
+            href={href}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+              e.preventDefault();
+              onNavigate(href, m.session ?? undefined);
+            }}
+            className={cn("project-sidebar__orch-row", activeSessionId === m.name && "project-sidebar__orch-row--active")}
+            aria-label={`Open ${m.name} meta dashboard`}
+          >
+            <span className="project-sidebar__orch-glyph" aria-hidden="true">◆</span>
+            <span className="project-sidebar__orch-name flex-1 min-w-0">{m.name}</span>
+            <ActivityDot session={m.session} />
+          </a>
+        );
+      })}
+      {metaOrchestrators.length > 0 && orchestrators.length > 0 ? (
+        <div className="project-sidebar__orch-divider" aria-hidden="true" />
+      ) : null}
+      {orchestrators.map((o) => {
+        const { slot } = getProjectColor(o.projectId, registeredProjectIds);
+        const session = findSession(o.id);
+        const href = projectSessionPath(o.projectId, o.id);
+        return (
+          <a
+            key={o.id}
+            href={href}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+              e.preventDefault();
+              onNavigate(href, session ?? undefined);
+            }}
+            className={cn("project-sidebar__orch-row", activeSessionId === o.id && "project-sidebar__orch-row--active")}
+            aria-label={`Open ${o.projectId} orchestrator`}
+          >
+            <span className={cn("project-sidebar__orch-dot rounded-full shrink-0", PROJECT_DOT_CLASS[slot])} aria-hidden="true" />
+            <span className="project-sidebar__orch-name flex-1 min-w-0">{o.projectId}</span>
+            <ActivityDot session={session} />
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+```
+> Add the small CSS classes used above (`project-sidebar__orchestrators`, `__orch-row`, `__orch-glyph`, `__orch-name`, `__orch-dot`, `__orch-divider`, collapsed variants) to the existing sidebar styles in `globals.css`, matching the look of the neighbouring `project-sidebar__*` rules. Keep `SidebarOrchestrators.tsx` under 400 lines (it is).
+
+In `ProjectSidebar.tsx`:
+1. Add `metaOrchestrators?: SidebarMetaOrchestrator[]` to `ProjectSidebarProps` (import the type from `SidebarOrchestrators`).
+2. In the **expanded** branch, render `<SidebarOrchestrators collapsed={false} ... />` immediately above the `Projects` `project-sidebar__nav-label`, passing `orchestrators={orchestrators ?? []}`, `metaOrchestrators={props.metaOrchestrators ?? []}`, `sessions`, `registeredProjectIds={allProjectIdsInOrder}`, `activeSessionId`, and `onNavigate={navigate}`.
+3. In the **collapsed** branch, render `<SidebarOrchestrators collapsed ... />` at the top of the rail (below the expand button).
+4. `registeredProjectIds` is the ordered list of project IDs (use `visibleProjects.map((p) => p.id)` — already ordered by registration).
+
+- [ ] **Step 4: Run test to verify it passes** — Run: `pnpm --filter @made-by-moonlight/athene-web test -- SidebarOrchestrators && pnpm --filter @made-by-moonlight/athene-web typecheck` → PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add packages/web/src/components/SidebarOrchestrators.tsx packages/web/src/components/ProjectSidebar.tsx packages/web/src/components/__tests__/SidebarOrchestrators.test.tsx packages/web/src/app/globals.css
+git commit -m "feat(web): add ORCHESTRATORS sidebar section"
+```
+
+> **Data wiring note (follow-up within this task or a thin server change):** the sidebar's `metaOrchestrators` prop must be supplied upstream. Extend whatever feeds `ProjectSidebar` today (the `/api/sessions` response `orchestrators` field / the layout that renders the sidebar) to also list configured meta orchestrators from `config.metaOrchestrators` paired with their `_meta` session (if running). This is presentational data only — no lifecycle change.
+
+---
+
 ## Phase 4 — Verification
 
-### Task 16: Full build, typecheck, lint, tests
+### Task 18: Full build, typecheck, lint, tests
 
 - [ ] **Step 1: Run the full suite**
 
@@ -1007,7 +1300,7 @@ Expected: all green. Fix any failures before claiming completion (per verificati
 
 - [ ] **Step 2: Manual smoke (optional, documented)**
 
-Add a `metaOrchestrators` block to a test global config, run `athene meta-start <name>`, confirm the session appears under `_meta/<name>`, dispatch a worker into a project and confirm it is stamped `ownerKind=meta`/`metaOwner` and visible at `/meta/<name>` with a project-color accent. Confirm a duplicate issue-keyed spawn is refused.
+Add a `metaOrchestrators` block to a test global config, run `athene meta-start <name>`, confirm the session appears under `_meta/<name>`, dispatch a worker into a project and confirm it is stamped `ownerKind=meta`/`metaOwner` and visible at `/meta/<name>` with a project-color accent. Confirm the ORCHESTRATORS sidebar section lists the meta (◆) above per-project orchestrators (color dot) with right-aligned activity dots, in both expanded and collapsed sidebar states. Confirm a duplicate issue-keyed spawn is refused.
 
 - [ ] **Step 3: Commit any fixes**
 
@@ -1019,10 +1312,11 @@ git add -A && git commit -m "chore: meta orchestrator verification fixes"
 
 ## Self-Review (against the spec)
 
-- **Spec coverage:** config (Task 2), session model/kind/helpers (Task 1, 7), storage paths (Task 3), collision guard (Task 4–5), owner stamping (Task 1, 5, 9), meta prompt (Task 6), meta spawn (Task 7), lifecycle/discover (Task 8), CLI surface (Task 9–10), color tokens/helper/components/route (Task 11–15), testing strategy folded into each task, verification (Task 16). All §5–§12 sections map to a task.
+- **Spec coverage:** config (Task 2), session model/kind/helpers (Task 1, 7), storage paths (Task 3), collision guard (Task 4–5), owner stamping (Task 1, 5, 9), meta prompt (Task 6), meta spawn (Task 7), lifecycle/discover (Task 8), CLI surface (Task 9–10), color tokens/helper/card/sidebar-dot (Task 11–14), meta route + route helper (Task 15–16), ORCHESTRATORS sidebar section §11.5 (Task 17), verification (Task 18). All §5–§12 sections map to a task.
 - **Placeholder scan:** the few `it.todo` markers are deliberate handoffs where the concrete test must bind to the existing session-manager/CLI/web test harnesses (whose fixtures can't be reproduced blind); each is accompanied by an explicit description of the exact behavior to assert. All schema, helper signatures, and component wiring show real code.
-- **Type consistency:** `ownerKind`/`metaOwner` (metadata keys + `SessionSpawnConfig` fields), `getProjectColor(projectId, registeredProjectIds)`, `checkSpawnCollision(liveSessions, intent)`, `ensureMetaOrchestrator({ name, systemPrompt, agent })`, and `generateMetaOrchestratorPrompt({ config, name })` are used identically across tasks and match the spec inventory (§13).
+- **Type consistency:** `ownerKind`/`metaOwner` (metadata keys + `SessionSpawnConfig` fields), `getProjectColor(projectId, registeredProjectIds)`, `checkSpawnCollision(liveSessions, intent)`, `ensureMetaOrchestrator({ name, systemPrompt, agent })`, `generateMetaOrchestratorPrompt({ config, name })`, `metaDashboardPath(name)`, and the `SidebarMetaOrchestrator { name, session }` shape are used identically across tasks and match the spec inventory (§13).
 - **Invariants:** the lifecycle/session-manager invariants (no `terminated` writes from `list()`/reconcile, `deriveLegacyStatus` untouched, guard-before-resource-creation, default ownerKind=project, coordinator exclusion via `isCoordinatorSession`) are restated on Tasks 5, 7, 8.
+- **C-04 (file size):** the new sidebar section is extracted into `SidebarOrchestrators.tsx` (Task 17) rather than inlined, because `ProjectSidebar.tsx` already exceeds 400 lines; the extracted file stays under the cap and ships with its own test.
 
 ---
 
