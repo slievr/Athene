@@ -1498,6 +1498,15 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
       // Atomically reserve the session id, then immediately persist the issue
       // claim so a concurrent spawn (next to acquire the lock) sees it via
       // list() and hard-refuses — the empty reservation file carries no issueId.
+      //
+      // Accepted tradeoff of cross-process dedup: this claim writes
+      // issue + status:"spawning" with no lifecycle/runtime handle yet. If the
+      // spawn process crashes between here and the full writeMetadata below, the
+      // session is left on disk as a "spawning" phantom that still owns the issue
+      // (isSpawnTerminal treats only done/terminated/merged as terminal), so it
+      // keeps hard-refusing re-spawns of that issue until it is cleaned up. It is
+      // self-healing — lifecycle reconciliation probes the absent runtime and
+      // terminates it — and killable in the meantime via `athene session kill`.
       ({ sessionId, tmuxName } = await reserveNextSessionIdentity(project, sessionsDir));
       if (spawnConfig.issueId) {
         try {
