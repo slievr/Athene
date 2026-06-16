@@ -943,8 +943,11 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     const projectDir = getProjectDir(projectId);
     mkdirSync(projectDir, { recursive: true });
     const lockPath = join(projectDir, "spawn.lock");
+    // staleMs MUST be < timeoutMs so a single waiter can both wait out a live
+    // holder AND reap a lock orphaned by a crashed spawn within one acquisition,
+    // rather than timing out before the orphan becomes reapable.
     const timeoutMs = 30_000;
-    const staleMs = 60_000;
+    const staleMs = 15_000;
     const deadline = Date.now() + timeoutMs;
     let fd: number | null = null;
     let waitMs = 10;
@@ -955,6 +958,13 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
         if ((err as NodeJS.ErrnoException).code !== "EEXIST") {
           throw new Error(`Failed to acquire spawn lock: ${lockPath}`, { cause: err });
         }
+        // Checked every iteration (before any `continue`) so an ENOENT race on
+        // statSync can't spin past the timeout.
+        if (Date.now() > deadline) {
+          throw new Error(`Timed out acquiring spawn lock for project '${projectId}'`, {
+            cause: err,
+          });
+        }
         // Reap a stale lock left by a crashed spawn.
         try {
           if (Date.now() - statSync(lockPath).mtimeMs > staleMs) {
@@ -962,12 +972,8 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
             continue;
           }
         } catch {
+          // Lock vanished (ENOENT) between openSync and statSync — retry now.
           continue;
-        }
-        if (Date.now() > deadline) {
-          throw new Error(`Timed out acquiring spawn lock for project '${projectId}'`, {
-            cause: err,
-          });
         }
         await sleep(waitMs);
         waitMs = Math.min(waitMs * 2, 250);
@@ -2402,12 +2408,50 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     });
   }
 
+  /**
+   * Synthetic project context for the reserved `_meta` scope — a meta orchestrator
+   * has no repo/worktree. `workspacePath` is a plain scratch dir (agent cwd +
+   * PATH-wrapper home), never a git worktree, so the workspace plugin's create()
+   * is intentionally never called. Shared by spawn and the liveness probe.
+   */
+  function metaProjectContext(name: string, agentOverride?: string) {
+    const metaProject: ProjectConfig = {
+      name: `${name} (meta)`,
+      path: getMetaWorkspaceDir(name),
+      defaultBranch: "main",
+      sessionPrefix: name,
+    };
+    const selection = resolveAgentSelection({
+      role: "orchestrator",
+      project: metaProject,
+      defaults: config.defaults,
+      spawnAgentOverride: agentOverride,
+    });
+    const plugins = resolvePlugins(metaProject, selection.agentName);
+    return { metaProject, selection, plugins };
+  }
+
   async function ensureMetaOrchestratorInternal(
     metaConfig: MetaOrchestratorSpawnConfig,
   ): Promise<Session> {
-    const existing = readExistingMetaSession(metaConfig.name);
+    const name = metaConfig.name;
+    const existing = readExistingMetaSession(name);
     if (existing && !isTerminalSession(existing)) {
-      return existing;
+      // _meta sessions are not runtime-enriched or supervised by the lifecycle
+      // manager, so their persisted state stays `working` even after the runtime
+      // dies. Probe the runtime handle: reuse only if it is NOT definitely
+      // missing; otherwise clear the stale metadata and relaunch (mirrors
+      // ensureOrchestratorInternal's enriched get() + restore behavior).
+      const { plugins } = metaProjectContext(name, metaConfig.agent);
+      const aliveOrUncertain = Boolean(
+        existing.runtimeHandle &&
+          plugins.agent &&
+          (await isAgentProcessNotDefinitelyMissing(plugins.agent, existing.runtimeHandle)),
+      );
+      if (aliveOrUncertain) {
+        return existing;
+      }
+      deleteMetadata(getMetaSessionsDir(name), name);
     }
     return _spawnMetaOrchestratorInner(metaConfig);
   }
@@ -2442,25 +2486,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
       data: { agent: metaConfig.agent ?? undefined, role: "meta-orchestrator" },
     });
 
-    // Synthetic project context for the reserved `_meta` scope. The meta
-    // orchestrator has no repo and no git worktree (it routes and reads; deep
-    // reads go through scout workers). `workspacePath` is a plain scratch dir
-    // used only as the agent's cwd and PATH-wrapper home — never a worktree, so
-    // the workspace plugin's create() is intentionally not called.
-    const metaProject: ProjectConfig = {
-      name: `${name} (meta)`,
-      path: workspacePath,
-      defaultBranch: "main",
-      sessionPrefix: name,
-    };
-
-    const selection = resolveAgentSelection({
-      role: "orchestrator",
-      project: metaProject,
-      defaults: config.defaults,
-      spawnAgentOverride: metaConfig.agent,
-    });
-    const plugins = resolvePlugins(metaProject, selection.agentName);
+    const { metaProject, selection, plugins } = metaProjectContext(name, metaConfig.agent);
     if (!plugins.runtime) {
       throw new Error(`Runtime plugin '${config.defaults.runtime}' not found`);
     }

@@ -61,6 +61,24 @@ describe("ensureMetaOrchestrator", () => {
     expect(ctx.mockRuntime.create).toHaveBeenCalledTimes(1);
   });
 
+  it("relaunches a persisted-but-dead meta orchestrator instead of returning it", async () => {
+    const sm = createSessionManager({ config: ctx.config, registry: ctx.mockRegistry });
+
+    const first = await sm.ensureMetaOrchestrator({ name: "meta-1", systemPrompt: "p" });
+    expect(first.id).toBe("meta-1");
+
+    // Simulate the runtime dying: _meta sessions aren't supervised, so the
+    // persisted state stays `working`. The reuse path must probe liveness.
+    vi.mocked(ctx.mockAgent.isProcessRunning).mockResolvedValue(false);
+    vi.mocked(ctx.mockRuntime.create).mockClear();
+
+    const relaunched = await sm.ensureMetaOrchestrator({ name: "meta-1", systemPrompt: "p" });
+
+    expect(relaunched.id).toBe("meta-1");
+    // Dead runtime detected → stale metadata cleared and a fresh runtime spawned.
+    expect(ctx.mockRuntime.create).toHaveBeenCalledTimes(1);
+  });
+
   it("returns projectId _meta on the reuse path (parity with spawn)", async () => {
     const sm = createSessionManager({ config: ctx.config, registry: ctx.mockRegistry });
     await sm.ensureMetaOrchestrator({ name: "meta-1", systemPrompt: "p" });
