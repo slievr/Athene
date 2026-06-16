@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { getProjectColor, projectColorBgClass } from "@/lib/project-color";
 import { getAttentionLevel, type DashboardSession } from "@/lib/types";
 import { cn } from "@/lib/cn";
@@ -63,6 +65,9 @@ export function SidebarOrchestrators({
   activeSessionId,
   onNavigate,
 }: SidebarOrchestratorsProps) {
+  const router = useRouter();
+  const [startingMeta, setStartingMeta] = useState<Set<string>>(new Set());
+
   if (metaOrchestrators.length === 0 && orchestrators.length === 0) return null;
 
   const handleClick =
@@ -71,6 +76,23 @@ export function SidebarOrchestrators({
       e.preventDefault();
       onNavigate(href, session ?? undefined);
     };
+
+  const handleStartMeta = (name: string) => async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (startingMeta.has(name)) return;
+    setStartingMeta((prev) => new Set(prev).add(name));
+    try {
+      await fetch(`/api/meta/${encodeURIComponent(name)}/start`, { method: "POST" });
+      router.refresh();
+    } finally {
+      setStartingMeta((prev) => {
+        const next = new Set(prev);
+        next.delete(name);
+        return next;
+      });
+    }
+  };
 
   if (collapsed) {
     return (
@@ -128,6 +150,7 @@ export function SidebarOrchestrators({
           ) : null}
           {metaOrchestrators.map((m) => {
             const href = metaDashboardPath(m.name);
+            const isStarting = startingMeta.has(m.name);
             return (
               <a
                 key={m.name}
@@ -143,7 +166,23 @@ export function SidebarOrchestrators({
                   ◆
                 </span>
                 <span className="project-sidebar__orch-name min-w-0 flex-1">{m.name}</span>
-                <ActivityDot session={m.session} />
+                {m.session === null ? (
+                  <button
+                    type="button"
+                    onClick={handleStartMeta(m.name)}
+                    disabled={isStarting}
+                    aria-label={`Start ${m.name}`}
+                    className="project-sidebar__orch-start-btn shrink-0"
+                  >
+                    {isStarting ? (
+                      <span className="project-sidebar__orch-start-spinner" aria-hidden="true" />
+                    ) : (
+                      <span aria-hidden="true">▶</span>
+                    )}
+                  </button>
+                ) : (
+                  <ActivityDot session={m.session} />
+                )}
               </a>
             );
           })}

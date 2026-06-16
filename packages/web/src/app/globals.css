@@ -5436,6 +5436,51 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   max-width: 96px;
 }
 
+/* Start button shown on meta orchestrator rows when not yet running */
+.project-sidebar__orch-start-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 8px;
+  cursor: pointer;
+  shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.project-sidebar__orch-start-btn:hover:not(:disabled) {
+  opacity: 1;
+  color: var(--color-text-primary);
+}
+
+.project-sidebar__orch-start-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.project-sidebar__orch-start-spinner {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: orch-spin 0.7s linear infinite;
+}
+
+@keyframes orch-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Sub-group labels inside Parliament: "Meta" / "Project" */
 .project-sidebar__orch-group-label {
   padding: 5px 14px 2px;

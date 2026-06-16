@@ -1,7 +1,12 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { SidebarOrchestrators } from "@/components/SidebarOrchestrators";
 import type { DashboardSession } from "@/lib/types";
+
+const mockRefresh = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: mockRefresh }),
+}));
 
 const metaSession = {
   id: "meta-1",
@@ -137,5 +142,80 @@ describe("SidebarOrchestrators", () => {
     );
     screen.getByText("meta-1").closest("a")!.click();
     expect(onNavigate).toHaveBeenCalledWith("/meta/meta-1", metaSession);
+  });
+
+  describe("start button on meta orchestrator rows", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => ({ ok: true, json: async () => ({ sessionId: "meta-xyz" }) })),
+      );
+    });
+
+    it("renders a start button when session is null", () => {
+      render(
+        <SidebarOrchestrators
+          collapsed={false}
+          metaOrchestrators={[{ name: "fleet", session: null }]}
+          orchestrators={[]}
+          registeredProjectIds={[]}
+          activeSessionId={undefined}
+          onNavigate={() => {}}
+        />,
+      );
+      expect(screen.getByRole("button", { name: /start fleet/i })).toBeInTheDocument();
+    });
+
+    it("does not render a start button when session exists", () => {
+      render(
+        <SidebarOrchestrators
+          collapsed={false}
+          metaOrchestrators={[{ name: "fleet", session: metaSession }]}
+          orchestrators={[]}
+          registeredProjectIds={[]}
+          activeSessionId={undefined}
+          onNavigate={() => {}}
+        />,
+      );
+      expect(screen.queryByRole("button", { name: /start fleet/i })).toBeNull();
+    });
+
+    it("calls the start API and refreshes when start button is clicked", async () => {
+      render(
+        <SidebarOrchestrators
+          collapsed={false}
+          metaOrchestrators={[{ name: "fleet", session: null }]}
+          orchestrators={[]}
+          registeredProjectIds={[]}
+          activeSessionId={undefined}
+          onNavigate={() => {}}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /start fleet/i }));
+
+      await waitFor(() => {
+        expect(vi.mocked(fetch)).toHaveBeenCalledWith(
+          "/api/meta/fleet/start",
+          { method: "POST" },
+        );
+        expect(mockRefresh).toHaveBeenCalled();
+      });
+    });
+
+    it("does not render a start button in the collapsed sidebar view", () => {
+      render(
+        <SidebarOrchestrators
+          collapsed
+          metaOrchestrators={[{ name: "fleet", session: null }]}
+          orchestrators={[]}
+          registeredProjectIds={[]}
+          activeSessionId={undefined}
+          onNavigate={() => {}}
+        />,
+      );
+      expect(screen.queryByRole("button")).toBeNull();
+    });
   });
 });
