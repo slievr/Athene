@@ -378,6 +378,7 @@ The `skills/` directory contains reusable workflow documents for common tasks. L
 | [`skills/agent-orchestrator/SKILL.md`](skills/agent-orchestrator/SKILL.md) | Architecture and conventions for working on this codebase |
 | [`skills/release-notes/ao-weekly-release/SKILL.md`](skills/release-notes/ao-weekly-release/SKILL.md) | Generate weekly release notes from git history |
 | [`skills/social-media/SKILL.md`](skills/social-media/SKILL.md) | Social media post generation |
+| [`skills/spawn-worker/SKILL.md`](skills/spawn-worker/SKILL.md) | **Orchestrators only:** delegate any implementation work via `athene spawn`, never the Agent tool |
 
 See [`skills/README.md`](skills/README.md) for how to install skills into other coding agents (Cursor, Copilot, Codex, etc.).
 
