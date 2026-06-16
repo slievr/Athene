@@ -14,6 +14,7 @@ import { projectDashboardPath, projectSessionPath } from "@/lib/routes";
 import { ThemeToggle } from "./ThemeToggle";
 import { AddProjectModal } from "./AddProjectModal";
 import { ProjectSettingsModal } from "./ProjectSettingsModal";
+import { SidebarOrchestrators, type SidebarMetaOrchestrator } from "./SidebarOrchestrators";
 
 /** Minimal shape needed to render an orchestrator link in the sidebar. */
 export interface ProjectSidebarOrchestrator {
@@ -31,6 +32,8 @@ interface ProjectSidebarProps {
    * `sessions`: the sessions endpoint strips orchestrators out.
    */
   orchestrators?: ProjectSidebarOrchestrator[];
+  /** Configured meta orchestrators (with their _meta session if running). */
+  metaOrchestrators?: SidebarMetaOrchestrator[];
   activeProjectId: string | undefined;
   activeSessionId: string | undefined;
   loading?: boolean;
@@ -316,6 +319,7 @@ function ProjectSidebarInner({
   projects,
   sessions,
   orchestrators,
+  metaOrchestrators = [],
   activeProjectId,
   activeSessionId,
   loading = false,
@@ -715,6 +719,15 @@ function ProjectSidebarInner({
             </svg>
           </button>
         ) : null}
+        <SidebarOrchestrators
+          collapsed
+          metaOrchestrators={metaOrchestrators}
+          orchestrators={orchestrators ?? []}
+          sessions={sessions}
+          registeredProjectIds={visibleProjects.map((p) => p.id)}
+          activeSessionId={activeSessionId}
+          onNavigate={navigate}
+        />
         {visibleProjects.map((project, idx) => {
           const workerSessions = sessionsByProject.get(project.id) ?? [];
           // sessionsByProject already applies the showDone filter consistently.
@@ -780,6 +793,15 @@ function ProjectSidebarInner({
   return (
     <aside className="project-sidebar relative flex h-full flex-col">
       <SidebarBrand onToggleCollapsed={onToggleCollapsed} />
+      <SidebarOrchestrators
+        collapsed={false}
+        metaOrchestrators={metaOrchestrators}
+        orchestrators={orchestrators ?? []}
+        sessions={sessions}
+        registeredProjectIds={visibleProjects.map((p) => p.id)}
+        activeSessionId={activeSessionId}
+        onNavigate={navigate}
+      />
       <div className="project-sidebar__nav-label">
         <span>Projects</span>
         <button
