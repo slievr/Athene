@@ -1019,6 +1019,20 @@ export function findConfig(startDir?: string): string | null {
   return findConfigFile(startDir);
 }
 
+/**
+ * Validate a WRAPPED config (one that carries its full `projects` map inline).
+ * Mirrors the global/flat-local builders by failing loud on a meta scope that
+ * references an unregistered project — validated against this config's own
+ * complete projects set. NOT folded into the shared `validateConfig`, because the
+ * flat-local builder calls validateConfig with a SINGLE-PROJECT projection where
+ * such a check would spuriously reject valid multi-project scopes (round-15).
+ */
+function validateWrappedConfig(raw: unknown): OrchestratorConfig {
+  const config = validateConfig(raw);
+  assertMetaScopeProjectsExist(config.metaOrchestrators, Object.keys(config.projects));
+  return config;
+}
+
 /** Load and validate config from a YAML file */
 export function loadConfig(configPath?: string): LoadedConfig {
   // Priority: 1. Explicit param, 2. Search (including AO_CONFIG_PATH env var)
@@ -1040,7 +1054,7 @@ export function loadConfig(configPath?: string): LoadedConfig {
   const config = isCanonicalGlobalConfig
     ? (buildEffectiveConfigFromGlobalConfigPath(path) ?? validateConfig(normalizedParsed))
     : shape === "wrapped"
-      ? validateConfig(normalizedParsed)
+      ? validateWrappedConfig(normalizedParsed)
       : (buildEffectiveConfigFromFlatLocalPath(path, normalizedParsed) ??
         validateConfig(normalizedParsed));
 
@@ -1075,7 +1089,7 @@ export function loadConfigWithPath(configPath?: string): {
   const config = isCanonicalGlobalConfig
     ? (buildEffectiveConfigFromGlobalConfigPath(path) ?? validateConfig(normalizedParsed))
     : shape === "wrapped"
-      ? validateConfig(normalizedParsed)
+      ? validateWrappedConfig(normalizedParsed)
       : (buildEffectiveConfigFromFlatLocalPath(path, normalizedParsed) ??
         validateConfig(normalizedParsed));
 
