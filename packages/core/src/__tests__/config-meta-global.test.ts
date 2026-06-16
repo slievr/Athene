@@ -104,4 +104,47 @@ describe("metaOrchestrators via the global config path", () => {
 
     expect(() => loadConfig(configPath)).toThrow(/unknown project 'ghost'/);
   });
+
+  it("wrapped local config fails loud on a meta scope referencing an unregistered project", () => {
+    const projDir = join(tempRoot, "proj");
+    mkdirSync(projDir, { recursive: true });
+    const wrappedPath = join(projDir, "agent-orchestrator.yaml");
+    writeFileSync(
+      wrappedPath,
+      [
+        "projects:",
+        "  web:",
+        `    path: ${join(tempRoot, "web")}`,
+        "metaOrchestrators:",
+        "  meta-1:",
+        "    scope:",
+        "      projects: [web, ghost]",
+        "",
+      ].join("\n"),
+    );
+    expect(() => loadConfig(wrappedPath)).toThrow(/unknown project 'ghost'/);
+  });
+
+  it("wrapped local config with all-valid meta scope ids loads", () => {
+    const projDir = join(tempRoot, "proj2");
+    mkdirSync(projDir, { recursive: true });
+    const wrappedPath = join(projDir, "agent-orchestrator.yaml");
+    writeFileSync(
+      wrappedPath,
+      [
+        "projects:",
+        "  web:",
+        `    path: ${join(tempRoot, "web")}`,
+        "  api:",
+        `    path: ${join(tempRoot, "api")}`,
+        "metaOrchestrators:",
+        "  meta-1:",
+        "    scope:",
+        "      projects: [web, api]",
+        "",
+      ].join("\n"),
+    );
+    const config = loadConfig(wrappedPath);
+    expect(config.metaOrchestrators?.["meta-1"]).toBeDefined();
+  });
 });
