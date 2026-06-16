@@ -52,7 +52,6 @@ import {
   PR_STATE,
 } from "./types.js";
 import {
-  readMetadata,
   readMetadataRaw,
   writeMetadata,
   updateMetadata,

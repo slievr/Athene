@@ -46,7 +46,7 @@ const PROJECT_BG_CLASS: Record<number, string> = {
 };
 
 export function projectColorBgClass(slot: number): string {
-  return PROJECT_BG_CLASS[slot] ?? PROJECT_BG_CLASS[1]!;
+  return PROJECT_BG_CLASS[slot] ?? "bg-[var(--project-color-1)]";
 }
 
 /** Tailwind left-border class for a palette slot (used for card rails). */
@@ -62,5 +62,5 @@ const PROJECT_BORDER_CLASS: Record<number, string> = {
 };
 
 export function projectColorBorderClass(slot: number): string {
-  return PROJECT_BORDER_CLASS[slot] ?? PROJECT_BORDER_CLASS[1]!;
+  return PROJECT_BORDER_CLASS[slot] ?? "border-l-[color:var(--project-color-1)]";
 }
