@@ -1027,7 +1027,7 @@ export function findConfig(startDir?: string): string | null {
  * flat-local builder calls validateConfig with a SINGLE-PROJECT projection where
  * such a check would spuriously reject valid multi-project scopes (round-15).
  */
-function validateWrappedConfig(raw: unknown): OrchestratorConfig {
+export function validateWrappedConfig(raw: unknown): OrchestratorConfig {
   const config = validateConfig(raw);
   assertMetaScopeProjectsExist(config.metaOrchestrators, Object.keys(config.projects));
   return config;
@@ -1052,7 +1052,11 @@ export function loadConfig(configPath?: string): LoadedConfig {
       ? applyWrappedLocalStorageKeys(path, parsed)
       : parsed;
   const config = isCanonicalGlobalConfig
-    ? (buildEffectiveConfigFromGlobalConfigPath(path) ?? validateConfig(normalizedParsed))
+    ? // The canonical-global `normalizedParsed` carries the full registry, so the
+      // fallback must mirror the builder's "fail loudly on unknown meta scope"
+      // rule (validateConfig alone skips it). validateWrappedConfig validates
+      // scopes against the complete `projects` map — no flat-local projection.
+      (buildEffectiveConfigFromGlobalConfigPath(path) ?? validateWrappedConfig(normalizedParsed))
     : shape === "wrapped"
       ? validateWrappedConfig(normalizedParsed)
       : (buildEffectiveConfigFromFlatLocalPath(path, normalizedParsed) ??
@@ -1087,7 +1091,11 @@ export function loadConfigWithPath(configPath?: string): {
       ? applyWrappedLocalStorageKeys(path, parsed)
       : parsed;
   const config = isCanonicalGlobalConfig
-    ? (buildEffectiveConfigFromGlobalConfigPath(path) ?? validateConfig(normalizedParsed))
+    ? // The canonical-global `normalizedParsed` carries the full registry, so the
+      // fallback must mirror the builder's "fail loudly on unknown meta scope"
+      // rule (validateConfig alone skips it). validateWrappedConfig validates
+      // scopes against the complete `projects` map — no flat-local projection.
+      (buildEffectiveConfigFromGlobalConfigPath(path) ?? validateWrappedConfig(normalizedParsed))
     : shape === "wrapped"
       ? validateWrappedConfig(normalizedParsed)
       : (buildEffectiveConfigFromFlatLocalPath(path, normalizedParsed) ??

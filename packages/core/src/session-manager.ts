@@ -2636,10 +2636,23 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     // winner's runtime). On conflict, reuse a live session or reclaim a stale one.
     if (!reserveSessionId(sessionsDir, sessionId)) {
       const existing = readExistingMetaSession(name);
-      if (existing && !isTerminalSession(existing)) {
+      // Probe the runtime before reusing — mirrors ensureMetaOrchestratorInternal.
+      // _meta sessions are not lifecycle-supervised, so a non-terminal persisted
+      // state can still front a dead runtime; under a truly-concurrent meta-start
+      // race the normal probe/delete in the caller may not have run yet. Reuse only
+      // if NOT definitely missing; otherwise reclaim and relaunch.
+      const aliveOrUncertain =
+        existing &&
+        !isTerminalSession(existing) &&
+        Boolean(
+          existing.runtimeHandle &&
+            plugins.agent &&
+            (await isAgentProcessNotDefinitelyMissing(plugins.agent, existing.runtimeHandle)),
+        );
+      if (aliveOrUncertain) {
         return existing;
       }
-      // Stale or terminal record left behind — reclaim the id.
+      // Stale, dead, or terminal record left behind — reclaim the id.
       deleteMetadata(sessionsDir, sessionId);
       if (!reserveSessionId(sessionsDir, sessionId)) {
         throw new Error(`Meta orchestrator '${name}' is already being created`);

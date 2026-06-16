@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { loadConfig } from "../config.js";
+import { loadConfig, validateWrappedConfig } from "../config.js";
 import { generateMetaOrchestratorPrompt } from "../meta-orchestrator-prompt.js";
 
 // Regression test for ath-rev-14 #2: metaOrchestrators must survive loading the
@@ -145,6 +145,31 @@ describe("metaOrchestrators via the global config path", () => {
       ].join("\n"),
     );
     const config = loadConfig(wrappedPath);
+    expect(config.metaOrchestrators?.["meta-1"]).toBeDefined();
+  });
+});
+
+// ath-rev-21 #2: the canonical-global branch is
+// `buildEffectiveConfigFromGlobalConfigPath(path) ?? validateWrappedConfig(normalizedParsed)`.
+// The builder already fails loud on an unknown meta scope, but the `??` fallback
+// must not silently load a bad scope. The fallback is wired through
+// validateWrappedConfig, so this asserts that guard fails loud (and loads a valid
+// scope) directly — proving the fallback honors the same invariant as the builder.
+describe("validateWrappedConfig (canonical-global fallback guard)", () => {
+  it("fails loud on a meta scope referencing an unregistered project", () => {
+    expect(() =>
+      validateWrappedConfig({
+        projects: { web: { path: "/tmp/web" } },
+        metaOrchestrators: { "meta-1": { scope: { projects: ["web", "ghost"] } } },
+      }),
+    ).toThrow(/unknown project 'ghost'/);
+  });
+
+  it("accepts a meta scope whose projects are all registered", () => {
+    const config = validateWrappedConfig({
+      projects: { web: { path: "/tmp/web" }, api: { path: "/tmp/api" } },
+      metaOrchestrators: { "meta-1": { scope: { projects: ["web", "api"] } } },
+    });
     expect(config.metaOrchestrators?.["meta-1"]).toBeDefined();
   });
 });
