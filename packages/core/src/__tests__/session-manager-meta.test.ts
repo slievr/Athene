@@ -1,8 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { createSessionManager } from "../session-manager.js";
 import { readMetadataRaw } from "../metadata.js";
-import { getMetaSessionsDir } from "../paths.js";
-import { setupTestContext, teardownTestContext, type TestContext } from "./test-utils.js";
+import { getMetaSessionsDir, getMetaWorkspaceDir } from "../paths.js";
+import {
+  setupTestContext,
+  teardownTestContext,
+  createMockRegistry,
+  type TestContext,
+} from "./test-utils.js";
 
 vi.mock("../activity-events.js", () => ({
   recordActivityEvent: vi.fn(),
@@ -97,5 +104,23 @@ describe("ensureMetaOrchestrator", () => {
     expect(second.id).toBe(first.id);
     // Reused — no second runtime spawn.
     expect(ctx.mockRuntime.create).not.toHaveBeenCalled();
+  });
+
+  it("delivers the routing prompt via AGENTS.md when the agent is opencode", async () => {
+    // OpenCode reads its prompt from a workspace AGENTS.md, not systemPromptFile.
+    const opencodeRegistry = createMockRegistry({
+      runtime: ctx.mockRuntime,
+      agent: { ...ctx.mockAgent, name: "opencode" },
+      workspace: ctx.mockWorkspace,
+    });
+    ctx.config.defaults.agent = "opencode";
+    const sm = createSessionManager({ config: ctx.config, registry: opencodeRegistry });
+
+    const prompt = "META ROUTING CATALOG: route web→web, api→api.";
+    await sm.ensureMetaOrchestrator({ name: "meta-1", systemPrompt: prompt });
+
+    const agentsMd = join(getMetaWorkspaceDir("meta-1"), "AGENTS.md");
+    expect(existsSync(agentsMd)).toBe(true);
+    expect(readFileSync(agentsMd, "utf-8")).toContain(prompt);
   });
 });

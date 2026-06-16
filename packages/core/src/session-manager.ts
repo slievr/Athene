@@ -2625,6 +2625,12 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     if (metaConfig.systemPrompt) {
       systemPromptFile = join(workspacePath, `meta-orchestrator-prompt-${sessionId}.md`);
       writeFileSync(systemPromptFile, metaConfig.systemPrompt, "utf-8");
+      // OpenCode does not consume systemPromptFile — it reads its prompt from a
+      // workspace AGENTS.md. Mirror the per-project orchestrator path so a meta
+      // orchestrator on the opencode agent actually receives its routing prompt.
+      if (plugins.agent.name === "opencode") {
+        writeWorkspaceOpenCodeAgentsMd(workspacePath, systemPromptFile);
+      }
     }
 
     // Meta orchestrator ALWAYS runs permissionless — it must run ao CLI commands.
