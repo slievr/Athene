@@ -39,6 +39,11 @@ export function resolveInScopeProjectIds(
  *   *since startup* — i.e. present in `config.projects` now but absent from
  *   `baselineProjectIds`.
  *
+ * NOTE: not yet wired into the supervisor/polling loop — `discover` currently
+ * takes effect on meta-orchestrator restart (the prompt catalog is generated once
+ * at meta-start). This helper is the building block for a future live
+ * prompt-refresh path; `meta-status`/dashboard already resolve scope live.
+ *
  * IMPORTANT — `baselineProjectIds` MUST be the FULL set of project IDs that were
  * registered when the meta orchestrator started (e.g. `Object.keys(startupConfig.
  * projects)`), NOT the in-scope subset. Seeding it with the in-scope subset would

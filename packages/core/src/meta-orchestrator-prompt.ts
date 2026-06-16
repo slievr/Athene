@@ -60,7 +60,7 @@ function createRenderData(opts: MetaOrchestratorPromptConfig): MetaPromptRenderD
     dashboardUrl: `http://localhost:${port}/meta/${opts.name}`,
     scopeDescription,
     discoverDescription: meta.discover
-      ? "enabled (newly-registered projects are auto-included without a restart)"
+      ? "enabled — newly-registered projects appear in `athene meta-status` and the dashboard immediately (both read live config); this prompt's catalog above is a snapshot from meta-start, so restart the meta orchestrator to surface new projects here"
       : "disabled",
     projectCatalog: buildProjectCatalog(opts.config, opts.name),
     rules: meta.rules?.trim() ?? "",
