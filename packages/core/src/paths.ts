@@ -177,6 +177,16 @@ export function getMetaSessionPath(name: string): string {
   return join(getMetaSessionsDir(name), `${name}.json`);
 }
 
+/**
+ * Minimal scratch working directory for a meta orchestrator's runtime/agent.
+ * It is NOT a git worktree — the meta orchestrator never operates on a single
+ * repo. It exists only as a cwd for the agent process and PATH-wrapper hooks.
+ */
+export function getMetaWorkspaceDir(name: string): string {
+  assertSafeMetaName(name);
+  return join(getAoBaseDir(), "projects", "_meta", name, "workspace");
+}
+
 // =============================================================================
 // LEGACY PATH FUNCTIONS (deprecated — used by migration only)
 // =============================================================================

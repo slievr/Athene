@@ -429,6 +429,15 @@ export interface OrchestratorSpawnConfig {
   agent?: string;
 }
 
+/** Config for creating a meta orchestrator session (portfolio-scoped coordinator). */
+export interface MetaOrchestratorSpawnConfig {
+  /** Identity of the meta orchestrator (its configured name, e.g. "meta-1"). */
+  name: string;
+  systemPrompt?: string;
+  /** Override the agent plugin for this meta orchestrator. */
+  agent?: string;
+}
+
 // =============================================================================
 // RUNTIME — Plugin Slot 1
 // =============================================================================
@@ -1937,6 +1946,11 @@ export interface SessionManager {
   spawn(config: SessionSpawnConfig): Promise<Session>;
   spawnOrchestrator(config: OrchestratorSpawnConfig): Promise<Session>;
   ensureOrchestrator(config: OrchestratorSpawnConfig): Promise<Session>;
+  /**
+   * Ensure a meta orchestrator session exists for the given name. Reuses a live
+   * one if present, else spawns a fresh one under the reserved `_meta` scope.
+   */
+  ensureMetaOrchestrator(config: MetaOrchestratorSpawnConfig): Promise<Session>;
   /**
    * Replace the canonical orchestrator with a fresh one. If an orchestrator
    * already exists for the project, it is killed, its metadata deleted, and a
