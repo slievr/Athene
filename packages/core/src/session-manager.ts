@@ -95,6 +95,7 @@ import { sessionFromMetadata } from "./utils/session-from-metadata.js";
 import { dedupePrUrls } from "./utils/pr.js";
 import { safeJsonParse, validateStatus } from "./utils/validation.js";
 import { isGitBranchNameSafe } from "./utils.js";
+import { checkSpawnCollision, formatHardRefusal } from "./spawn-collision.js";
 import { resolveAgentSelection, resolveAgentSelectionForSession } from "./agent-selection.js";
 import {
   buildAgentPath,
@@ -1313,6 +1314,23 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
       }
     }
 
+    // Anti-collision guard — runs BEFORE any resource creation so a refusal
+    // leaves no orphaned worktree/runtime. Lives in the shared spawn path so it
+    // protects BOTH coordinators symmetrically: a meta orchestrator and a
+    // per-project orchestrator are equally blocked from duplicating an issue.
+    // Issue-keyed work is a HARD refusal; freeform work is advisory (surfaced
+    // by the CLI, not blocked here).
+    const liveInProject = (await list(spawnConfig.projectId)).filter(
+      (s) => !isTerminalSession(s),
+    );
+    const collision = checkSpawnCollision(liveInProject, {
+      projectId: spawnConfig.projectId,
+      issueId: spawnConfig.issueId,
+    });
+    if (collision.hard) {
+      throw new Error(formatHardRefusal(collision.hard));
+    }
+
     // Get the sessions directory for this project
     const sessionsDir = getProjectSessionsDir(spawnConfig.projectId);
 
@@ -1547,6 +1565,15 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
           ...(reusedOpenCodeSessionId ? { opencodeSessionId: reusedOpenCodeSessionId } : {}),
           ...(spawnConfig.prompt ? { userPrompt: spawnConfig.prompt } : {}),
           ...(displayName ? { displayName } : {}),
+          // Owner stamping: meta-dispatched workers carry ownerKind/metaOwner so
+          // they are visible to BOTH the meta orchestrator and the per-project
+          // orchestrator. Absent => project-owned (the default).
+          ...(spawnConfig.ownerKind === "meta"
+            ? {
+                ownerKind: "meta",
+                ...(spawnConfig.metaOwner ? { metaOwner: spawnConfig.metaOwner } : {}),
+              }
+            : {}),
         },
       };
 
