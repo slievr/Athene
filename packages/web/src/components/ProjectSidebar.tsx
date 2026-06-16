@@ -460,6 +460,12 @@ function ProjectSidebarInner({
     [projects, removedProjectIds],
   );
 
+  // Canonical ordered project-id list for color resolution. Uses the FULL
+  // `projects` prop (registration order), NOT the filtered visibleProjects, so a
+  // project's color slot stays stable when another is optimistically removed and
+  // matches the slot used for its cards in Dashboard.
+  const colorProjectIds = useMemo(() => projects.map((p) => p.id), [projects]);
+
   const prefixByProject = useMemo(
     () => new Map(visibleProjects.map((p) => [p.id, p.sessionPrefix ?? p.id])),
     [visibleProjects],
@@ -725,7 +731,7 @@ function ProjectSidebarInner({
           metaOrchestrators={metaOrchestrators}
           orchestrators={orchestrators ?? []}
           sessions={sessions}
-          registeredProjectIds={visibleProjects.map((p) => p.id)}
+          registeredProjectIds={colorProjectIds}
           activeSessionId={activeSessionId}
           onNavigate={navigate}
         />
@@ -799,7 +805,7 @@ function ProjectSidebarInner({
         metaOrchestrators={metaOrchestrators}
         orchestrators={orchestrators ?? []}
         sessions={sessions}
-        registeredProjectIds={visibleProjects.map((p) => p.id)}
+        registeredProjectIds={colorProjectIds}
         activeSessionId={activeSessionId}
         onNavigate={navigate}
       />
@@ -939,7 +945,7 @@ function ProjectSidebarInner({
                       className={cn(
                         "project-sidebar__proj-dot shrink-0 rounded-full",
                         projectColorBgClass(
-                          getProjectColor(project.id, visibleProjects.map((p) => p.id)).slot,
+                          getProjectColor(project.id, colorProjectIds).slot,
                         ),
                       )}
                       aria-hidden="true"

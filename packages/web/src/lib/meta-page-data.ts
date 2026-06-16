@@ -14,6 +14,8 @@ import {
 } from "@/lib/serialize";
 import { getAllProjects, type ProjectInfo } from "@/lib/project-name";
 import { settlesWithin } from "@/lib/async-utils";
+import { listSidebarMetaOrchestrators } from "@/lib/meta-orchestrators";
+import type { SidebarMetaOrchestrator } from "@/components/SidebarOrchestrators";
 import {
   DEFAULT_ATTENTION_ZONE_MODE,
   formatDashboardLoadError,
@@ -24,9 +26,14 @@ const FAST_METADATA_ENRICH_TIMEOUT_MS = 3_000;
 export interface MetaPageData {
   name: string;
   sessions: DashboardSession[];
+  /**
+   * Full registered project set (registration order). Passed to Dashboard as
+   * `projects`, which is the single canonical source for per-project color slots
+   * (sidebar + card accents both resolve from this same ordered list).
+   */
   projects: ProjectInfo[];
-  /** Ordered registered project IDs — drives per-project color resolution. */
-  registeredProjectIds: string[];
+  /** Configured meta orchestrators (with their _meta session if running). */
+  metaOrchestrators: SidebarMetaOrchestrator[];
   attentionZones: DashboardAttentionZoneMode;
   dashboardLoadError?: string;
 }
@@ -50,7 +57,7 @@ export const getMetaPageData = cache(async function getMetaPageData(
     name,
     sessions: [],
     projects,
-    registeredProjectIds: projects.map((p) => p.id),
+    metaOrchestrators: [],
     attentionZones: DEFAULT_ATTENTION_ZONE_MODE,
   };
 
@@ -61,8 +68,8 @@ export const getMetaPageData = cache(async function getMetaPageData(
     if (!config.metaOrchestrators?.[name]) {
       return null;
     }
-    pageData.registeredProjectIds = Object.keys(config.projects);
     pageData.attentionZones = config.dashboard?.attentionZones ?? DEFAULT_ATTENTION_ZONE_MODE;
+    pageData.metaOrchestrators = listSidebarMetaOrchestrators(config);
     try {
       allSessions = await services.sessionManager.listCached();
     } catch (listErr) {

@@ -71,6 +71,6 @@ describe("getMetaPageData", () => {
     const data = await getMetaPageData("meta-1");
     expect(data).not.toBeNull();
     expect(data!.sessions.map((s) => s.id)).toEqual(["web-1"]);
-    expect(data!.registeredProjectIds).toEqual(["web", "api"]);
+    expect(data!.projects.map((p) => p.id)).toEqual(["web", "api"]);
   });
 });
