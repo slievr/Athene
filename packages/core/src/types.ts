@@ -24,7 +24,7 @@ import type { ObservabilityLevel } from "./observability.js";
 /** Unique session identifier, e.g. "my-app-1", "backend-12" */
 export type SessionId = string;
 
-export type SessionKind = "worker" | "orchestrator";
+export type SessionKind = "worker" | "orchestrator" | "meta-orchestrator";
 
 export type CanonicalSessionState =
   | "not_started"
@@ -368,6 +368,43 @@ export function isOrchestratorSession(
   return true;
 }
 
+/** True when the session is a meta orchestrator (portfolio-scoped coordinator). */
+export function isMetaOrchestratorSession(
+  session: { id: SessionId; metadata?: Record<string, string> },
+): boolean {
+  return session.metadata?.["role"] === "meta-orchestrator";
+}
+
+/**
+ * True for any coordinator session — a per-project orchestrator OR a meta
+ * orchestrator. Worker views/counts must use this (not `isOrchestratorSession`)
+ * so meta orchestrators are excluded from the worker board identically.
+ */
+export function isCoordinatorSession(
+  session: { id: SessionId; metadata?: Record<string, string> },
+  sessionPrefix?: string,
+  allSessionPrefixes?: string[],
+): boolean {
+  return (
+    isMetaOrchestratorSession(session) ||
+    isOrchestratorSession(session, sessionPrefix, allSessionPrefixes)
+  );
+}
+
+/** Which coordinator dispatched this session. Defaults to "project" when unset. */
+export function getSessionOwnerKind(
+  session: { metadata?: Record<string, string> },
+): "meta" | "project" {
+  return session.metadata?.["ownerKind"] === "meta" ? "meta" : "project";
+}
+
+/** Name of the dispatching meta orchestrator, or null for project-owned sessions. */
+export function getSessionMetaOwner(
+  session: { metadata?: Record<string, string> },
+): string | null {
+  return session.metadata?.["metaOwner"] ?? null;
+}
+
 /** Config for creating a new session */
 export interface SessionSpawnConfig {
   projectId: string;
@@ -378,6 +415,10 @@ export interface SessionSpawnConfig {
   agent?: string;
   /** Override the OpenCode subagent for this session (e.g. "sisyphus", "oracle") */
   subagent?: string;
+  /** Coordinator that dispatched this session. Defaults to "project". */
+  ownerKind?: "meta" | "project";
+  /** Name of the dispatching meta orchestrator (set only when ownerKind === "meta"). */
+  metaOwner?: string;
 }
 
 /** Config for creating an orchestrator session */
