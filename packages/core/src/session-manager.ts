@@ -1442,11 +1442,23 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
       // list() and hard-refuses — the empty reservation file carries no issueId.
       ({ sessionId, tmuxName } = await reserveNextSessionIdentity(project, sessionsDir));
       if (spawnConfig.issueId) {
-        updateMetadata(sessionsDir, sessionId, {
-          issue: spawnConfig.issueId,
-          project: spawnConfig.projectId,
-          status: "spawning",
-        });
+        try {
+          updateMetadata(sessionsDir, sessionId, {
+            issue: spawnConfig.issueId,
+            project: spawnConfig.projectId,
+            status: "spawning",
+          });
+        } catch (err) {
+          // Roll back the reservation so a failed claim write inside the lock
+          // can't leave an orphaned phantom session (the cleanupStack undo is
+          // only registered after this block).
+          try {
+            deleteMetadata(sessionsDir, sessionId);
+          } catch {
+            /* best effort */
+          }
+          throw err;
+        }
       }
     });
 
