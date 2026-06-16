@@ -1487,7 +1487,12 @@ export type MetaScope = "all" | { projects: string[] };
 export interface MetaOrchestratorConfig {
   /** Which projects this meta orchestrator can route into. */
   scope: MetaScope;
-  /** Watch the global registry and auto-include newly-registered projects without a restart. */
+  /**
+   * Include newly-registered projects in scope. Current behavior: `meta-status`
+   * and the dashboard resolve scope live (new projects show immediately); the
+   * running orchestrator's prompt catalog is a meta-start snapshot and refreshes
+   * only on restart. See `reconcileMetaScopeIds`.
+   */
   discover: boolean;
   /** Optional agent plugin override; defaults to the global default agent. */
   agent?: string;

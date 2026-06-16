@@ -363,9 +363,12 @@ const MetaScopeSchema = z.union([
 
 const MetaOrchestratorConfigSchema = z.object({
   scope: MetaScopeSchema,
-  // Watch the global registry and auto-include newly-registered projects
-  // without a restart. With scope:'all' new projects are naturally in scope;
-  // with an explicit list, discover:true also adds newly-registered projects.
+  // Include newly-registered projects in this meta orchestrator's scope.
+  // NOTE (current behavior): scope is resolved live by `meta-status` and the
+  // dashboard, so new projects show there immediately; the running orchestrator's
+  // prompt catalog is a snapshot from `meta-start`, so it only refreshes on
+  // restart. (`reconcileMetaScopeIds` is the building block for future live
+  // prompt-refresh wiring.) With scope:'all' new projects are naturally in scope.
   discover: z.boolean().default(false),
   // Optional agent plugin override; defaults to the global default agent.
   agent: z.string().optional(),
@@ -418,6 +421,22 @@ const OrchestratorConfigSchema = z
         message:
           "'_meta' is a reserved project ID used for meta orchestrator storage; rename this project.",
       });
+    }
+
+    // Fail loudly on a meta orchestrator whose explicit scope references an
+    // unknown project — otherwise the scope is silently narrowed (or empty) and
+    // the meta orchestrator routes into nothing.
+    for (const [metaName, meta] of Object.entries(value.metaOrchestrators ?? {})) {
+      if (meta.scope === "all") continue;
+      for (const projectId of meta.scope.projects) {
+        if (!Object.prototype.hasOwnProperty.call(value.projects, projectId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["metaOrchestrators", metaName, "scope", "projects"],
+            message: `Meta orchestrator '${metaName}' references unknown project '${projectId}'. Known projects: ${Object.keys(value.projects).join(", ") || "(none)"}.`,
+          });
+        }
+      }
     }
   });
 

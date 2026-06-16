@@ -36,4 +36,18 @@ describe("metaOrchestrators config", () => {
   it("rejects a project literally named _meta", () => {
     expect(() => validateConfig({ projects: { _meta: { path: "/tmp/x" } } })).toThrow(/_meta/);
   });
+
+  it("rejects an explicit scope referencing an unknown project", () => {
+    expect(() =>
+      validateConfig({
+        ...base,
+        metaOrchestrators: { "meta-1": { scope: { projects: ["web", "ghost"] } } },
+      }),
+    ).toThrow(/unknown project 'ghost'/);
+  });
+
+  it("accepts scope:all without project validation", () => {
+    const cfg = validateConfig({ ...base, metaOrchestrators: { platform: { scope: "all" } } });
+    expect(cfg.metaOrchestrators?.platform.scope).toBe("all");
+  });
 });
