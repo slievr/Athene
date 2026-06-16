@@ -50,4 +50,17 @@ describe("metaOrchestrators config", () => {
     const cfg = validateConfig({ ...base, metaOrchestrators: { platform: { scope: "all" } } });
     expect(cfg.metaOrchestrators?.platform.scope).toBe("all");
   });
+
+  it("surfaces a clean Zod error (not a TypeError) when projects is omitted", () => {
+    let thrown: unknown;
+    try {
+      validateConfig({ metaOrchestrators: { platform: { scope: "all" } } } as never);
+    } catch (err) {
+      thrown = err;
+    }
+    expect(thrown).toBeTruthy();
+    const message = thrown instanceof Error ? thrown.message : String(thrown);
+    // The superRefine must not blow up on undefined `projects`.
+    expect(message).not.toMatch(/Cannot convert undefined or null to object/);
+  });
 });
