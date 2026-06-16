@@ -334,8 +334,41 @@ These guard the subtle state machine in `lifecycle-manager.ts` / `session-manage
   Registration index = the project's position in the ordered list of registered project IDs (insertion order of `config.projects`, which is a JS object preserving insertion order). `slot = (index % 8) + 1`. An unknown `projectId` (not in the list) falls back to slot 1 deterministically.
 - Consumers (`SessionCard.tsx`, `ProjectSidebar.tsx`) apply the color via Tailwind arbitrary-value classes referencing the CSS var (e.g. `border-l-[color:var(--project-color-3)]`) — **no inline `style=` attributes** (C-02). The component receives the resolved `colorVar`/`tintVar` and the project name/dot.
 
-### 11.4 Constraints honored
-- No new UI libraries (C-01); no inline styles (C-02); component files < 400 lines (C-04); dark theme preserved (C-05); App Router only (C-06); no animation libs (C-07); SSE 5s interval unchanged (C-14).
+### 11.5 Sidebar ORCHESTRATORS section
+
+A dedicated **ORCHESTRATORS** section is added to the dashboard sidebar (`packages/web/src/components/ProjectSidebar.tsx`), rendered **above** the existing PROJECTS list. Chosen layout: **flat list**.
+
+**Layout (expanded sidebar):**
+- A section label `Orchestrators` (mirroring the existing `project-sidebar__nav-label` treatment of `Projects`).
+- **Meta orchestrators on top**, each row marked with a diamond glyph (`◆`) preceding its name.
+- A **divider**, then the **per-project orchestrators** below, each row prefixed with its **project-color dot** (`●`) resolved via `getProjectColor(projectId, registeredProjectIds)` (§11.3) — the same palette used for cards and project rows.
+- **Right-aligned on each row:** the orchestrator's **activity-state dot** (working / idle / needs-input), reusing the **existing** session status/activity dot system — i.e. compute `getAttentionLevel(session)` and render with the existing `sidebar-session-dot` / `data-level` styling (the same mechanism `SessionDot` uses today). **Do not invent a new dot.**
+
+**Navigation:**
+- Click a **meta orchestrator** row → navigate to its `/meta/<name>` dashboard (where its session is also reachable). Use a new route helper `metaDashboardPath(name)` → `/meta/<name>` in `packages/web/src/lib/routes.ts`.
+- Click a **per-project orchestrator** row → open that orchestrator session (`projectSessionPath(projectId, orchestratorId)`, the existing helper).
+
+**Not shown:** scope relationships (which meta manages which projects) are **not** rendered in the sidebar — they live on the meta dashboard.
+
+**Collapsed sidebar variant:** render the orchestrators as a compact cluster at the top of the collapsed rail, consistent with how projects collapse today:
+- Meta orchestrators as a `◆` glyph link (title = `<name>`), navigating to `/meta/<name>`.
+- Per-project orchestrators as a small project-color dot link (title = `<project name> orchestrator`), navigating to the orchestrator session.
+- Each carries its activity-state via the existing `data-level` attribute for consistent coloring.
+
+**Component extraction (C-04 compliance):** `ProjectSidebar.tsx` is already ~1260 lines (pre-existing, well over the 400-line cap). Adding this section inline would worsen that, so the ORCHESTRATORS section ships as a **new extracted component** `packages/web/src/components/SidebarOrchestrators.tsx` (handling both expanded and collapsed variants), imported and rendered by `ProjectSidebar`. The new component stays < 400 lines and gets its own test file. This is the "refactor/extract if ProjectSidebar would exceed it" path.
+
+**Data flow:** `ProjectSidebar` gains two new props — the existing per-project `orchestrators?: ProjectSidebarOrchestrator[]` (already present: `{ id, projectId }`) is reused for project orchestrators, and a new `metaOrchestrators?: SidebarMetaOrchestrator[]` where:
+```ts
+export interface SidebarMetaOrchestrator {
+  name: string;
+  /** The meta orchestrator session (under projectId "_meta"), if running — used to derive the activity dot. Null when not started. */
+  session: DashboardSession | null;
+}
+```
+The per-project orchestrator's session (for its activity dot) is looked up from the raw `sessions` prop by id (the same `sessions?.find((s) => s.id === orchestratorLink.id)` pattern already used in `ProjectSidebar`). Meta orchestrator sessions live under `_meta` and are not in the project-scoped `sessions` list, so they are passed explicitly via `SidebarMetaOrchestrator.session`. The server-side wiring that feeds the sidebar (the `/api/sessions` `orchestrators` field today) is extended to also surface configured meta orchestrators and their sessions; the sidebar itself stays presentational.
+
+### 11.6 Constraints honored
+- No new UI libraries (C-01); no inline styles (C-02); component files < 400 lines — new `SidebarOrchestrators.tsx` and `SessionCard`/helper changes stay under it (C-04); dark theme preserved (C-05); App Router only (C-06); no animation libs (C-07); SSE 5s interval unchanged (C-14); test files for new components/helpers (C-12).
 
 ---
 
@@ -351,6 +384,7 @@ These guard the subtle state machine in `lifecycle-manager.ts` / `session-manage
 | Web helper | `getProjectColor`: index→slot mapping, cycling after 8, deterministic fallback for unknown project. |
 | Web components | `SessionCard` renders the project rail/dot/name with the resolved color var (no inline style); `ProjectSidebar` renders the project dot. New components/helpers ship with test files (C-12). |
 | Lifecycle | Meta orchestrator liveness reuses existing probe path (smoke test that a meta session is supervised and excluded from worker counts); `discover` reconcile adds a newly-registered project to the in-scope catalog without restart. |
+| Sidebar orchestrators (§11.5) | `SidebarOrchestrators` renders meta rows with the `◆` glyph + name, per-project orchestrator rows with a project-color dot + name, and a right-aligned activity-state dot driven by `getAttentionLevel(session)` / `data-level` (no new dot). Meta row links to `/meta/<name>` via `metaDashboardPath`; project orchestrator row links to its session. Collapsed variant renders the compact glyph/dot cluster. No inline styles. |
 
 Testing follows the repo defaults: Vitest + @testing-library/react, tests in `__tests__/`, TypeScript strict (no `any`), cross-platform helpers (`isWindows()` etc.) for any path/process code.
 
@@ -378,14 +412,16 @@ Testing follows the repo defaults: Vitest + @testing-library/react, tests in `__
 - `app/meta/[name]/page.tsx` (new) + `lib/meta-page-data.ts` (new loader).
 - `app/globals.css` — `--project-color-1..8` + `--project-tint-1..8` in `:root`/`.dark`/`.ocean`/light.
 - `lib/project-color.ts` (new) + test.
+- `lib/routes.ts` — `metaDashboardPath(name)` helper.
 - `components/SessionCard.tsx` — project rail/dot/name.
-- `components/ProjectSidebar.tsx` — project dot.
+- `components/SidebarOrchestrators.tsx` (new) + test — the ORCHESTRATORS section (§11.5), expanded + collapsed.
+- `components/ProjectSidebar.tsx` — project dot on rows; render `SidebarOrchestrators` above PROJECTS; new `metaOrchestrators` prop.
 
 ---
 
 ## 14. Spec Self-Review
 
 - **Placeholder scan:** no TBD/TODO/"handle later" — every section names concrete files, schema, and helper signatures.
-- **Internal consistency:** `ownerKind`/`metaOwner` are metadata keys throughout (§6.2, §7, §8, §11.1); `SessionKind` value `"meta-orchestrator"` and `role` metadata value `"meta-orchestrator"` are used consistently; the `isOrchestratorSession` non-match edge case is called out and resolved with `isCoordinatorSession` (§6.3, invariant 3); `getProjectColor` signature is consistent between §11.3 and §13.
-- **Scope:** matches the approved design; no speculative commands, no project-lane redesign, no filesystem discovery, no per-project-orchestrator delegation. Freeform dedup is advisory only.
-- **Ambiguity resolved:** storage sentinel `_meta` reservation, "live/non-terminal" definition for the guard, registration-index definition for color, and the no-worktree deviation for the meta session are each made explicit.
+- **Internal consistency:** `ownerKind`/`metaOwner` are metadata keys throughout (§6.2, §7, §8, §11.1); `SessionKind` value `"meta-orchestrator"` and `role` metadata value `"meta-orchestrator"` are used consistently; the `isOrchestratorSession` non-match edge case is called out and resolved with `isCoordinatorSession` (§6.3, invariant 3); `getProjectColor` signature is consistent between §11.3, §11.5, and §13; the sidebar reuses `getAttentionLevel`/`SessionDot` styling rather than introducing a new dot (§11.5).
+- **Scope:** matches the approved design; no speculative commands, no project-lane redesign, no filesystem discovery, no per-project-orchestrator delegation. Freeform dedup is advisory only. The ORCHESTRATORS sidebar section (§11.5) is the flat-list layout as approved; scope relationships are intentionally omitted from the sidebar.
+- **Ambiguity resolved:** storage sentinel `_meta` reservation, "live/non-terminal" definition for the guard, registration-index definition for color, the no-worktree deviation for the meta session, and the C-04 extraction of `SidebarOrchestrators` (since `ProjectSidebar` already exceeds 400 lines) are each made explicit.
