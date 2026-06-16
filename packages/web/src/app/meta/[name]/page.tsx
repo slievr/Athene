@@ -21,6 +21,7 @@ export default async function MetaPage(props: {
         projectName={`${name} (meta)`}
         projects={data.projects}
         orchestrators={[]}
+        metaOrchestrators={data.metaOrchestrators}
         attentionZones={data.attentionZones}
         dashboardLoadError={data.dashboardLoadError}
       />

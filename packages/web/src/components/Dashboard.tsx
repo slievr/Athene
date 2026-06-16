@@ -27,6 +27,7 @@ import { CopyDebugBundleButton } from "./CopyDebugBundleButton";
 import { DashboardNotificationButton } from "./DashboardNotificationButton";
 import { SidebarContext, useSidebarContext } from "./workspace/SidebarContext";
 import { ProjectSidebar } from "./ProjectSidebar";
+import type { SidebarMetaOrchestrator } from "./SidebarOrchestrators";
 import type { ProjectAccent } from "./SessionCard";
 import { getProjectColor } from "@/lib/project-color";
 import { isOrchestratorSession } from "@made-by-moonlight/athene-core/types";
@@ -39,6 +40,8 @@ interface DashboardProps {
   projectName?: string;
   projects?: ProjectInfo[];
   orchestrators?: DashboardOrchestratorLink[];
+  /** Configured meta orchestrators (◆ rows in the sidebar ORCHESTRATORS section). */
+  metaOrchestrators?: SidebarMetaOrchestrator[];
   /** Dashboard attention zone mode (defaults to "simple" — 4 zones). */
   attentionZones?: DashboardAttentionZoneMode;
   /** SSR/services failure — show an error banner instead of a misleading empty dashboard */
@@ -151,6 +154,7 @@ function DashboardInner({
   projectName,
   projects = [],
   orchestrators,
+  metaOrchestrators,
   attentionZones = "simple",
   dashboardLoadError,
 }: DashboardProps) {
@@ -845,6 +849,7 @@ function DashboardInner({
               projects={projects}
               sessions={sessions}
               orchestrators={sidebarOrchestrators}
+              metaOrchestrators={metaOrchestrators}
               activeProjectId={projectId}
               activeSessionId={activeSessionId}
               loading={!liveSessionsResolved}

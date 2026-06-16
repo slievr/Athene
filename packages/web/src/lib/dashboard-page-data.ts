@@ -16,6 +16,8 @@ import {
 import { getPrimaryProjectId, getProjectName, getAllProjects, type ProjectInfo } from "@/lib/project-name";
 import { filterProjectSessions, filterWorkerSessions } from "@/lib/project-utils";
 import { settlesWithin } from "@/lib/async-utils";
+import { listSidebarMetaOrchestrators } from "@/lib/meta-orchestrators";
+import type { SidebarMetaOrchestrator } from "@/components/SidebarOrchestrators";
 
 const FAST_METADATA_ENRICH_TIMEOUT_MS = 3_000;
 
@@ -44,6 +46,7 @@ export function formatDashboardLoadError(err: unknown): string {
 interface DashboardPageData {
   sessions: DashboardSession[];
   orchestrators: DashboardOrchestratorLink[];
+  metaOrchestrators: SidebarMetaOrchestrator[];
   projectName: string;
   projects: ProjectInfo[];
   selectedProjectId?: string;
@@ -81,6 +84,7 @@ export const getDashboardPageData = cache(async function getDashboardPageData(pr
   const pageData: DashboardPageData = {
     sessions: [],
     orchestrators: [],
+    metaOrchestrators: [],
     projectName: getDashboardProjectName(projectFilter),
     projects: getAllProjects(),
     selectedProjectId: projectFilter === "all" ? undefined : projectFilter,
@@ -96,6 +100,7 @@ export const getDashboardPageData = cache(async function getDashboardPageData(pr
     config = services.config;
     registry = services.registry;
     pageData.attentionZones = config.dashboard?.attentionZones ?? DEFAULT_ATTENTION_ZONE_MODE;
+    pageData.metaOrchestrators = listSidebarMetaOrchestrators(config);
     try {
       allSessions = await services.sessionManager.listCached();
     } catch (listErr) {
