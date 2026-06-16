@@ -204,6 +204,25 @@ export interface SpawnOwner {
 }
 
 /**
+ * Resolve the effective owner flags, auto-stamping meta ownership from the
+ * environment when no explicit flag is given. A meta orchestrator's runtime sets
+ * `AO_CALLER_TYPE=meta-orchestrator` + `AO_META_NAME=<name>`, which a worker it
+ * dispatches via `athene spawn` inherits — so meta-dispatched workers are tagged
+ * automatically and the agent cannot forget. Explicit `--owner-kind`/`--meta-owner`
+ * flags always win (override). Pure — no I/O.
+ */
+export function effectiveOwnerOptions(
+  opts: { ownerKind?: string; metaOwner?: string },
+  env: NodeJS.ProcessEnv,
+): { ownerKind?: string; metaOwner?: string } {
+  if (opts.ownerKind || opts.metaOwner) return opts; // explicit flags take precedence
+  if (env.AO_CALLER_TYPE === "meta-orchestrator" && env.AO_META_NAME) {
+    return { ownerKind: "meta", metaOwner: env.AO_META_NAME };
+  }
+  return opts;
+}
+
+/**
  * Validate the internal `--owner-kind` / `--meta-owner` flags used by a meta
  * orchestrator to attribute the workers it dispatches. Pure — throws on misuse.
  */
@@ -405,7 +424,7 @@ export function registerSpawn(program: Command): void {
 
         let owner: SpawnOwner;
         try {
-          owner = parseSpawnOwner(opts);
+          owner = parseSpawnOwner(effectiveOwnerOptions(opts, process.env));
         } catch (err) {
           console.error(chalk.red(err instanceof Error ? err.message : String(err)));
           process.exit(1);
@@ -467,6 +486,10 @@ export function registerBatchSpawn(program: Command): void {
     .option("--open", "Open sessions in terminal tabs")
     .action(async (issues: string[], opts: { open?: boolean }) => {
       const config = loadConfig();
+
+      // Auto-stamp meta ownership from the environment (same as `athene spawn`),
+      // so a meta orchestrator's batch-spawned workers are attributed to it.
+      const owner = parseSpawnOwner(effectiveOwnerOptions({}, process.env));
 
       // Resolve each issue to its target project. Issues without a prefix fall
       // back to auto-detection; prefixed issues route to the matched project.
@@ -563,7 +586,12 @@ export function registerBatchSpawn(program: Command): void {
           }
 
           try {
-            const session = await sm.spawn({ projectId: groupProjectId, issueId: resolved });
+            const session = await sm.spawn({
+              projectId: groupProjectId,
+              issueId: resolved,
+              ...(owner.ownerKind ? { ownerKind: owner.ownerKind } : {}),
+              ...(owner.metaOwner ? { metaOwner: owner.metaOwner } : {}),
+            });
             created.push({ session: session.id, issue: original });
             spawnedIssues.add(resolved.toLowerCase());
             console.log(chalk.green(`  Created ${session.id} for ${original}`));
