@@ -122,12 +122,14 @@ export const getDashboardPageData = cache(async function getDashboardPageData(pr
 
   const visibleSessions = filterProjectSessions(allSessions, projectFilter, config.projects);
   pageData.orchestrators = listDashboardOrchestrators(visibleSessions, config.projects);
-  // Carry each orchestrator's enriched session for the sidebar activity dot —
-  // orchestrators are stripped from the worker session stream, so the client
-  // cannot look them up there.
+  // Sidebar orchestrators are UNSCOPED (the sidebar always shows all projects),
+  // so derive them from allSessions — not visibleSessions, which is scoped to the
+  // active project on a /projects/[projectId] page. Each carries its enriched
+  // session for the activity dot (orchestrators are stripped from the worker
+  // stream, so the client can't look them up there). Matches meta-page-data.
   pageData.sidebarOrchestrators = buildSidebarProjectOrchestrators(
     allSessions,
-    pageData.orchestrators,
+    listDashboardOrchestrators(allSessions, config.projects),
   );
 
   const coreSessions = filterWorkerSessions(allSessions, projectFilter, config.projects);

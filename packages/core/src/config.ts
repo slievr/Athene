@@ -924,6 +924,7 @@ function buildEffectiveConfigFromFlatLocalPath(
     notifiers: globalConfig.notifiers,
     notificationRouting: globalConfig.notificationRouting,
     reactions: globalConfig.reactions,
+    metaOrchestrators: globalConfig.metaOrchestrators,
     projects: {
       [projectId]: {
         ...project,
@@ -976,6 +977,7 @@ function buildEffectiveConfigFromGlobalConfigPath(configPath: string): LoadedCon
     notifiers: globalConfig.notifiers,
     notificationRouting: globalConfig.notificationRouting,
     reactions: globalConfig.reactions,
+    metaOrchestrators: globalConfig.metaOrchestrators,
     projects,
   });
   return { ...config, degradedProjects };

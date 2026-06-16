@@ -239,6 +239,13 @@ export const GlobalConfigSchema = z
     }),
     /** Reaction rules (default reactions merged at load time). */
     reactions: z.record(z.object({}).passthrough()).default({}),
+    /**
+     * Named meta orchestrators (portfolio-scoped coordinators). Kept loose here
+     * (passthrough entries) — the strict shape is validated by
+     * OrchestratorConfigSchema when the effective config is built. Preserving it
+     * here ensures it survives parsing of ~/.agent-orchestrator/config.yaml.
+     */
+    metaOrchestrators: z.record(z.object({}).passthrough()).optional(),
   })
   .passthrough();
 
