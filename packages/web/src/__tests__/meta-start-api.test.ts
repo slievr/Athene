@@ -82,7 +82,7 @@ const mockRegistry: PluginRegistry = {
 };
 
 vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@made-by-moonlight/athene-core")>();
+  const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
     generateMetaOrchestratorPrompt: vi.fn(() => "generated-system-prompt"),
