@@ -377,6 +377,14 @@ export function create(config?: Record<string, unknown>): Workspace {
             errorMessage: msg,
           },
         });
+        // Prune stale registrations so a rmSync-fallback destroy does not leave
+        // this branch appearing "checked out" at a now-deleted path, which would
+        // cause the retry git worktree add to fail with "already checked out at".
+        try {
+          await git(repoPath, "worktree", "prune");
+        } catch {
+          // Best-effort
+        }
         const baseSha = await git(repoPath, "rev-parse", baseRef);
         const branchRef = `refs/heads/${cfg.branch}`;
         const existingBranchSha = (await refExists(repoPath, branchRef))

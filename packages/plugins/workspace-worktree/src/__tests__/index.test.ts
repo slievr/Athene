@@ -498,6 +498,7 @@ describe("workspace.create()", () => {
     mockOriginRemote();
     mockGitSuccess(""); // git rev-parse --verify --quiet origin/main
     mockGitError("already exists"); // worktree add -b fails
+    mockGitSuccess(""); // git worktree prune (collision recovery)
     mockGitSuccess("base-sha"); // git rev-parse origin/main
     mockGitSuccess(""); // git rev-parse --verify --quiet refs/heads/feat/TEST-1
     mockGitSuccess("base-sha"); // git rev-parse refs/heads/feat/TEST-1
@@ -520,6 +521,7 @@ describe("workspace.create()", () => {
     mockOriginRemote();
     mockGitSuccess(""); // git rev-parse --verify --quiet origin/main
     mockGitError("already exists"); // worktree add -b fails
+    mockGitSuccess(""); // git worktree prune (collision recovery)
     mockGitSuccess("base-sha"); // git rev-parse origin/main
     mockGitSuccess(""); // git rev-parse --verify --quiet refs/heads/feat/TEST-1
     mockGitSuccess("old-sha"); // git rev-parse refs/heads/feat/TEST-1
@@ -549,6 +551,7 @@ describe("workspace.create()", () => {
     mockGitError("fatal: not a git repository"); // git remote get-url origin fails
     mockGitSuccess(""); // git rev-parse --verify --quiet refs/heads/main
     mockGitError("already exists"); // worktree add -b fails
+    mockGitSuccess(""); // git worktree prune (collision recovery)
     mockGitSuccess("base-sha"); // git rev-parse refs/heads/main
     mockGitSuccess(""); // git rev-parse --verify --quiet refs/heads/feat/TEST-1
     mockGitSuccess("base-sha"); // git rev-parse refs/heads/feat/TEST-1
@@ -571,6 +574,7 @@ describe("workspace.create()", () => {
     mockOriginRemote();
     mockGitSuccess(""); // git rev-parse --verify --quiet origin/main
     mockGitError("already exists"); // worktree add -b fails
+    mockGitSuccess(""); // git worktree prune (collision recovery)
     mockGitSuccess("base-sha"); // git rev-parse origin/main
     mockGitSuccess(""); // git rev-parse --verify --quiet refs/heads/feat/TEST-1
     mockGitSuccess("old-sha"); // git rev-parse refs/heads/feat/TEST-1
@@ -595,6 +599,7 @@ describe("workspace.create()", () => {
     mockOriginRemote();
     mockGitSuccess(""); // git rev-parse --verify --quiet origin/main
     mockGitError("already exists"); // worktree add -b fails
+    mockGitSuccess(""); // git worktree prune (collision recovery)
     mockGitSuccess("base-sha"); // git rev-parse origin/main
     mockGitSuccess(""); // git rev-parse --verify --quiet refs/heads/feat/TEST-1
     mockGitSuccess("old-sha"); // git rev-parse refs/heads/feat/TEST-1
@@ -604,6 +609,53 @@ describe("workspace.create()", () => {
     await expect(ws.create(makeCreateConfig())).rejects.toThrow(
       'Failed to create worktree for branch "feat/TEST-1": worktree add failed',
     );
+  });
+
+  it("succeeds after destroy() left a stale registration via rmSync fallback", async () => {
+    // Regression: destroy() falls back to rmSync when git worktree remove fails,
+    // leaving git's registry pointing at the now-deleted path. The next create()
+    // for the same branch hits "already exists", and the collision recovery must
+    // prune the stale registration before retrying so git allows the worktree add.
+    const ws = create();
+
+    mockOriginRemote();
+    mockGitSuccess(""); // git rev-parse --verify --quiet origin/main
+    mockGitError("already exists"); // worktree add -b fails (branch registered from old session)
+    mockGitSuccess(""); // git worktree prune — clears the stale rmSync-fallback registration
+    mockGitSuccess("base-sha"); // git rev-parse origin/main
+    mockGitSuccess(""); // git rev-parse --verify --quiet refs/heads/feat/TEST-1
+    mockGitSuccess("base-sha"); // git rev-parse refs/heads/feat/TEST-1 (matches base → reuse)
+    mockGitSuccess(""); // git worktree add <path> <branch> — succeeds now that prune ran
+
+    const info = await ws.create(makeCreateConfig());
+
+    // Verify prune was called in the collision recovery path
+    expect(mockExecFileAsync).toHaveBeenCalledWith(
+      "git",
+      ["worktree", "prune"],
+      { cwd: "/repo/path", windowsHide: true, timeout: 30_000 },
+    );
+
+    expect(info.branch).toBe("feat/TEST-1");
+  });
+
+  it("proceeds with retry even when prune fails in collision recovery", async () => {
+    // If git worktree prune itself fails (e.g. permissions, concurrent git op),
+    // the collision recovery continues — prune is best-effort, not a hard requirement.
+    const ws = create();
+
+    mockOriginRemote();
+    mockGitSuccess(""); // git rev-parse --verify --quiet origin/main
+    mockGitError("already exists"); // worktree add -b fails
+    mockGitError("fatal: prune failed"); // git worktree prune fails — best-effort, ignored
+    mockGitSuccess("base-sha"); // git rev-parse origin/main
+    mockGitSuccess(""); // git rev-parse --verify --quiet refs/heads/feat/TEST-1
+    mockGitSuccess("base-sha"); // git rev-parse refs/heads/feat/TEST-1
+    mockGitSuccess(""); // git worktree add <path> <branch>
+
+    const info = await ws.create(makeCreateConfig());
+
+    expect(info.branch).toBe("feat/TEST-1");
   });
 
   it("throws for non-already-exists worktree add errors", async () => {
