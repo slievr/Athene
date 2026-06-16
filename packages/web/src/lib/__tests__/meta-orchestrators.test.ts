@@ -37,4 +37,15 @@ describe("listSidebarMetaOrchestrators liveness", () => {
     expect(result[0]!.session?.activity).toBe("active");
     expect(result[0]!.session?.status).toBe("working");
   });
+
+  it("does not stall when the runtime probe never resolves (bounded; uncertain → keep live)", async () => {
+    // A probe that never resolves must not hang the page-data build — it is raced
+    // against the timeout, which yields the uncertain/live state.
+    const neverResolves = () => new Promise<boolean>(() => {});
+    const start = Date.now();
+    const result = await listSidebarMetaOrchestrators(config, registryWith(neverResolves), 30);
+    expect(Date.now() - start).toBeLessThan(2_000); // resolved via timeout, didn't hang
+    // Uncertain → not marked dead → keeps the live dot.
+    expect(result[0]!.session?.activity).toBe("active");
+  });
 });

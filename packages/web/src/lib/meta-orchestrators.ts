@@ -16,20 +16,42 @@ import type {
   SidebarProjectOrchestrator,
 } from "@/components/SidebarOrchestrators";
 
+/** Default per-meta liveness-probe budget on the SSR hot path. */
+const META_PROBE_TIMEOUT_MS = 3_000;
+
 /**
  * Probe whether a session's runtime is NOT definitely missing — conservative:
  * a probe failure returns true (don't claim dead). Mirrors the core relaunch
- * check used by ensureMetaOrchestrator.
+ * check used by ensureMetaOrchestrator. BOUNDED: for tmux this shells out to
+ * ps/tmux, which can hang on an unresponsive server or stale handle; this runs on
+ * the dashboard SSR hot path, so the probe is raced against a timeout. A timeout
+ * is treated as UNCERTAIN → returns true (keep the live dot), consistent with the
+ * catch-returns-true behavior, rather than stalling the whole render.
+ * (`settlesWithin` can't be reused here — it returns only whether the promise
+ * settled, not the probe's boolean result.)
  */
 async function runtimeNotDefinitelyMissing(
   session: Session,
   agent: Agent | null,
+  timeoutMs: number,
 ): Promise<boolean> {
   if (!session.runtimeHandle || !agent) return false;
+  const handle = session.runtimeHandle;
+  const probe = (async () => {
+    try {
+      return (await agent.isProcessRunning(handle)) !== false;
+    } catch {
+      return true;
+    }
+  })();
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const timeout = new Promise<boolean>((resolve) => {
+    timer = setTimeout(() => resolve(true), timeoutMs);
+  });
   try {
-    return (await agent.isProcessRunning(session.runtimeHandle)) !== false;
-  } catch {
-    return true;
+    return await Promise.race([probe, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
@@ -44,30 +66,33 @@ async function runtimeNotDefinitelyMissing(
 export async function listSidebarMetaOrchestrators(
   config: OrchestratorConfig,
   registry: PluginRegistry,
+  probeTimeoutMs: number = META_PROBE_TIMEOUT_MS,
 ): Promise<SidebarMetaOrchestrator[]> {
   const names = Object.keys(config.metaOrchestrators ?? {});
-  const result: SidebarMetaOrchestrator[] = [];
-  for (const name of names) {
-    const raw = readMetadataRaw(getMetaSessionsDir(name), name);
-    if (!raw) {
-      result.push({ name, session: null });
-      continue;
-    }
-    const core = sessionFromMetadata(name, raw, {
-      projectId: "_meta",
-      sessionKind: "meta-orchestrator",
-    });
-    const agentName = config.metaOrchestrators?.[name]?.agent ?? config.defaults.agent;
-    const agent = registry.get<Agent>("agent", agentName);
-    const dash = sessionToDashboard(core);
-    if (!(await runtimeNotDefinitelyMissing(core, agent))) {
-      // Runtime is gone — show a non-live dot, not a stale "working" one.
-      dash.activity = "idle";
-      dash.status = "idle";
-    }
-    result.push({ name, session: dash });
-  }
-  return result;
+  // Probe all metas CONCURRENTLY under a bounded per-probe deadline, so a single
+  // hung tmux/ps probe can't stall the dashboard SSR render (total ≈ slowest
+  // probe, capped at probeTimeoutMs — not the sum of sequential probes).
+  return Promise.all(
+    names.map(async (name): Promise<SidebarMetaOrchestrator> => {
+      const raw = readMetadataRaw(getMetaSessionsDir(name), name);
+      if (!raw) {
+        return { name, session: null };
+      }
+      const core = sessionFromMetadata(name, raw, {
+        projectId: "_meta",
+        sessionKind: "meta-orchestrator",
+      });
+      const agentName = config.metaOrchestrators?.[name]?.agent ?? config.defaults.agent;
+      const agent = registry.get<Agent>("agent", agentName);
+      const dash = sessionToDashboard(core);
+      if (!(await runtimeNotDefinitelyMissing(core, agent, probeTimeoutMs))) {
+        // Runtime is gone — show a non-live dot, not a stale "working" one.
+        dash.activity = "idle";
+        dash.status = "idle";
+      }
+      return { name, session: dash };
+    }),
+  );
 }
 
 /**
