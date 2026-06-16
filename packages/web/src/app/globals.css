@@ -5359,7 +5359,7 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   padding-left: 24px;
 }
 
-/* ORCHESTRATORS section (meta orchestrators + per-project orchestrators) */
+/* Parliament section (meta orchestrators + per-project orchestrators) */
 .project-sidebar__orchestrators {
   display: flex;
   flex-direction: column;
@@ -5436,10 +5436,14 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   max-width: 96px;
 }
 
-.project-sidebar__orch-divider {
-  height: 1px;
-  margin: 4px 12px;
-  background: var(--color-border-subtle);
+/* Sub-group labels inside Parliament: "Meta" / "Project" */
+.project-sidebar__orch-group-label {
+  padding: 5px 14px 2px;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  user-select: none;
 }
 
 /* Collapsed-rail orchestrator cluster */
