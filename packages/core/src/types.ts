@@ -1461,11 +1461,29 @@ export interface OrchestratorConfig {
   /** Default reaction configs */
   reactions: Record<string, ReactionConfig>;
 
+  /** Named meta orchestrators (portfolio-scoped coordinators). */
+  metaOrchestrators?: Record<string, MetaOrchestratorConfig>;
+
   /**
    * Internal: External plugin entries collected from inline tracker/scm/notifier configs.
    * Used by plugin-registry for manifest validation. Set automatically during config validation.
    */
   _externalPluginEntries?: ExternalPluginEntryRef[];
+}
+
+/** Scope of projects a meta orchestrator may route into. */
+export type MetaScope = "all" | { projects: string[] };
+
+/** Configuration for a single named meta orchestrator. */
+export interface MetaOrchestratorConfig {
+  /** Which projects this meta orchestrator can route into. */
+  scope: MetaScope;
+  /** Watch the global registry and auto-include newly-registered projects without a restart. */
+  discover: boolean;
+  /** Optional agent plugin override; defaults to the global default agent. */
+  agent?: string;
+  /** Optional extra instructions appended to the meta orchestrator prompt. */
+  rules?: string;
 }
 
 export interface DegradedProjectEntry {
@@ -1571,6 +1589,9 @@ export interface ProjectConfig {
 
   /** Repository path for the configured SCM provider, e.g. "owner/repo" or "group/subgroup/repo" (optional — omitted when no remote detected) */
   repo?: string;
+
+  /** Short routing hint surfaced in the meta orchestrator catalog. */
+  description?: string;
 
   /** Local path to the repo */
   path: string;

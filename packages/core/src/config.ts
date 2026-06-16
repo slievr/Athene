@@ -247,6 +247,8 @@ const RoleAgentConfigSchema = z
 const ProjectConfigSchema = z.object({
   name: z.string().optional(),
   repo: z.string().optional(),
+  /** Short routing hint surfaced in the meta orchestrator catalog. */
+  description: z.string().optional(),
   path: z.string(),
   defaultBranch: z.string().default("main"),
   sessionPrefix: z
@@ -354,7 +356,25 @@ const LifecycleConfigSchema = z
   })
   .default({});
 
-const OrchestratorConfigSchema = z.object({
+const MetaScopeSchema = z.union([
+  z.literal("all"),
+  z.object({ projects: z.array(z.string()).min(1) }),
+]);
+
+const MetaOrchestratorConfigSchema = z.object({
+  scope: MetaScopeSchema,
+  // Watch the global registry and auto-include newly-registered projects
+  // without a restart. With scope:'all' new projects are naturally in scope;
+  // with an explicit list, discover:true also adds newly-registered projects.
+  discover: z.boolean().default(false),
+  // Optional agent plugin override; defaults to the global default agent.
+  agent: z.string().optional(),
+  // Optional extra instructions appended to the meta orchestrator prompt.
+  rules: z.string().optional(),
+});
+
+const OrchestratorConfigSchema = z
+  .object({
   $schema: z.string().optional(),
   port: z.number().int().default(3000),
   terminalPort: z.number().int().optional(),
@@ -378,7 +398,28 @@ const OrchestratorConfigSchema = z.object({
   notifiers: z.record(NotifierConfigSchema).default({}),
   notificationRouting: z.record(z.array(z.string())).default({}),
   reactions: z.record(ReactionConfigSchema).default({}),
-});
+  metaOrchestrators: z
+    .record(
+      z
+        .string()
+        .regex(/^[a-zA-Z0-9_-]+$/, "meta orchestrator name must match [a-zA-Z0-9_-]+"),
+      MetaOrchestratorConfigSchema,
+    )
+    .optional(),
+  })
+  .superRefine((value, ctx) => {
+    // `_meta` is the reserved on-disk parent for meta orchestrator sessions
+    // (projects/_meta/<name>/sessions/<name>.json). A real project keyed `_meta`
+    // would collide with that storage scope.
+    if (Object.prototype.hasOwnProperty.call(value.projects, "_meta")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["projects", "_meta"],
+        message:
+          "'_meta' is a reserved project ID used for meta orchestrator storage; rename this project.",
+      });
+    }
+  });
 
 // =============================================================================
 // CONFIG LOADING
