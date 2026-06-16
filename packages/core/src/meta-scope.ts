@@ -28,3 +28,31 @@ export function resolveInScopeProjectIds(
 ): string[] {
   return resolveInScopeProjects(config, meta).map(([id]) => id);
 }
+
+/**
+ * Reconcile a meta orchestrator's in-scope project set against the current
+ * global config, so newly-registered projects become routable without a restart.
+ *
+ * - scope "all": always the full current project set (discover is redundant).
+ * - explicit list, discover off: just the listed projects that still exist.
+ * - explicit list, discover on: the listed projects PLUS any project registered
+ *   since the last reconcile (i.e. present in config but absent from
+ *   `previousIds`). This is the documented "discover also adds newly-registered
+ *   projects" behavior.
+ *
+ * Pure — callers pass `previousIds` (the last reconciled set) and persist the
+ * returned set as the new baseline.
+ */
+export function reconcileMetaScopeIds(
+  config: OrchestratorConfig,
+  meta: MetaOrchestratorConfig,
+  previousIds: string[],
+): string[] {
+  const base = resolveInScopeProjectIds(config, meta);
+  if (meta.scope === "all" || !meta.discover) {
+    return base;
+  }
+  const known = new Set(previousIds);
+  const newlyRegistered = Object.keys(config.projects).filter((id) => !known.has(id));
+  return Array.from(new Set([...base, ...newlyRegistered]));
+}
