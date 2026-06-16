@@ -108,6 +108,45 @@ cd packages/web && pnpm dev
 # Open http://localhost:3000
 ```
 
+### Watch mode (faster inner loop)
+
+For iterative development, use watch mode instead of re-running `pnpm build` after every change.
+
+**One-time initial build** (required before watching):
+
+```bash
+pnpm build
+```
+
+**Web dashboard changes only** — Next.js HMR handles this automatically:
+
+```bash
+pnpm dev   # starts Next.js dev server with hot reload
+```
+
+**Core or plugin changes** — watch-rebuild all packages except web and CLI:
+
+```bash
+pnpm dev:packages
+# Runs rollup --watch (core) and tsc --watch (all plugins) in parallel
+# Leave this running; rebuilt dist/ files are picked up immediately by dependents
+```
+
+**CLI changes** — rebuild CLI on changes, then auto-restart:
+
+```bash
+# Terminal 1: watch-rebuild core + plugins
+pnpm dev:packages
+
+# Terminal 2: watch-rebuild CLI
+pnpm --filter @made-by-moonlight/athene-cli exec tsc --watch
+
+# Terminal 3: auto-restart athene start when CLI dist changes
+pnpm dev:start
+```
+
+Note: `dev:packages` intentionally excludes `@made-by-moonlight/athene-cli` (its `dev` script is a one-shot runner, not a watch-rebuild) and `@made-by-moonlight/athene-web` (handled by `pnpm dev` above).
+
 ### Project structure
 
 ```

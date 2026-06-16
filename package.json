@@ -12,6 +12,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm --filter @made-by-moonlight/athene-web dev",
+    "dev:packages": "pnpm -r --parallel --filter '!@made-by-moonlight/athene-web' --filter '!@made-by-moonlight/athene-cli' dev",
     "dev:start": "node --watch packages/cli/dist/index.js start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

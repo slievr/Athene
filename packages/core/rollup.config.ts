@@ -35,6 +35,7 @@ function cleanDist(): Plugin {
   return {
     name: "clean-dist",
     async buildStart() {
+      if (process.env.ROLLUP_WATCH) return;
       await rm("dist", { force: true, recursive: true });
     },
   };
