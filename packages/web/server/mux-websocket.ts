@@ -441,6 +441,18 @@ interface ManagedTerminal {
    * reachable for up to 5 s after teardown.
    */
   resetTimer?: ReturnType<typeof setTimeout>;
+  /**
+   * Accumulated PTY data not yet flushed to subscribers or the ring buffer.
+   * Multiple rapid onData events (e.g. tmux's initial full-pane redraw) are
+   * coalesced here so they are sent to subscribers in a single WebSocket
+   * message rather than N individual messages. Sending N messages causes
+   * xterm.js to render after each one, producing a "garbled briefly then
+   * self-corrects" effect because the redraw sequences are incomplete until
+   * all chunks arrive.
+   */
+  pendingData: string;
+  /** Whether a setImmediate flush for pendingData is already scheduled. */
+  flushScheduled: boolean;
 }
 
 const RING_BUFFER_MAX = 50 * 1024; // 50KB max per terminal
@@ -547,6 +559,8 @@ export class TerminalManager {
         bufferBytes: 0,
         reattachAttempts: 0,
         ptyLostEmitted: false,
+        pendingData: "",
+        flushScheduled: false,
       };
       this.terminals.set(key, terminal);
     }
@@ -618,26 +632,44 @@ export class TerminalManager {
     }, REATTACH_RESET_GRACE_MS);
     terminal.resetTimer.unref();
 
-    // Wire up data events
+    // Wire up data events.
+    // Multiple rapid onData calls (e.g. tmux's initial full-pane redraw on
+    // attach-session) are coalesced via setImmediate so subscribers receive
+    // one WebSocket message per event-loop iteration rather than one per PTY
+    // read(). Without batching, xterm.js renders each partial chunk separately
+    // producing a "garbled briefly then self-corrects" visual artifact.
     pty.onData((data: string) => {
-      // Push to all subscribers — isolate each callback so a throw in one
-      // (e.g. a closed ws.send) doesn't abort the loop or skip the buffer.
-      for (const callback of terminal.subscribers) {
-        try {
-          callback(data);
-        } catch (err) {
-          console.error("[MuxServer] Subscriber callback threw:", err);
-        }
-      }
+      // Accumulate data for batched delivery
+      terminal.pendingData += data;
 
-      // Append to ring buffer
-      terminal.buffer.push(data);
-      terminal.bufferBytes += Buffer.byteLength(data, "utf8");
+      if (!terminal.flushScheduled) {
+        terminal.flushScheduled = true;
+        setImmediate(() => {
+          terminal.flushScheduled = false;
+          const toSend = terminal.pendingData;
+          terminal.pendingData = "";
+          if (!toSend) return;
 
-      // Trim buffer if over limit
-      while (terminal.bufferBytes > RING_BUFFER_MAX && terminal.buffer.length > 0) {
-        const removed = terminal.buffer.shift() ?? "";
-        terminal.bufferBytes -= Buffer.byteLength(removed, "utf8");
+          // Append to ring buffer as one coalesced chunk
+          terminal.buffer.push(toSend);
+          terminal.bufferBytes += Buffer.byteLength(toSend, "utf8");
+
+          // Trim buffer if over limit
+          while (terminal.bufferBytes > RING_BUFFER_MAX && terminal.buffer.length > 0) {
+            const removed = terminal.buffer.shift() ?? "";
+            terminal.bufferBytes -= Buffer.byteLength(removed, "utf8");
+          }
+
+          // Notify all subscribers — isolate each callback so a throw in one
+          // (e.g. a closed ws.send) doesn't abort the loop.
+          for (const callback of terminal.subscribers) {
+            try {
+              callback(toSend);
+            } catch (err) {
+              console.error("[MuxServer] Subscriber callback threw:", err);
+            }
+          }
+        });
       }
     });
 

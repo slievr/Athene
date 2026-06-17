@@ -470,7 +470,7 @@ export function useXtermTerminal(
         : resolvedTheme === "ocean"
           ? terminalThemes.ocean
           : terminalThemes.dark;
-    terminal.options.minimumContrastRatio = isDark ? 1 : 7;
+    terminal.options.minimumContrastRatio = isDark ? 4.5 : 7;
   }, [appearance, resolvedTheme, terminalThemes]);
 
   // Font size change — mutate in place and persist, then resize the PTY so
