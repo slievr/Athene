@@ -12,6 +12,8 @@
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm --filter @made-by-moonlight/athene-web dev",
+    "dev:packages": "pnpm -r --parallel --filter '!@made-by-moonlight/athene-web' --filter '!@made-by-moonlight/athene-cli' dev",
+    "dev:cli": "concurrently --names tsc,node -c blue,green 'pnpm --filter @made-by-moonlight/athene-cli dev:watch' 'pnpm dev:start'",
     "dev:start": "node --watch packages/cli/dist/index.js start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -29,6 +31,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
+    "concurrently": "^9.2.1",
     "@eslint/js": "^10.0.1",
     "@next/eslint-plugin-next": "^15.5.15",
     "@types/node": "^25.2.3",

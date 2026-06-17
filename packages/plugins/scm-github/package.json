@@ -29,6 +29,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:integration": "vitest run graphql-batch.integration.test.ts",
