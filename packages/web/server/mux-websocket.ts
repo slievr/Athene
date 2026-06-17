@@ -531,7 +531,7 @@ export class TerminalManager {
    * Open/attach to a terminal. If already open, just return.
    * If has subscribers but PTY crashed, re-attach.
    */
-  open(id: string, projectId?: string, tmuxName?: string): string {
+  open(id: string, projectId?: string, tmuxName?: string, initialCols?: number, initialRows?: number): string {
     if (!validateSessionId(id)) {
       throw new Error(`Invalid session ID: ${id}`);
     }
@@ -604,8 +604,8 @@ export class TerminalManager {
     const exactTmuxTarget = `=${tmuxSessionId}`;
     const pty = this.spawnTmuxPty(["attach-session", "-t", exactTmuxTarget], {
       name: "xterm-256color",
-      cols: 80,
-      rows: 24,
+      cols: initialCols ?? 80,
+      rows: initialRows ?? 24,
       cwd: homeDir,
       env,
     });
@@ -1213,7 +1213,9 @@ export function createMuxWebSocket(tmuxPath?: string | null): WebSocketServer | 
               } else {
                 // --- Unix: tmux path with project scoping ---
                 if (!terminalManager) throw new Error("Terminal manager not available");
-                terminalManager.open(id, projectId, "tmuxName" in msg ? msg.tmuxName : undefined);
+                const openCols = "cols" in msg && typeof msg.cols === "number" ? msg.cols : undefined;
+                const openRows = "rows" in msg && typeof msg.rows === "number" ? msg.rows : undefined;
+                terminalManager.open(id, projectId, "tmuxName" in msg ? msg.tmuxName : undefined, openCols, openRows);
 
                 // Send opened confirmation (idempotent — safe to send on re-open)
                 const openedMsg: ServerMessage = {

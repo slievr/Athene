@@ -328,7 +328,7 @@ export function useXtermTerminal(
         // hazard if subscribeTerminal ever fires synchronously.
         let programmaticScroll = false;
 
-        openTerminal(sessionId, projectId, tmuxName);
+        openTerminal(sessionId, projectId, tmuxName, terminal.cols, terminal.rows);
 
         unsubscribe = subscribeTerminal(
           sessionId,

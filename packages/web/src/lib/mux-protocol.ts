@@ -16,7 +16,7 @@ export type {
 export type ClientMessage =
   | { ch: "terminal"; id: string; type: "data"; data: string; projectId?: string }
   | { ch: "terminal"; id: string; type: "resize"; cols: number; rows: number; projectId?: string }
-  | { ch: "terminal"; id: string; type: "open"; projectId?: string; tmuxName?: string }
+  | { ch: "terminal"; id: string; type: "open"; projectId?: string; tmuxName?: string; cols?: number; rows?: number }
   | { ch: "terminal"; id: string; type: "close"; projectId?: string }
   | { ch: "system"; type: "ping" }
   | { ch: "subscribe"; topics: Array<"sessions" | "notifications"> };
