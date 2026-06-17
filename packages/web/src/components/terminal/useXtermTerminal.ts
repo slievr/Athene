@@ -328,7 +328,7 @@ export function useXtermTerminal(
         // hazard if subscribeTerminal ever fires synchronously.
         let programmaticScroll = false;
 
-        openTerminal(sessionId, projectId, tmuxName);
+        openTerminal(sessionId, projectId, tmuxName, terminal.cols, terminal.rows);
 
         unsubscribe = subscribeTerminal(
           sessionId,
@@ -470,7 +470,7 @@ export function useXtermTerminal(
         : resolvedTheme === "ocean"
           ? terminalThemes.ocean
           : terminalThemes.dark;
-    terminal.options.minimumContrastRatio = isDark ? 1 : 7;
+    terminal.options.minimumContrastRatio = isDark ? 4.5 : 7;
   }, [appearance, resolvedTheme, terminalThemes]);
 
   // Font size change — mutate in place and persist, then resize the PTY so

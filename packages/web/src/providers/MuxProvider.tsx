@@ -15,7 +15,7 @@ interface MuxContextValue {
     projectId?: string,
   ) => () => void;
   writeTerminal: (id: string, data: string, projectId?: string) => void;
-  openTerminal: (id: string, projectId?: string, tmuxName?: string) => void;
+  openTerminal: (id: string, projectId?: string, tmuxName?: string, cols?: number, rows?: number) => void;
   closeTerminal: (id: string, projectId?: string) => void;
   resizeTerminal: (id: string, cols: number, rows: number, projectId?: string) => void;
   status: "connecting" | "connected" | "reconnecting" | "disconnected";
@@ -114,7 +114,7 @@ export function MuxProvider({ children }: { children: ReactNode }) {
   const wsRef = useRef<WebSocket | null>(null);
   const subscribersRef = useRef(new Map<string, Set<(data: string) => void>>());
   const openedTerminalsRef = useRef(
-    new Map<string, { id: string; projectId?: string; tmuxName?: string }>(),
+    new Map<string, { id: string; projectId?: string; tmuxName?: string; cols?: number; rows?: number }>(),
   );
   const [status, setStatus] = useState<
     "connecting" | "connected" | "reconnecting" | "disconnected"
@@ -160,6 +160,8 @@ export function MuxProvider({ children }: { children: ReactNode }) {
             type: "open",
             ...(terminal.projectId && { projectId: terminal.projectId }),
             ...(terminal.tmuxName && { tmuxName: terminal.tmuxName }),
+            ...(terminal.cols !== undefined && { cols: terminal.cols }),
+            ...(terminal.rows !== undefined && { rows: terminal.rows }),
           };
           ws.send(JSON.stringify(openMsg));
         }
@@ -348,8 +350,8 @@ export function MuxProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const openTerminal = useCallback((id: string, projectId?: string, tmuxName?: string) => {
-    openedTerminalsRef.current.set(terminalKey(id, projectId), { id, projectId, tmuxName });
+  const openTerminal = useCallback((id: string, projectId?: string, tmuxName?: string, cols?: number, rows?: number) => {
+    openedTerminalsRef.current.set(terminalKey(id, projectId), { id, projectId, tmuxName, cols, rows });
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       const msg: ClientMessage = {
         ch: "terminal",
@@ -357,6 +359,8 @@ export function MuxProvider({ children }: { children: ReactNode }) {
         type: "open",
         ...(projectId && { projectId }),
         ...(tmuxName && { tmuxName }),
+        ...(cols !== undefined && { cols }),
+        ...(rows !== undefined && { rows }),
       };
       wsRef.current.send(JSON.stringify(msg));
     }
