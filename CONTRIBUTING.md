@@ -34,7 +34,7 @@ Include:
 
 ```bash
 git clone https://github.com/slievr/Athene.git
-cd agent-orchestrator
+cd Athene
 pnpm install
 pnpm build
 ```

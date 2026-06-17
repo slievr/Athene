@@ -91,7 +91,7 @@ For AI agent-specific guidance (including high-risk files like `types.ts`, `life
 
 ```bash
 git clone https://github.com/slievr/Athene.git
-cd agent-orchestrator
+cd Athene
 pnpm install
 pnpm build
 cp agent-orchestrator.yaml.example agent-orchestrator.yaml

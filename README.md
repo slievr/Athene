@@ -59,15 +59,28 @@ npm install -g @made-by-moonlight/athene
 > Back to stable: `npm install -g @made-by-moonlight/athene@latest`
 
 <details>
-<summary>Permission denied? Install from source?</summary>
+<summary>Permission denied? npm warn allow-scripts? Install from source?</summary>
 
-If `npm install -g` fails with EACCES, prefix with `sudo` or [fix your npm permissions](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally).
+**Permission denied (EACCES):** prefix with `sudo` or [fix your npm permissions](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally).
 
-To install from source (for contributors):
+**`npm warn allow-scripts` (npm 10+):** Athene requires native modules (`node-pty`, `better-sqlite3`) that compile during install. If you see this warning and `athene start` fails, approve the install scripts once:
+
+```bash
+npm install -g @made-by-moonlight/athene --allow-scripts=@made-by-moonlight/athene,node-pty,better-sqlite3,sharp
+```
+
+Or approve them permanently for global installs:
+
+```bash
+npm config set allow-scripts=@made-by-moonlight/athene,node-pty,better-sqlite3,sharp --location=user
+npm install -g @made-by-moonlight/athene
+```
+
+**Install from source (for contributors):**
 
 ```bash
 git clone https://github.com/slievr/Athene.git
-cd agent-orchestrator && bash scripts/setup.sh
+cd Athene && bash scripts/setup.sh
 ```
 </details>
 
@@ -229,11 +242,18 @@ Running one AI agent in a terminal is easy. Running 30 across different issues, 
 
 ```bash
 pnpm install && pnpm build    # Install and build all packages
-pnpm test                      # Run tests (3,288 test cases)
-pnpm dev                       # Start web dashboard dev server
+pnpm test                      # Run tests
+pnpm dev                       # Start web dashboard dev server (Next.js HMR)
+pnpm dev:cli                   # Watch-rebuild CLI + auto-restart athene start
 ```
 
-See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for code conventions and architecture details.
+**Dev vs. globally installed `athene`:** the dev version runs directly from `packages/cli/dist/index.js` — it does not replace your globally installed binary. `pnpm dev:cli` calls `node --watch packages/cli/dist/index.js start`, so it's isolated from any `athene` on your PATH. If you also have a global install and want to avoid confusion, either uninstall it first (`npm uninstall -g @made-by-moonlight/athene`) or always invoke the dev version explicitly:
+
+```bash
+node packages/cli/dist/index.js <command>
+```
+
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for code conventions, watch-mode setup, and architecture details.
 
 ## Contributing
 

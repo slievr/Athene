@@ -17,7 +17,7 @@ packages/
   core/           # Engine: types, config, session manager, lifecycle, plugin registry
   cli/            # CLI tool (`ao` command) — depends on all plugins
   web/            # Next.js 15 dashboard (App Router, React 19, Tailwind v4)
-  ao/             # Global CLI wrapper (thin shim around cli)
+  athene/         # Global CLI wrapper (thin shim around cli)
   plugins/
     agent-claude-code/    agent-aider/    agent-codex/    agent-opencode/
     runtime-tmux/         runtime-process/

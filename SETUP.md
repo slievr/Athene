@@ -96,6 +96,19 @@ source ~/.zshrc
 npm install -g @made-by-moonlight/athene
 ```
 
+**`npm warn allow-scripts` (npm 10+)?** Athene includes native modules (`node-pty`, `better-sqlite3`) that need to compile or download prebuilt binaries during install. If the install completes but `athene start` fails with a native-module error, approve the scripts:
+
+```bash
+npm install -g @made-by-moonlight/athene --allow-scripts=@made-by-moonlight/athene,node-pty,better-sqlite3,sharp
+```
+
+Or approve them permanently for all future global installs:
+
+```bash
+npm config set allow-scripts=@made-by-moonlight/athene,node-pty,better-sqlite3,sharp --location=user
+npm install -g @made-by-moonlight/athene
+```
+
 ### Build from Source (for contributors)
 
 If you want to develop or contribute to Athene:
@@ -103,7 +116,7 @@ If you want to develop or contribute to Athene:
 ```bash
 # Clone the repository
 git clone https://github.com/slievr/Athene
-cd agent-orchestrator
+cd Athene
 
 # Run the setup script (installs deps, builds, links CLI)
 bash scripts/setup.sh
