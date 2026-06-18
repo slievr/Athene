@@ -10,6 +10,8 @@
 
 **Reference spec:** `docs/superpowers/specs/2026-06-16-meta-orchestrator-design.md`
 
+> **Superseded note (ath-rev-23):** This plan is a historical record of the original task breakdown. The `discover` "live reconcile" portion of **Task 8** was **not shipped**. v1 decision: `discover` is *resolve-at-start* with honest messaging — scope is resolved from the global registry at `meta-start`, there is no live auto-discovery, and the `reconcileMetaScope`/`reconcileMetaScopeIds` helper was removed (not just left unwired). See the spec (§Non-Goals, §10) for the authoritative behavior. The rest of Task 8 (coordinator-aware worker enumeration) did ship.
+
 **Note on commits:** this repo has GPG signing configured but no local secret key in this environment. If `git commit` fails with a gpg signing error, append `--no-gpg-sign` to the commit command.
 
 ---
@@ -638,6 +640,8 @@ git commit -m "feat(core): add ensureMetaOrchestrator spawn flow"
 ---
 
 ### Task 8: Lifecycle — coordinator-aware enumeration + discover reconcile
+
+> **Superseded (ath-rev-23):** the **discover reconcile** half of this task was dropped. v1 ships `discover` as *resolve-at-start* (resolved from the global registry at `meta-start`; re-run `meta-start` to refresh) with no live auto-discovery, and `reconcileMetaScope`/`reconcileMetaScopeIds` and its supervision-tick wiring were removed. Ignore the `discover reconcile` test todo and the `reconcileMetaScope` helper in Step 3 below. Only the **coordinator-aware worker enumeration** (`isCoordinatorSession`) part of this task is live.
 
 **Files:**
 - Modify: `packages/core/src/lifecycle-manager.ts` (worker-enumeration filters; supervision tick)
