@@ -9,6 +9,7 @@ import {
   type CIStatus,
   type ReviewDecision,
   type ActivityState,
+  type ContextWindowUsage,
   type Tracker,
   type ProjectConfig,
   type AgentReportAuditEntry,
@@ -32,6 +33,7 @@ import {
   ciStatusIcon,
   reviewDecisionIcon,
   padCol,
+  formatContextWindow,
 } from "../lib/format.js";
 import { getAgentByName, getAgentByNameFromRegistry, getSCMFromRegistry } from "../lib/plugins.js";
 import { getPluginRegistry, getSessionManager } from "../lib/create-session-manager.js";
@@ -53,6 +55,7 @@ interface SessionInfo {
   pendingThreads: number | null;
   activity: ActivityState | null;
   reports: AgentReportAuditEntry[];
+  contextWindow: ContextWindowUsage | null;
 }
 
 interface StatusOptions {
@@ -164,12 +167,14 @@ async function gatherSessionInfo(
   // normalizes session.metadata.agent on read, so never infer the session agent
   // from current project/default config here.
   let claudeSummary: string | null = null;
+  let contextWindow: ContextWindowUsage | null = null;
   try {
     const agentName = session.metadata["agent"];
     if (agentName) {
       const agent = getAgentByNameFromRegistry(registry, agentName);
       const introspection = await agent.getSessionInfo(session);
       claudeSummary = introspection?.summary ?? null;
+      contextWindow = introspection?.contextWindow ?? null;
     }
   } catch {
     // Summary extraction failed — not critical
@@ -249,6 +254,7 @@ async function gatherSessionInfo(
     pendingThreads,
     activity,
     reports,
+    contextWindow,
   };
 }
 
@@ -332,6 +338,10 @@ function printSessionRow(info: SessionInfo): void {
     console.log(`  ${" ".repeat(COL.session)}${chalk.dim(displaySummary.slice(0, 60))}`);
   }
 
+  if (info.contextWindow) {
+    console.log(`  ${" ".repeat(COL.session)}${formatContextWindow(info.contextWindow)}`);
+  }
+
   printReportRows(info.reports, `  ${" ".repeat(COL.session)}`);
 }
 
@@ -344,6 +354,9 @@ function printOrchestratorRow(info: SessionInfo): void {
   const displaySummary = info.claudeSummary || info.summary;
   if (displaySummary) {
     console.log(`                ${chalk.dim(displaySummary.slice(0, 60))}`);
+  }
+  if (info.contextWindow) {
+    console.log(`                ${formatContextWindow(info.contextWindow)}`);
   }
   printReportRows(info.reports, "                ");
 }
@@ -748,6 +761,9 @@ async function showFallbackStatus(): Promise<void> {
 
     if (introspection?.summary) {
       console.log(`     ${chalk.dim("Claude:")} ${introspection.summary.slice(0, 65)}`);
+    }
+    if (introspection?.contextWindow) {
+      console.log(`     ${formatContextWindow(introspection.contextWindow)}`);
     }
   }
   console.log();

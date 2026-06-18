@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { formatAge, statusColor, header, banner } from "../../src/lib/format.js";
+import {
+  formatAge,
+  statusColor,
+  header,
+  banner,
+  formatTokenCount,
+  formatContextWindow,
+  CONTEXT_WINDOW_WARN_PCT,
+} from "../../src/lib/format.js";
 
 describe("formatAge", () => {
   beforeEach(() => {
@@ -73,5 +81,51 @@ describe("banner", () => {
     expect(result).toContain("STATUS");
     const lines = result.split("\n");
     expect(lines.length).toBe(3);
+  });
+});
+
+describe("formatTokenCount", () => {
+  it("renders thousands with a k suffix", () => {
+    expect(formatTokenCount(145_000)).toBe("145k");
+    expect(formatTokenCount(1_500)).toBe("2k"); // rounds
+    expect(formatTokenCount(200_000)).toBe("200k");
+  });
+
+  it("renders millions with one decimal", () => {
+    expect(formatTokenCount(1_000_000)).toBe("1.0M");
+    expect(formatTokenCount(1_250_000)).toBe("1.3M");
+  });
+
+  it("renders small counts verbatim", () => {
+    expect(formatTokenCount(0)).toBe("0");
+    expect(formatTokenCount(999)).toBe("999");
+  });
+});
+
+describe("formatContextWindow", () => {
+  it("includes used/limit tokens and percentage", () => {
+    const out = formatContextWindow({ usedTokens: 145_000, limitTokens: 200_000, pct: 0.725 });
+    expect(out).toContain("ctx 145k/200k (73%)");
+    expect(out).not.toContain("⚠");
+  });
+
+  it("prefixes a warning marker above the warn threshold", () => {
+    const pct = CONTEXT_WINDOW_WARN_PCT + 0.05;
+    const out = formatContextWindow({
+      usedTokens: Math.round(pct * 200_000),
+      limitTokens: 200_000,
+      pct,
+    });
+    expect(out).toContain("⚠");
+    expect(out).toContain("ctx");
+  });
+
+  it("does not warn exactly at the threshold (strictly greater triggers it)", () => {
+    const out = formatContextWindow({
+      usedTokens: Math.round(CONTEXT_WINDOW_WARN_PCT * 200_000),
+      limitTokens: 200_000,
+      pct: CONTEXT_WINDOW_WARN_PCT,
+    });
+    expect(out).not.toContain("⚠");
   });
 });

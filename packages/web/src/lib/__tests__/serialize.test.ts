@@ -252,6 +252,33 @@ describe("sessionToDashboard", () => {
     expect(dashboard.summaryIsFallback).toBe(false);
   });
 
+  it("should propagate contextWindow from agentInfo", () => {
+    const coreSession = createCoreSession({
+      agentInfo: {
+        summary: "Working",
+        summaryIsFallback: false,
+        agentSessionId: "abc123",
+        contextWindow: { usedTokens: 145_000, limitTokens: 200_000, pct: 0.725 },
+      },
+    });
+    const dashboard = sessionToDashboard(coreSession);
+
+    expect(dashboard.contextWindow).toEqual({
+      usedTokens: 145_000,
+      limitTokens: 200_000,
+      pct: 0.725,
+    });
+  });
+
+  it("should default contextWindow to null for agents that don't report it", () => {
+    const coreSession = createCoreSession({
+      agentInfo: { summary: "Working", summaryIsFallback: false, agentSessionId: "abc123" },
+    });
+    const dashboard = sessionToDashboard(coreSession);
+
+    expect(dashboard.contextWindow).toBeNull();
+  });
+
   it("should use live agentInfo summary even when pinnedSummary is set in metadata", () => {
     const coreSession = createCoreSession({
       agentInfo: {

@@ -186,6 +186,7 @@ export function sessionToDashboard(session: Session): DashboardSession {
     displayNameUserSet: session.metadata["displayNameUserSet"] === "true",
     summary,
     summaryIsFallback: agentSummary ? (session.agentInfo?.summaryIsFallback ?? false) : false,
+    contextWindow: session.agentInfo?.contextWindow ?? null,
     createdAt: session.createdAt.toISOString(),
     lastActivityAt: session.lastActivityAt.toISOString(),
     pr: session.pr

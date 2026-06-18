@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/cn";
 import { getSessionTitle } from "@/lib/format";
 import { StatusBadge } from "./StatusBadge";
+import { ContextWindowBadge } from "./ContextWindowBadge";
 import { DoneSessionCard, ProjectChip } from "./SessionCard.parts";
 import { projectColorBorderClass } from "@/lib/project-color";
 import { projectSessionHashPath } from "@/lib/routes";
@@ -327,6 +328,7 @@ function SessionCardView({ session, onKill, onMerge, onRestore, projectAccent }:
                 {footerDetail.text}
               </span>
             ) : null}
+            <ContextWindowBadge contextWindow={session.contextWindow} />
           </div>
 
           <div className="session-card__footer-actions">
