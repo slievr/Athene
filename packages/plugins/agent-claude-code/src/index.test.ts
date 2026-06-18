@@ -1569,6 +1569,21 @@ describe("subagent-blocker script — runtime behavior", () => {
     expect(parsed.hookSpecificOutput.permissionDecision).toBe("deny");
   });
 
+  it("meta-orchestrator + Task general-purpose → deny JSON", () => {
+    const out = runBlocker(
+      JSON.stringify({ tool_name: "Task", tool_input: { subagent_type: "general-purpose" } }),
+      "meta-orchestrator",
+    );
+    const parsed = JSON.parse(out);
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe("deny");
+  });
+
+  it("orchestrator + Task with missing subagent_type → deny JSON", () => {
+    const out = runBlocker(JSON.stringify({ tool_name: "Task", tool_input: {} }), "orchestrator");
+    const parsed = JSON.parse(out);
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe("deny");
+  });
+
   it("orchestrator + Explore subagent_type → allowed (no output)", () => {
     expect(
       runBlocker(
@@ -1602,7 +1617,21 @@ describe("subagent-blocker script — runtime behavior", () => {
     ).toBe("");
   });
 
+  it("worker (AO_CALLER_TYPE=agent) + Task general-purpose → allowed (no output)", () => {
+    // A set-but-non-orchestrating caller type must also be unaffected.
+    expect(
+      runBlocker(
+        JSON.stringify({ tool_name: "Task", tool_input: { subagent_type: "general-purpose" } }),
+        "agent",
+      ),
+    ).toBe("");
+  });
+
   it("unparseable stdin → exit 0, no output", () => {
     expect(runBlocker("this is not json", "orchestrator")).toBe("");
+  });
+
+  it("empty stdin → exit 0, no output", () => {
+    expect(runBlocker("", "orchestrator")).toBe("");
   });
 });
