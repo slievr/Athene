@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { join as pathJoin } from "node:path";
+import type * as NodeFsModule from "node:fs";
+import type * as NodeOsModule from "node:os";
+import type * as NodePathModule from "node:path";
+import type * as NodeChildProcessModule from "node:child_process";
 import {
   createActivitySignal,
   type Session,
@@ -80,6 +84,7 @@ import {
   METADATA_UPDATER_SCRIPT_NODE,
   ACTIVITY_UPDATER_SCRIPT,
   ACTIVITY_UPDATER_SCRIPT_NODE,
+  SUBAGENT_BLOCKER_SCRIPT_NODE,
 } from "./index.js";
 
 // ---------------------------------------------------------------------------
@@ -1399,5 +1404,205 @@ describe("setupWorkspaceHooks on win32", () => {
       .filter((h) => h.command.includes("metadata-updater"));
     // Must be exactly 1 — no duplicates
     expect(metadataHooks).toHaveLength(1);
+  });
+});
+
+// =========================================================================
+// setupWorkspaceHooks — subagent-blocker registration + script write
+// =========================================================================
+describe("setupWorkspaceHooks — subagent-blocker", () => {
+  const agent = create();
+
+  function getParsedSettings(): Record<string, unknown> {
+    const settingsWrite = mockWriteFile.mock.calls.find(
+      ([path]: unknown[]) => typeof path === "string" && path.endsWith("settings.json"),
+    );
+    expect(settingsWrite).toBeDefined();
+    return JSON.parse(settingsWrite![1] as string) as Record<string, unknown>;
+  }
+
+  const BLOCKER_CMD = "node .claude/subagent-blocker.cjs";
+
+  it("writes the subagent-blocker.cjs script to .claude/", async () => {
+    await agent.setupWorkspaceHooks!("/workspace/test", {} as WorkspaceHooksConfig);
+
+    const scriptWrite = mockWriteFile.mock.calls.find(
+      ([path]: unknown[]) => typeof path === "string" && path.endsWith("subagent-blocker.cjs"),
+    );
+    expect(scriptWrite).toBeDefined();
+    expect(scriptWrite![0]).toBe(
+      pathJoin("/workspace/test", ".claude", "subagent-blocker.cjs"),
+    );
+    expect(scriptWrite![1]).toBe(SUBAGENT_BLOCKER_SCRIPT_NODE);
+  });
+
+  it("registers a PreToolUse subagent-blocker hook with matcher Task|Agent", async () => {
+    mockWriteFile.mockClear();
+    await agent.setupWorkspaceHooks!("/workspace/test", {} as WorkspaceHooksConfig);
+
+    const settings = getParsedSettings();
+    const preToolUse = (settings.hooks as Record<string, unknown>)["PreToolUse"] as Array<{
+      matcher: string;
+      hooks: Array<{ command: string; timeout?: number }>;
+    }>;
+    expect(preToolUse).toBeDefined();
+
+    const blockerEntry = preToolUse.find((g) =>
+      g.hooks.some((h) => h.command === BLOCKER_CMD),
+    );
+    expect(blockerEntry).toBeDefined();
+    expect(blockerEntry!.matcher).toBe("Task|Agent");
+    const blockerHook = blockerEntry!.hooks.find((h) => h.command === BLOCKER_CMD);
+    expect(blockerHook!.timeout).toBe(2000);
+  });
+
+  it("does not chmod the .cjs blocker on unix (invoked via node)", async () => {
+    mockChmod.mockClear();
+    await agent.setupWorkspaceHooks!("/workspace/test", {} as WorkspaceHooksConfig);
+
+    const chmodCalls = mockChmod.mock.calls.filter(
+      ([path]: unknown[]) => typeof path === "string" && path.endsWith("subagent-blocker.cjs"),
+    );
+    expect(chmodCalls).toHaveLength(0);
+  });
+
+  it("uses the same node .cjs command/script on Windows (no platform branch)", async () => {
+    mockIsWindows.mockReturnValue(true);
+    mockWriteFile.mockClear();
+
+    await agent.setupWorkspaceHooks!("C:\\\\Users\\\\dev\\\\workspace", {} as WorkspaceHooksConfig);
+
+    const scriptWrite = mockWriteFile.mock.calls.find(
+      ([path]: unknown[]) => typeof path === "string" && path.endsWith("subagent-blocker.cjs"),
+    );
+    expect(scriptWrite).toBeDefined();
+    expect(scriptWrite![1]).toBe(SUBAGENT_BLOCKER_SCRIPT_NODE);
+
+    const settings = getParsedSettings();
+    const preToolUse = (settings.hooks as Record<string, unknown>)["PreToolUse"] as Array<{
+      hooks: Array<{ command: string }>;
+    }>;
+    expect(preToolUse.flatMap((g) => g.hooks).some((h) => h.command === BLOCKER_CMD)).toBe(true);
+
+    mockIsWindows.mockReturnValue(false);
+  });
+
+  it("is idempotent — calling twice keeps exactly one subagent-blocker entry", async () => {
+    mockWriteFile.mockClear();
+    await agent.setupWorkspaceHooks!("/workspace/test", {} as WorkspaceHooksConfig);
+    const firstSettings = mockWriteFile.mock.calls.find(
+      ([path]: unknown[]) => typeof path === "string" && path.endsWith("settings.json"),
+    );
+    mockExistsSync.mockReturnValueOnce(true);
+    mockReadFile.mockResolvedValueOnce(firstSettings![1] as string);
+    mockWriteFile.mockClear();
+
+    await agent.setupWorkspaceHooks!("/workspace/test", {} as WorkspaceHooksConfig);
+
+    const settings = getParsedSettings();
+    const preToolUse = (settings.hooks as Record<string, unknown>)["PreToolUse"] as Array<{
+      hooks: Array<{ command: string }>;
+    }>;
+    const blockerHooks = preToolUse
+      .flatMap((g) => g.hooks)
+      .filter((h) => h.command === BLOCKER_CMD);
+    expect(blockerHooks).toHaveLength(1);
+  });
+});
+
+// =========================================================================
+// subagent-blocker script — runtime behavior (real node subprocess)
+// =========================================================================
+describe("subagent-blocker script — runtime behavior", () => {
+  // The hook script is gated on process.env.AO_CALLER_TYPE and parses JSON
+  // from stdin, so behavior is verified by running the real .cjs as a
+  // subprocess. Use the un-mocked node built-ins (the rest of this file mocks
+  // node:fs / node:child_process for the registration tests).
+  let scriptPath: string;
+  let realExecFileSync: typeof NodeChildProcessModule.execFileSync;
+
+  beforeEach(async () => {
+    const realFs = (await vi.importActual("node:fs")) as typeof NodeFsModule;
+    const realOs = (await vi.importActual("node:os")) as typeof NodeOsModule;
+    const realPath = (await vi.importActual("node:path")) as typeof NodePathModule;
+    realExecFileSync = (
+      (await vi.importActual("node:child_process")) as typeof NodeChildProcessModule
+    ).execFileSync;
+
+    const dir = realFs.mkdtempSync(realPath.join(realOs.tmpdir(), "ao-subagent-blocker-"));
+    scriptPath = realPath.join(dir, "subagent-blocker.cjs");
+    realFs.writeFileSync(scriptPath, SUBAGENT_BLOCKER_SCRIPT_NODE, "utf-8");
+  });
+
+  /** Run the hook script with the given stdin + AO_CALLER_TYPE; return stdout. */
+  function runBlocker(stdin: string, callerType?: string): string {
+    const env = { ...process.env };
+    if (callerType === undefined) {
+      delete env.AO_CALLER_TYPE;
+    } else {
+      env.AO_CALLER_TYPE = callerType;
+    }
+    return realExecFileSync("node", [scriptPath], {
+      input: stdin,
+      env,
+      encoding: "utf-8",
+    });
+  }
+
+  it("orchestrator + Task general-purpose → deny JSON", () => {
+    const out = runBlocker(
+      JSON.stringify({ tool_name: "Task", tool_input: { subagent_type: "general-purpose" } }),
+      "orchestrator",
+    );
+    const parsed = JSON.parse(out);
+    expect(parsed.hookSpecificOutput.hookEventName).toBe("PreToolUse");
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(parsed.hookSpecificOutput.permissionDecisionReason).toContain("ao spawn");
+  });
+
+  it("orchestrator + Agent general-purpose → deny JSON", () => {
+    const out = runBlocker(
+      JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type: "general-purpose" } }),
+      "orchestrator",
+    );
+    const parsed = JSON.parse(out);
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe("deny");
+  });
+
+  it("orchestrator + Explore subagent_type → allowed (no output)", () => {
+    expect(
+      runBlocker(
+        JSON.stringify({ tool_name: "Task", tool_input: { subagent_type: "Explore" } }),
+        "orchestrator",
+      ),
+    ).toBe("");
+  });
+
+  it("orchestrator + Plan subagent_type → allowed (no output)", () => {
+    expect(
+      runBlocker(
+        JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type: "plan" } }),
+        "orchestrator",
+      ),
+    ).toBe("");
+  });
+
+  it("orchestrator + non-Task/Agent tool → allowed (no output)", () => {
+    expect(
+      runBlocker(JSON.stringify({ tool_name: "Bash", tool_input: { command: "ls" } }), "orchestrator"),
+    ).toBe("");
+  });
+
+  it("worker (AO_CALLER_TYPE unset) + Task general-purpose → allowed (no output)", () => {
+    expect(
+      runBlocker(
+        JSON.stringify({ tool_name: "Task", tool_input: { subagent_type: "general-purpose" } }),
+        undefined,
+      ),
+    ).toBe("");
+  });
+
+  it("unparseable stdin → exit 0, no output", () => {
+    expect(runBlocker("this is not json", "orchestrator")).toBe("");
   });
 });
