@@ -59,9 +59,12 @@ function createRenderData(opts: MetaOrchestratorPromptConfig): MetaPromptRenderD
     metaName: opts.name,
     dashboardUrl: `http://localhost:${port}/meta/${opts.name}`,
     scopeDescription,
+    // HONEST wording (ath-rev-23): there is NO live auto-discovery. The in-scope
+    // project set is resolved from the global config at `meta-start`; to pick up
+    // projects registered later, re-run `athene meta-start`.
     discoverDescription: meta.discover
-      ? "enabled — newly-registered projects appear in `athene meta-status` and the dashboard immediately (both read live config); this prompt's catalog above is a snapshot from meta-start, so restart the meta orchestrator to surface new projects here"
-      : "disabled",
+      ? "requested, but live auto-discovery is not enabled in this version — the in-scope project set is resolved from the global config at `meta-start`. Re-run `athene meta-start` to refresh the catalog with newly-registered projects."
+      : "off — the in-scope project set is resolved from the global config at `meta-start`. Re-run `athene meta-start` to pick up newly-registered projects.",
     projectCatalog: buildProjectCatalog(opts.config, opts.name),
     rules: meta.rules?.trim() ?? "",
   };

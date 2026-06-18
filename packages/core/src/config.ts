@@ -363,12 +363,9 @@ const MetaScopeSchema = z.union([
 
 const MetaOrchestratorConfigSchema = z.object({
   scope: MetaScopeSchema,
-  // Include newly-registered projects in this meta orchestrator's scope.
-  // NOTE (current behavior): scope is resolved live by `meta-status` and the
-  // dashboard, so new projects show there immediately; the running orchestrator's
-  // prompt catalog is a snapshot from `meta-start`, so it only refreshes on
-  // restart. (`reconcileMetaScopeIds` is the building block for future live
-  // prompt-refresh wiring.) With scope:'all' new projects are naturally in scope.
+  // Reserved for future live auto-discovery. Current behavior (v1): NO effect —
+  // scope is resolved from the global registry at `meta-start` (resolve-at-start).
+  // Re-run `athene meta-start` to pick up projects registered afterwards.
   discover: z.boolean().default(false),
   // Optional agent plugin override; defaults to the global default agent.
   agent: z.string().optional(),

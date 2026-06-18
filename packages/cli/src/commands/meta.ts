@@ -88,6 +88,16 @@ function metaNames(config: OrchestratorConfig): string[] {
   return Object.keys(config.metaOrchestrators ?? {});
 }
 
+/**
+ * Honest `discover` status line for `meta-status`. There is NO live auto-discovery
+ * in v1: scope is resolved from the global registry at `meta-start`. A `discover:true`
+ * config is acknowledged as having no effect, not as an active feature. Pure.
+ */
+export function formatDiscoverStatus(discover: boolean): string {
+  const state = discover ? "requested (no effect in v1)" : "off";
+  return `${state} — resolved at meta-start; re-run \`athene meta-start\` to refresh.`;
+}
+
 export function registerMeta(program: Command): void {
   program
     .command("meta-start <name>")
@@ -141,7 +151,11 @@ export function registerMeta(program: Command): void {
       const { owned, peers } = partitionMetaSessions(all, resolved, inScopeIds);
 
       console.log(chalk.bold(`\nMeta orchestrator: ${resolved}`));
-      console.log(chalk.dim(`  Scope: ${inScopeIds.join(", ") || "(none)"}\n`));
+      console.log(chalk.dim(`  Scope: ${inScopeIds.join(", ") || "(none)"}`));
+      // Honest discover semantics (ath-rev-23): the in-scope set is resolved from
+      // the global registry at `meta-start`; there is no live auto-discovery, so a
+      // running orchestrator won't auto-join projects registered afterwards.
+      console.log(chalk.dim(`  Discover: ${formatDiscoverStatus(meta.discover)}\n`));
 
       if (owned.length === 0) {
         console.log(chalk.dim("  No owned workers yet."));

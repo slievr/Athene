@@ -67,4 +67,26 @@ describe("generateMetaOrchestratorPrompt", () => {
       /Unknown meta orchestrator/,
     );
   });
+
+  it("does NOT claim live auto-discovery for discover:true (honest resolve-at-start wording)", () => {
+    // makeConfig's meta-1 has discover:true. The prompt must not imply new projects
+    // appear "immediately/live"; it must direct the user to re-run meta-start.
+    const p = generateMetaOrchestratorPrompt({ config: makeConfig(), name: "meta-1" });
+    // The old dishonest wording claimed new projects show up live/immediately.
+    expect(p).not.toMatch(/appear.*immediately/i);
+    expect(p).not.toMatch(/read(s)? live config/i);
+    expect(p).toContain("live auto-discovery is not enabled in this version");
+    expect(p).toContain("Re-run `athene meta-start`");
+  });
+
+  it("reflects the registry at load time — a project added to scope is in the catalog", () => {
+    // The catalog is a snapshot of the (global) config passed at generation time:
+    // widen meta-1's scope to include api and it appears immediately in this render.
+    const cfg = makeConfig({
+      metaOrchestrators: { "meta-1": { scope: { projects: ["web", "api"] }, discover: false } },
+    });
+    const p = generateMetaOrchestratorPrompt({ config: cfg, name: "meta-1" });
+    expect(p).toContain("UI app");
+    expect(p).toContain("backend");
+  });
 });

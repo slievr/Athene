@@ -7,6 +7,7 @@ import {
   resolveMetaName,
   partitionMetaSessions,
   loadMetaRegistryConfig,
+  formatDiscoverStatus,
 } from "../../src/commands/meta.js";
 import type { Session } from "@made-by-moonlight/athene-core";
 
@@ -40,6 +41,22 @@ describe("resolveMetaName", () => {
 
   it("throws when ambiguous (multiple, none requested)", () => {
     expect(() => resolveMetaName(["a", "b"])).toThrow(/specify one/);
+  });
+});
+
+describe("formatDiscoverStatus", () => {
+  it("never claims live auto-discovery, even when discover is true", () => {
+    const on = formatDiscoverStatus(true);
+    expect(on).toContain("no effect in v1");
+    expect(on).toMatch(/re-run `athene meta-start`/i);
+    expect(on).not.toMatch(/enabled|immediately|live/i);
+  });
+
+  it("says 'off' and points to meta-start refresh when discover is false", () => {
+    const off = formatDiscoverStatus(false);
+    expect(off).toContain("off");
+    expect(off).toMatch(/re-run `athene meta-start`/i);
+    expect(off).not.toMatch(/enabled|immediately|live/i);
   });
 });
 

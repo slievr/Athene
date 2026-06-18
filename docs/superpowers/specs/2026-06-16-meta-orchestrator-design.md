@@ -27,7 +27,7 @@ Meta orchestrators **coexist** with per-project orchestrators. Both can be runni
 ### Non-Goals (v1)
 - Meta orchestrators do **not** delegate to per-project orchestrators (direct-to-worker was chosen deliberately).
 - No cross-project task-dependency graph or ordering.
-- `discover` watches the **global registry only** — it does **not** scan the filesystem for unregistered repos.
+- No **live auto-discovery** in v1. `discover` is reserved and currently has no effect: scope is resolved from the global registry at `meta-start` (resolve-at-start); re-run `meta-start` to pick up later registrations. (`discover` never scans the filesystem for unregistered repos.)
 - Freeform-prompt dedup stays **advisory**; only issue-keyed work is hard-guarded.
 
 ---
@@ -71,7 +71,7 @@ Web: /meta/<name>  → existing kanban board, aggregated over workers where meta
 ### Data flow additions
 - **Config Loader** parses the new `metaOrchestrators` map and per-project `description`.
 - **Session Manager** gains: meta-orchestrator spawn (`ensureMetaOrchestrator`), owner-metadata stamping in the worker spawn path, and the pre-spawn collision guard.
-- **Lifecycle Manager / supervisor** tracks meta-orchestrator liveness. (`discover`-driven live prompt-refresh is not wired in v1 — see §10; scope is resolved live by status/dashboard surfaces.)
+- **Lifecycle Manager / supervisor** tracks meta-orchestrator liveness. (No `discover`-driven live prompt-refresh in v1 — see §10; scope is resolved from the global registry at `meta-start`.)
 - **Portfolio session service** is the reused aggregation layer for the `/meta/<name>` view, filtered by `metaOwner`.
 
 ---
@@ -291,7 +291,7 @@ Content lifts the orchestrator's non-negotiable rules to portfolio scope and doc
 
 - `athene meta-start <name>` spawns the meta orchestrator under `_meta/<name>` with the rendered prompt and resolved scope. It does **not** suppress per-project orchestrators — they coexist.
 - A **meta-aware supervision path** tracks the meta orchestrator's liveness using the existing lifecycle/runtime probe machinery (reuse, don't duplicate).
-- `discover: true` semantics — **current implementation (v1):** scope is resolved **live** by `athene meta-status` and the `/meta/<name>` dashboard (both read the current global config), so newly-registered projects appear there immediately. The **running meta orchestrator's prompt catalog**, however, is a snapshot generated once at `meta-start`, so a new project only appears in the agent's own prompt after a restart. `reconcileMetaScopeIds(config, meta, baselineProjectIds)` is the pure building block for a future supervisor/prompt-refresh path that would make this fully live; it is **not yet wired** into the polling loop (deliberately, to avoid destabilizing `lifecycle-manager` in this PR). For `scope: 'all'`, new projects are naturally in scope live.
+- `discover` semantics — **v1: resolve-at-start, no live discovery.** The in-scope project set is resolved from the **global registry** when `athene meta-start` runs (`scope: 'all'` → every project registered at launch; explicit list → those projects, resolved against the current registry). A **running** meta orchestrator does **not** auto-join projects registered afterwards — re-run `meta-start` to refresh. The `discover` flag is reserved for a future live-discovery feature and currently has **no effect**; the prompt and `athene meta-status` both say so plainly rather than implying live behavior.
 
 ### Invariants the core changes must preserve
 
@@ -383,7 +383,7 @@ The per-project orchestrator's session (for its activity dot) is looked up from 
 | Paths | `getMetaSessionsDir` / `getMetaSessionPath` produce the `_meta/<name>/sessions/<name>.json` layout. |
 | Web helper | `getProjectColor`: index→slot mapping, cycling after 8, deterministic fallback for unknown project. |
 | Web components | `SessionCard` renders the project rail/dot/name with the resolved color var (no inline style); `ProjectSidebar` renders the project dot. New components/helpers ship with test files (C-12). |
-| Lifecycle | `reconcileMetaScopeIds` (pure) adds a project registered after the startup baseline for a `discover:true` explicit-list scope, and does NOT pull pre-existing out-of-list projects in (full-baseline contract). Meta orchestrator sessions are excluded from project-scoped worker enumeration. |
+| Lifecycle / scope | `resolveInScopeProjectIds` (pure) resolves scope from the current registry (resolve-at-start; `discover` has no live effect — an out-of-list project registered later is not pulled in). Meta orchestrator sessions are excluded from project-scoped worker enumeration. |
 | Sidebar orchestrators (§11.5) | `SidebarOrchestrators` renders meta rows with the `◆` glyph + name, per-project orchestrator rows with a project-color dot + name, and a right-aligned activity-state dot driven by `getAttentionLevel(session)` / `data-level` (no new dot). Meta row links to `/meta/<name>` via `metaDashboardPath`; project orchestrator row links to its session. Collapsed variant renders the compact glyph/dot cluster. No inline styles. |
 
 Testing follows the repo defaults: Vitest + @testing-library/react, tests in `__tests__/`, TypeScript strict (no `any`), cross-platform helpers (`isWindows()` etc.) for any path/process code.
@@ -399,7 +399,7 @@ Testing follows the repo defaults: Vitest + @testing-library/react, tests in `__
 - `spawn-collision.ts` (new) — `checkSpawnCollision`.
 - `session-manager.ts` — owner stamping in `_spawnInner`; collision guard call; `ensureMetaOrchestrator` (mirrors `ensureOrchestrator`).
 - `meta-orchestrator-prompt.ts` (new) + `prompts/meta-orchestrator.md` (new).
-- `lifecycle-manager.ts` — coordinator-aware enumeration (use `isCoordinatorSession`); meta liveness + `discover` reconcile (reuse existing supervision).
+- `lifecycle-manager.ts` — coordinator-aware enumeration (use `isCoordinatorSession`); meta liveness (reuse existing supervision). No `discover` reconcile in v1.
 - `index.ts` — export new public symbols.
 
 **CLI (`packages/cli/src/commands/`)**:

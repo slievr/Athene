@@ -1079,8 +1079,18 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     const ownerToken = nextSpawnLockToken();
     try {
       writeFileSync(lockPath, ownerToken);
-    } catch {
-      /* best effort — a missing token just falls back to the age ceiling */
+    } catch (err) {
+      // The token write failed, leaving an empty (no-PID) lock: releaseSpawnLockIfOwned
+      // won't delete it (content != token) and reapers won't touch a no-PID lock until
+      // the 5-min age ceiling — stalling EVERY spawn for this project. Clean up the lock
+      // we just created and abort, so a transient write failure doesn't block the project.
+      try {
+        closeSync(fd);
+      } catch {
+        /* best effort */
+      }
+      rmSync(lockPath, { force: true });
+      throw new Error(`Failed to write spawn lock owner token: ${lockPath}`, { cause: err });
     }
     try {
       return await fn();

@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  resolveInScopeProjects,
-  resolveInScopeProjectIds,
-  reconcileMetaScopeIds,
-} from "../meta-scope.js";
+import { resolveInScopeProjects, resolveInScopeProjectIds } from "../meta-scope.js";
 import type { MetaOrchestratorConfig, OrchestratorConfig, ProjectConfig } from "../types.js";
 
 const proj = (name: string): ProjectConfig =>
@@ -13,9 +9,9 @@ const makeConfig = (ids: string[]): OrchestratorConfig =>
   ({ projects: Object.fromEntries(ids.map((id) => [id, proj(id)])) }) as OrchestratorConfig;
 
 const all: MetaOrchestratorConfig = { scope: "all", discover: false };
-const list = (projects: string[], discover = false): MetaOrchestratorConfig => ({
+const list = (projects: string[]): MetaOrchestratorConfig => ({
   scope: { projects },
-  discover,
+  discover: false,
 });
 
 describe("resolveInScopeProjects", () => {
@@ -35,32 +31,11 @@ describe("resolveInScopeProjects", () => {
     expect(tuples[0]![0]).toBe("web");
     expect(tuples[0]![1].name).toBe("web");
   });
-});
 
-describe("reconcileMetaScopeIds", () => {
-  it("adds a project registered after startup to a discover:true list scope", () => {
-    // Startup baseline was just [web]; api registered later.
+  it("resolves against the current registry (resolve-at-start; discover has no live effect)", () => {
+    // A project registered after meta-start but absent from an explicit list is
+    // NOT pulled in — there is no live auto-discovery in v1.
     const cfg = makeConfig(["web", "api"]);
-    const result = reconcileMetaScopeIds(cfg, list(["web"], true), ["web"]);
-    expect(result).toContain("web");
-    expect(result).toContain("api");
-  });
-
-  it("does NOT pull pre-existing out-of-list projects into scope (full baseline)", () => {
-    // api already existed at startup (in the baseline) but is NOT in the allow-list,
-    // so discover must not add it — the allow-list is preserved.
-    const cfg = makeConfig(["web", "api"]);
-    const result = reconcileMetaScopeIds(cfg, list(["web"], true), ["web", "api"]);
-    expect(result).toEqual(["web"]);
-  });
-
-  it("does NOT add new projects when discover is off", () => {
-    const cfg = makeConfig(["web", "api"]);
-    expect(reconcileMetaScopeIds(cfg, list(["web"], false), ["web"])).toEqual(["web"]);
-  });
-
-  it("scope:all always reflects the full current set", () => {
-    const cfg = makeConfig(["web", "api", "next"]);
-    expect(reconcileMetaScopeIds(cfg, all, ["web"])).toEqual(["web", "api", "next"]);
+    expect(resolveInScopeProjectIds(cfg, list(["web"]))).toEqual(["web"]);
   });
 });

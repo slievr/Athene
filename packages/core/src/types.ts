@@ -1488,10 +1488,10 @@ export interface MetaOrchestratorConfig {
   /** Which projects this meta orchestrator can route into. */
   scope: MetaScope;
   /**
-   * Include newly-registered projects in scope. Current behavior: `meta-status`
-   * and the dashboard resolve scope live (new projects show immediately); the
-   * running orchestrator's prompt catalog is a meta-start snapshot and refreshes
-   * only on restart. See `reconcileMetaScopeIds`.
+   * Reserved for future live auto-discovery. Current behavior (v1): NO effect —
+   * the in-scope project set is resolved from the global registry at `meta-start`
+   * (resolve-at-start). Re-run `athene meta-start` to pick up projects registered
+   * afterwards; a running meta orchestrator does not auto-join new projects.
    */
   discover: boolean;
   /** Optional agent plugin override; defaults to the global default agent. */
