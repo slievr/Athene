@@ -15,6 +15,7 @@ const {
   mockPtyHostGetOutput,
   mockPtyHostIsAlive,
   mockPtyHostKill,
+  mockGetWindowsPtyHosts,
 } = vi.hoisted(() => ({
   mockSpawn: vi.fn(),
   mockIsWindows: vi.fn(() => false),
@@ -25,6 +26,7 @@ const {
   mockPtyHostGetOutput: vi.fn().mockResolvedValue(""),
   mockPtyHostIsAlive: vi.fn().mockResolvedValue(true),
   mockPtyHostKill: vi.fn().mockResolvedValue(undefined),
+  mockGetWindowsPtyHosts: vi.fn((): unknown[] => []),
 }));
 
 vi.mock("node:child_process", async (importOriginal) => {
@@ -44,6 +46,7 @@ vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
     getShell: mockGetShell,
     isWindows: mockIsWindows,
     killProcessTree: mockKillProcessTree,
+    getWindowsPtyHosts: mockGetWindowsPtyHosts,
   };
 });
 
@@ -882,5 +885,59 @@ describe("per-instance isolation", () => {
     // Both runtimes can have the same session ID independently
     expect(await runtime1.isAlive(makeHandle("session-a"))).toBe(true);
     expect(await runtime2.isAlive(makeHandle("session-a"))).toBe(true);
+  });
+});
+
+// =========================================================================
+// runtime.listSessions() — orphan reconciliation enumeration
+// =========================================================================
+describe("listSessions()", () => {
+  it("POSIX: reports sessions tracked in the in-memory process map", async () => {
+    mockIsWindows.mockReturnValue(false);
+    const child = createMockChild();
+    child.pid = 9001;
+    mockSpawn.mockReturnValue(child);
+
+    const runtime = create();
+    await runtime.create(defaultConfig({ sessionId: "ath-3" }));
+
+    const sessions = await runtime.listSessions!();
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]).toMatchObject({ id: "ath-3", pid: 9001 });
+    expect(typeof sessions[0]!.createdAt).toBe("number");
+  });
+
+  it("Windows: maps the pty-host registry into summaries with destroy data", async () => {
+    mockIsWindows.mockReturnValue(true);
+    mockGetWindowsPtyHosts.mockReturnValue([
+      {
+        sessionId: "ath-5",
+        ptyHostPid: 4242,
+        pipePath: "\\\\.\\pipe\\ao-pty-ath-5",
+        registeredAt: "2023-11-14T00:00:00.000Z",
+      },
+    ]);
+
+    const runtime = create();
+    const sessions = await runtime.listSessions!();
+    expect(sessions).toEqual([
+      {
+        id: "ath-5",
+        pid: 4242,
+        createdAt: Date.parse("2023-11-14T00:00:00.000Z"),
+        handleData: {
+          pipePath: "\\\\.\\pipe\\ao-pty-ath-5",
+          ptyHostPid: 4242,
+          pid: 4242,
+        },
+      },
+    ]);
+  });
+
+  it("Windows: returns [] when the registry is empty", async () => {
+    mockIsWindows.mockReturnValue(true);
+    mockGetWindowsPtyHosts.mockReturnValue([]);
+    const runtime = create();
+    await expect(runtime.listSessions!()).resolves.toEqual([]);
   });
 });

@@ -12,6 +12,7 @@ import {
   type RuntimeCreateConfig,
   type RuntimeHandle,
   type RuntimeMetrics,
+  type RuntimeSessionSummary,
   type AttachInfo,
 } from "@made-by-moonlight/athene-core";
 import {
@@ -457,6 +458,35 @@ export function create(): Runtime {
       return {
         uptimeMs: Date.now() - createdAt,
       };
+    },
+
+    async listSessions(): Promise<RuntimeSessionSummary[]> {
+      // Windows: the pty-host registry is the durable, cross-process source of
+      // truth for live runtime sessions (it survives session-JSON loss). Each
+      // entry carries the data destroy() needs to graceful-kill the host.
+      if (isWindows()) {
+        const { getWindowsPtyHosts } = await import("@made-by-moonlight/athene-core");
+        return getWindowsPtyHosts().map((entry) => ({
+          id: entry.sessionId,
+          pid: entry.ptyHostPid,
+          createdAt: Date.parse(entry.registeredAt) || undefined,
+          handleData: {
+            pipePath: entry.pipePath,
+            ptyHostPid: entry.ptyHostPid,
+            pid: entry.ptyHostPid,
+          },
+        }));
+      }
+
+      // POSIX: child processes aren't tracked in a durable cross-process
+      // registry, so we can only report sessions this runtime instance owns
+      // (best-effort). tmux is the default POSIX runtime where orphan reaping
+      // matters; the process runtime's leaks are bounded to this process.
+      return [...processes.entries()].map(([id, entry]) => ({
+        id,
+        pid: entry.process?.pid ?? undefined,
+        createdAt: entry.createdAt,
+      }));
     },
 
     async getAttachInfo(handle: RuntimeHandle): Promise<AttachInfo> {

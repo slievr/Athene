@@ -687,3 +687,35 @@ describe("runtime.preflight()", () => {
     else expect(err.message).toMatch(/apt install tmux|dnf install tmux/);
   });
 });
+
+describe("listSessions()", () => {
+  it("parses tmux list-sessions output into RuntimeSessionSummary[]", async () => {
+    mockTmuxSuccess(
+      "ath-15\t1700000000\t4242\t/dev/ttys003\nath-2\t1700000100\t4300\t/dev/ttys004",
+    );
+    const runtime = create();
+    const sessions = await runtime.listSessions!();
+    expect(mockExecFileCustom).toHaveBeenCalledWith(
+      "tmux",
+      ["list-sessions", "-F", "#{session_name}\t#{session_created}\t#{pane_pid}\t#{pane_tty}"],
+      expectedTmuxOptions,
+    );
+    expect(sessions).toEqual([
+      { id: "ath-15", createdAt: 1700000000000, pid: 4242, tty: "/dev/ttys003" },
+      { id: "ath-2", createdAt: 1700000100000, pid: 4300, tty: "/dev/ttys004" },
+    ]);
+  });
+
+  it("returns [] when no tmux server is running (command fails)", async () => {
+    mockTmuxError("no server running");
+    const runtime = create();
+    await expect(runtime.listSessions!()).resolves.toEqual([]);
+  });
+
+  it("tolerates missing pid/tty/created fields", async () => {
+    mockTmuxSuccess("ath-7\t\t\t");
+    const runtime = create();
+    const sessions = await runtime.listSessions!();
+    expect(sessions).toEqual([{ id: "ath-7", createdAt: undefined, pid: undefined, tty: undefined }]);
+  });
+});

@@ -467,6 +467,15 @@ export interface Runtime {
   /** Get resource metrics (uptime, memory, etc.) */
   getMetrics?(handle: RuntimeHandle): Promise<RuntimeMetrics>;
 
+  /**
+   * Optional: enumerate the live runtime sessions this runtime can observe,
+   * for orphan reconciliation. Best-effort — return [] when enumeration is
+   * unsupported or fails. Implementations return every session they can cheaply
+   * see; the caller applies the AO naming filter and reconciles against tracked
+   * session metadata before deciding what (if anything) to reap.
+   */
+  listSessions?(): Promise<RuntimeSessionSummary[]>;
+
   /** Get info needed to attach a human to this session (for Terminal plugin) */
   getAttachInfo?(handle: RuntimeHandle): Promise<AttachInfo>;
 
@@ -499,6 +508,23 @@ export interface RuntimeMetrics {
   uptimeMs: number;
   memoryMb?: number;
   cpuPercent?: number;
+}
+
+/**
+ * Lightweight description of a live runtime session, returned by
+ * `Runtime.listSessions()` for orphan reconciliation and resource reporting.
+ */
+export interface RuntimeSessionSummary {
+  /** Runtime session id — equals the AO session id by naming convention. */
+  id: string;
+  /** Epoch ms when the runtime session was created, if known (for grace gating). */
+  createdAt?: number;
+  /** OS pid associated with the session (for best-effort resource lookup). */
+  pid?: number;
+  /** TTY device backing the session (POSIX), if available. */
+  tty?: string;
+  /** `RuntimeHandle.data` needed to destroy this session (e.g. Windows pipePath). */
+  handleData?: Record<string, unknown>;
 }
 
 export interface AttachInfo {

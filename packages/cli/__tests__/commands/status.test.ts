@@ -1343,6 +1343,49 @@ describe("status command", () => {
     expect(parsed.meta.hiddenTerminatedCount).toBe(1);
   });
 
+  it("reports a runtime summary and reaps orphaned runtime sessions", async () => {
+    const destroySpy = vi.fn().mockResolvedValue(undefined);
+    const fakeRuntime = {
+      name: "tmux",
+      listSessions: vi.fn().mockResolvedValue([
+        { id: "app-1", createdAt: 0, pid: 0 }, // backed by a live tracked session
+        { id: "app-9", createdAt: 0, pid: 0 }, // orphan — no tracked session
+      ]),
+      destroy: destroySpy,
+    };
+    mockGetPluginRegistry.mockResolvedValue({
+      get: (slot: string, name: string) =>
+        slot === "runtime" && name === "tmux" ? fakeRuntime : null,
+      list: vi.fn(),
+      register: vi.fn(),
+    });
+
+    mockSessionManager.list.mockResolvedValue([
+      makeSession({ id: "app-1", projectId: "my-app", status: "working" }),
+    ]);
+    mockGit.mockResolvedValue(null);
+
+    await program.parseAsync(["node", "test", "status", "--json"]);
+
+    const jsonCalls = consoleSpy.mock.calls.map((c) => c[0]).join("");
+    const parsed = JSON.parse(jsonCalls) as {
+      runtime: Array<{
+        projectId: string;
+        trackedCount: number;
+        reapedCount: number;
+        failedCount: number;
+      }>;
+    };
+    const summary = parsed.runtime.find((r) => r.projectId === "my-app");
+    expect(summary).toMatchObject({ projectId: "my-app", trackedCount: 1, reapedCount: 1 });
+    expect(destroySpy).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "app-9", runtimeName: "tmux" }),
+    );
+    expect(destroySpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ id: "app-1" }),
+    );
+  });
+
   it("filters lifecycle-driven terminal sessions (runtime exited, pr merged, session terminated)", async () => {
     // Exercises the lifecycle branch of isTerminalSession — legacy status stays
     // "working" but canonical lifecycle puts the session in a terminal state.

@@ -563,6 +563,21 @@ export {
   type AoOrphanProcess,
 } from "./daemon-children.js";
 
+export {
+  DEFAULT_ORPHAN_GRACE_MS,
+  isAoRuntimeSessionName,
+  findRuntimeOrphans,
+  reconcileRuntimeOrphans,
+  parsePsResourceOutput,
+  readProcessResourceUsage,
+  type RuntimeOrphanInput,
+  type RuntimeForReconcile,
+  type OrphanReapOutcome,
+  type RuntimeOrphanReport,
+  type ReconcileRuntimeOrphansOptions,
+  type RuntimeResourceUsage,
+} from "./runtime-orphans.js";
+
 // Activity event logging — structured diagnostic event trail
 export { recordActivityEvent, droppedEventCount } from "./activity-events.js";
 export { isActivityEventsFtsEnabled, closeDb } from "./events-db.js";

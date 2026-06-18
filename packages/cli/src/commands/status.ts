@@ -13,6 +13,8 @@ import {
   type ProjectConfig,
   type AgentReportAuditEntry,
   type PluginRegistry,
+  type Runtime,
+  type OrchestratorConfig,
   isOrchestratorSession,
   isTerminalSession,
   isWindows,
@@ -20,6 +22,8 @@ import {
   getProjectSessionsDir,
   readAgentReportAuditTrailAsync,
   createCodeReviewStore,
+  reconcileRuntimeOrphans,
+  readProcessResourceUsage,
   type CodeReviewRunStatus,
   type CodeReviewRunSummary,
 } from "@made-by-moonlight/athene-core";
@@ -123,6 +127,108 @@ function gatherProjectReviewStatus(projectId: string): ProjectReviewStatus {
     activeRunCount,
     openFindingCount,
   };
+}
+
+/** Per-project runtime resource + orphan-reap summary surfaced in `ao status`. */
+interface RuntimeSummary {
+  projectId: string;
+  /** Live AO-named runtime sessions backed by tracking (orphans excluded). */
+  trackedCount: number;
+  /** Orphaned runtime sessions reaped during this status run. */
+  reapedCount: number;
+  /** Orphans that failed to reap (best-effort). */
+  failedCount: number;
+  /** Aggregate RSS (MB) of tracked sessions, null when unavailable (e.g. Windows). */
+  rssMb: number | null;
+  /** Aggregate CPU (%) of tracked sessions, null when unavailable. */
+  cpuPercent: number | null;
+}
+
+/**
+ * Reconcile the project's runtime sessions against tracked metadata, reap
+ * orphans (AO-named `<prefix>-<number>` sessions with no non-terminal tracked
+ * session), and gather best-effort RSS/CPU for the survivors. Fully best-effort:
+ * any failure yields a zeroed summary so `status` never crashes.
+ */
+async function gatherRuntimeSummary(
+  projectId: string,
+  projectConfig: ProjectConfig,
+  config: OrchestratorConfig,
+  registry: PluginRegistry,
+  activeTrackedIds: Set<string>,
+  log: (message: string) => void,
+): Promise<RuntimeSummary> {
+  const empty: RuntimeSummary = {
+    projectId,
+    trackedCount: 0,
+    reapedCount: 0,
+    failedCount: 0,
+    rssMb: null,
+    cpuPercent: null,
+  };
+  const runtimeName = projectConfig.runtime ?? config.defaults.runtime;
+  const runtime = registry.get<Runtime>("runtime", runtimeName);
+  if (!runtime || typeof runtime.listSessions !== "function") return empty;
+
+  try {
+    const report = await reconcileRuntimeOrphans({
+      runtimes: [{ runtime, sessionPrefixes: [projectConfig.sessionPrefix] }],
+      activeTrackedIds,
+      reap: true,
+      log,
+    });
+    const orphanIds = new Set(report.orphans.map((o) => o.id));
+    const tracked = report.liveAoSessions.filter((s) => !orphanIds.has(s.id));
+    const pids = tracked
+      .map((s) => s.pid)
+      .filter((p): p is number => typeof p === "number" && p > 0);
+    const usage = await readProcessResourceUsage(pids);
+
+    let rssMb = 0;
+    let cpuPercent = 0;
+    let hasUsage = false;
+    for (const u of usage.values()) {
+      if (typeof u.rssMb === "number") {
+        rssMb += u.rssMb;
+        hasUsage = true;
+      }
+      if (typeof u.cpuPercent === "number") cpuPercent += u.cpuPercent;
+    }
+
+    return {
+      projectId,
+      trackedCount: tracked.length,
+      reapedCount: report.outcomes.filter((o) => o.reaped).length,
+      failedCount: report.outcomes.filter((o) => !o.reaped).length,
+      rssMb: hasUsage ? rssMb : null,
+      cpuPercent: hasUsage ? Math.round(cpuPercent * 10) / 10 : null,
+    };
+  } catch {
+    return empty;
+  }
+}
+
+/** Render a one-line runtime summary, or "" when there is nothing to show. */
+function formatRuntimeSummary(summary: RuntimeSummary): string {
+  if (
+    summary.trackedCount === 0 &&
+    summary.reapedCount === 0 &&
+    summary.failedCount === 0
+  ) {
+    return "";
+  }
+  const parts = [
+    `runtime: ${summary.trackedCount} tracked`,
+  ];
+  if (summary.reapedCount > 0) {
+    parts.push(`${summary.reapedCount} orphan${summary.reapedCount !== 1 ? "s" : ""} reaped`);
+  }
+  if (summary.failedCount > 0) {
+    parts.push(`${summary.failedCount} reap${summary.failedCount !== 1 ? "s" : ""} failed`);
+  }
+  if (summary.rssMb !== null) parts.push(`~${summary.rssMb} MB RSS`);
+  if (summary.cpuPercent !== null) parts.push(`${summary.cpuPercent}% CPU`);
+  return parts.join(" · ");
 }
 
 async function gatherSessionInfo(
@@ -485,7 +591,13 @@ export function registerStatus(program: Command): void {
 
         // Show projects that have no sessions too (if not filtered)
         const projectIds = opts.project ? [opts.project] : Object.keys(config.projects);
+        // Runtime sessions backed by a non-terminal tracked session must never
+        // be reaped. Built from the full (pre-terminal-filter) list.
+        const activeTrackedIds = new Set(
+          allSessions.filter((s) => !isTerminalSession(s)).map((s) => s.id),
+        );
         const jsonOutput: SessionInfo[] = [];
+        const runtimeSummaries: RuntimeSummary[] = [];
         const reviewOutput: CodeReviewRunSummary[] = [];
         let totalWorkers = 0;
         let totalOrchestrators = 0;
@@ -511,8 +623,23 @@ export function registerStatus(program: Command): void {
           // different agent than the current project default.
           const scm = getSCMFromRegistry(registry, config, projectId);
 
+          // Reconcile + reap orphaned runtime sessions and gather resource use.
+          const runtimeSummary = await gatherRuntimeSummary(
+            projectId,
+            projectConfig,
+            config,
+            registry,
+            activeTrackedIds,
+            (message) => {
+              if (!opts.json) console.log(chalk.dim(`  ${message}`));
+            },
+          );
+          runtimeSummaries.push(runtimeSummary);
+
           if (!opts.json) {
             console.log(header(projectConfig.name || projectId));
+            const line = formatRuntimeSummary(runtimeSummary);
+            if (line) console.log(chalk.dim(`  ${line}`));
           }
 
           if (projectSessions.length === 0) {
@@ -573,6 +700,7 @@ export function registerStatus(program: Command): void {
               {
                 data: jsonOutput,
                 reviews: reviewOutput,
+                runtime: runtimeSummaries,
                 meta: {
                   hiddenTerminatedCount,
                   reviewRunCount: totalReviewRuns,

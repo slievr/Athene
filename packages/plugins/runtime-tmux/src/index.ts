@@ -11,6 +11,7 @@ import {
   type RuntimeCreateConfig,
   type RuntimeHandle,
   type RuntimeMetrics,
+  type RuntimeSessionSummary,
   type AttachInfo,
   shellEscape,
 } from "@made-by-moonlight/athene-core";
@@ -211,6 +212,41 @@ export function create(): Runtime {
       return {
         uptimeMs: Date.now() - createdAt,
       };
+    },
+
+    async listSessions(): Promise<RuntimeSessionSummary[]> {
+      // Enumerate every live tmux session. The lifecycle manager applies the
+      // AO naming filter and reconciles against tracked metadata before reaping;
+      // we just report what tmux can see. `session_created` is epoch seconds;
+      // pane_pid/pane_tty resolve to each session's active pane.
+      let output: string;
+      try {
+        output = await tmux(
+          "list-sessions",
+          "-F",
+          "#{session_name}\t#{session_created}\t#{pane_pid}\t#{pane_tty}",
+        );
+      } catch {
+        // No tmux server or no sessions — best-effort.
+        return [];
+      }
+      return output
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const [name = "", created = "", pid = "", tty = ""] = line.split("\t");
+          const createdSec = Number(created);
+          const pidNum = Number(pid);
+          return {
+            id: name,
+            createdAt:
+              Number.isFinite(createdSec) && createdSec > 0 ? createdSec * 1000 : undefined,
+            pid: Number.isInteger(pidNum) && pidNum > 0 ? pidNum : undefined,
+            tty: tty || undefined,
+          };
+        })
+        .filter((s) => s.id.length > 0);
     },
 
     async getAttachInfo(handle: RuntimeHandle): Promise<AttachInfo> {

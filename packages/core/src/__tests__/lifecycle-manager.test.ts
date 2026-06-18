@@ -4743,3 +4743,91 @@ describe("multi-PR state machine aggregation", () => {
     }
   });
 });
+
+describe("runtime orphan reconciliation (poll loop)", () => {
+  it("reaps an AO-named runtime session with no tracked session", async () => {
+    // No tracked sessions → any AO-named live runtime session is an orphan.
+    vi.mocked(mockSessionManager.list).mockResolvedValue([]);
+    plugins.runtime.listSessions = vi
+      .fn()
+      .mockResolvedValue([{ id: "app-9", createdAt: 0 }]);
+    const destroySpy = vi.mocked(plugins.runtime.destroy);
+
+    const lm = createLifecycleManager({
+      config,
+      registry: mockRegistry,
+      sessionManager: mockSessionManager,
+    });
+
+    try {
+      lm.start(60_000);
+      const deadline = Date.now() + 2000;
+      while (Date.now() < deadline) {
+        if (destroySpy.mock.calls.length > 0) break;
+        await new Promise((r) => setTimeout(r, 10));
+      }
+      expect(destroySpy).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "app-9", runtimeName: "mock" }),
+      );
+    } finally {
+      lm.stop();
+    }
+  });
+
+  it("never reaps a runtime session backed by a live tracked session", async () => {
+    vi.mocked(mockSessionManager.list).mockResolvedValue([
+      makeSession({ id: "app-9", status: "working" }),
+    ]);
+    plugins.runtime.listSessions = vi
+      .fn()
+      .mockResolvedValue([{ id: "app-9", createdAt: 0 }]);
+    const destroySpy = vi.mocked(plugins.runtime.destroy);
+
+    const lm = createLifecycleManager({
+      config,
+      registry: mockRegistry,
+      sessionManager: mockSessionManager,
+    });
+
+    try {
+      lm.start(60_000);
+      const deadline = Date.now() + 1000;
+      while (Date.now() < deadline) {
+        if (vi.mocked(plugins.runtime.listSessions).mock.calls.length > 0) break;
+        await new Promise((r) => setTimeout(r, 10));
+      }
+      // Give any erroneous reap a chance to fire before asserting it did not.
+      await new Promise((r) => setTimeout(r, 20));
+      expect(destroySpy).not.toHaveBeenCalled();
+    } finally {
+      lm.stop();
+    }
+  });
+
+  it("never reaps a human / non-AO-named runtime session", async () => {
+    vi.mocked(mockSessionManager.list).mockResolvedValue([]);
+    plugins.runtime.listSessions = vi
+      .fn()
+      .mockResolvedValue([{ id: "my-personal-shell", createdAt: 0 }, { id: "app", createdAt: 0 }]);
+    const destroySpy = vi.mocked(plugins.runtime.destroy);
+
+    const lm = createLifecycleManager({
+      config,
+      registry: mockRegistry,
+      sessionManager: mockSessionManager,
+    });
+
+    try {
+      lm.start(60_000);
+      const deadline = Date.now() + 1000;
+      while (Date.now() < deadline) {
+        if (vi.mocked(plugins.runtime.listSessions).mock.calls.length > 0) break;
+        await new Promise((r) => setTimeout(r, 10));
+      }
+      await new Promise((r) => setTimeout(r, 20));
+      expect(destroySpy).not.toHaveBeenCalled();
+    } finally {
+      lm.stop();
+    }
+  });
+});

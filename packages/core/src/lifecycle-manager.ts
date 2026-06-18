@@ -15,9 +15,15 @@ import { readFile, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { recordActivityEvent } from "./activity-events.js";
 import {
+  DEFAULT_ORPHAN_GRACE_MS,
+  reconcileRuntimeOrphans,
+  type RuntimeForReconcile,
+} from "./runtime-orphans.js";
+import {
   ACTIVITY_STATE,
   SESSION_STATUS,
   TERMINAL_STATUSES,
+  isTerminalSession,
   type ActivityState,
   type LifecycleManager,
   type OpenCodeSessionManager,
@@ -502,6 +508,7 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
   let pollTimer: ReturnType<typeof setInterval> | null = null;
   let polling = false; // re-entrancy guard
   let allCompleteEmitted = false; // guard against repeated all_complete
+  let lastOrphanReapAt = 0; // throttle runtime-orphan reconciliation
   const branchAdoptionReservations = new Map<string, SessionId>();
 
   /**
@@ -3103,6 +3110,98 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
   }
 
   /** Run one polling cycle across all sessions. */
+  /** How often runtime-orphan reconciliation runs, independent of poll cadence. */
+  const ORPHAN_REAP_INTERVAL_MS = 60_000;
+
+  /**
+   * Reconcile live runtime sessions against tracked metadata and reap orphans —
+   * AO-named runtime sessions (`<sessionPrefix>-<number>`) that have NO
+   * non-terminal tracked session backing them.
+   *
+   * Lifecycle invariants preserved:
+   * - Never mutates any tracked session's state/lifecycle/metadata. Orphans by
+   *   definition have no active tracked session, so the single-authority rule
+   *   for terminal decisions (#1735) is untouched — we only kill runtime
+   *   sessions that nothing is tracking.
+   * - Runs inside the existing `polling` re-entrancy guard, after the main poll
+   *   work, and is throttled independently of the poll interval.
+   * - Best-effort: any failure is swallowed so it can never abort a poll cycle.
+   * - SAFETY: `reconcileRuntimeOrphans` only ever selects `<prefix>-<number>`
+   *   names (never human-created or orchestrator sessions), and a grace period
+   *   spares freshly-created sessions whose metadata may not be written yet.
+   */
+  async function reconcileOrphans(allSessions: Session[]): Promise<void> {
+    const now = Date.now();
+    if (now - lastOrphanReapAt < ORPHAN_REAP_INTERVAL_MS) return;
+    lastOrphanReapAt = now;
+
+    // Active = tracked AND non-terminal. These runtime sessions are never reaped.
+    const activeTrackedIds = new Set(
+      allSessions.filter((s) => !isTerminalSession(s)).map((s) => s.id),
+    );
+
+    // Group projects by runtime so each runtime is queried once with the set of
+    // prefixes it may own. Scope to this worker's project when project-scoped.
+    const projects =
+      scopedProjectId && config.projects[scopedProjectId]
+        ? { [scopedProjectId]: config.projects[scopedProjectId] }
+        : scopedProjectId
+          ? {}
+          : config.projects;
+
+    const byRuntime = new Map<string, RuntimeForReconcile>();
+    for (const project of Object.values(projects)) {
+      if (!project.sessionPrefix) continue;
+      const runtimeName = project.runtime ?? config.defaults.runtime;
+      const existing = byRuntime.get(runtimeName);
+      if (existing) {
+        existing.sessionPrefixes.push(project.sessionPrefix);
+        continue;
+      }
+      const runtime = registry.get<Runtime>("runtime", runtimeName);
+      if (!runtime) continue;
+      byRuntime.set(runtimeName, { runtime, sessionPrefixes: [project.sessionPrefix] });
+    }
+    if (byRuntime.size === 0) return;
+
+    try {
+      const report = await reconcileRuntimeOrphans({
+        runtimes: [...byRuntime.values()],
+        activeTrackedIds,
+        graceMs: DEFAULT_ORPHAN_GRACE_MS,
+        nowMs: now,
+        reap: true,
+        log: (message, data) => {
+          recordActivityEvent({
+            projectId: scopedProjectId,
+            source: "lifecycle",
+            kind: "lifecycle.runtime_orphan_reaped",
+            level: "warn",
+            summary: message,
+            data,
+          });
+        },
+      });
+      if (report.outcomes.length > 0) {
+        observer.recordOperation({
+          metric: "lifecycle_poll",
+          operation: "lifecycle.reap_runtime_orphans",
+          correlationId: createCorrelationId("lifecycle-orphan-reap"),
+          outcome: "success",
+          projectId: scopedProjectId,
+          data: {
+            reaped: report.outcomes.filter((o) => o.reaped).length,
+            failed: report.outcomes.filter((o) => !o.reaped).length,
+            orphans: report.orphans.map((o) => o.id),
+          },
+          level: "info",
+        });
+      }
+    } catch {
+      // Best-effort — orphan reaping must never break the poll loop.
+    }
+  }
+
   async function pollAll(): Promise<void> {
     const correlationId = createCorrelationId("lifecycle-poll");
     const startedAt = Date.now();
@@ -3188,6 +3287,10 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
           }
         }
       }
+      // Reconcile and reap orphaned runtime sessions (throttled internally).
+      // Runs after the main poll so tracked-session state is already settled.
+      await reconcileOrphans(sessions);
+
       if (scopedProjectId) {
         observer.recordOperation({
           metric: "lifecycle_poll",
