@@ -1,5 +1,48 @@
 # @made-by-moonlight/athene-plugin-agent-claude-code
 
+## 0.10.0
+
+### Minor Changes
+
+- dc706d5: Introduce `ATHENE_*` as the canonical environment-variable prefix, with full
+  backward compatibility for the legacy `AO_*` prefix. **Non-breaking / additive.**
+
+  Environment-variable names now live in a single source-of-truth module,
+  `packages/core/src/env.ts` (exported as `ENV` / `ENV_PREFIX` from
+  `@made-by-moonlight/athene-core`). The read side prefers the canonical
+  `ATHENE_*` name and transparently falls back to the legacy `AO_*` name
+  (`getEnvString` / `isEnvFlagEnabled`). The set side emits BOTH names on every
+  spawned child process (`withLegacyEnvAliases`), and generated agent hook scripts
+  (claude-code metadata/subagent-blocker bash + node variants, the gh/git PATH
+  wrappers) read with the same `ATHENE_*`-preferred, `AO_*`-fallback logic.
+
+  What this means:
+  - New code and docs should prefer `ATHENE_*` (e.g. `ATHENE_CONFIG_PATH`,
+    `ATHENE_SHELL`, `ATHENE_PUBLIC_URL`).
+  - Existing setups keep working unchanged: anything exporting `AO_*` — the live
+    `ao` fleet, `~/.ao/bin` wrappers, already-spawned sessions, external scripts,
+    reverse-proxy configs — is still fully honored. `ATHENE_*` wins when both are
+    set.
+
+  Out of scope (unchanged): the `~/.ao/bin` PATH wrappers, `.ao/` workspace
+  directories, the `ao` CLI binary, and the `@made-by-moonlight/athene-*` package
+  names.
+
+### Patch Changes
+
+- 5bd7af9: fix(agent-claude-code): block native subagent dispatch in orchestrator sessions
+
+  Ship a PreToolUse hook (`subagent-blocker.cjs`) that deterministically blocks
+  native Claude `Task`/`Agent` subagent dispatch in orchestrator sessions, turning
+  the prompt-only rule into an enforced guard. The hook is installed in every
+  workspace but runtime-gated to `ATHENE_CALLER_TYPE === "orchestrator"`, so worker
+  sessions (`ATHENE_CALLER_TYPE === "agent"`) are unaffected. Read-only Explore/Plan
+  investigation agents are still permitted; everything else must go through
+  `ao spawn`.
+
+- Updated dependencies [dc706d5]
+  - @made-by-moonlight/athene-core@0.10.0
+
 ## 0.9.1
 
 ### Patch Changes

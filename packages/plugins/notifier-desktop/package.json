@@ -1,6 +1,6 @@
 {
   "name": "@made-by-moonlight/athene-plugin-notifier-desktop",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "Notifier plugin: OS desktop notifications",
   "license": "MIT",
   "type": "module",

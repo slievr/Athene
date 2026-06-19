@@ -1,6 +1,6 @@
 {
   "name": "@made-by-moonlight/athene-plugin-workspace-clone",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "Workspace plugin: git clone",
   "license": "MIT",
   "type": "module",

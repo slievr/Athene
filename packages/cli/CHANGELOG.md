@@ -1,5 +1,71 @@
 # @made-by-moonlight/athene-cli
 
+## 0.10.0
+
+### Minor Changes
+
+- dc706d5: Introduce `ATHENE_*` as the canonical environment-variable prefix, with full
+  backward compatibility for the legacy `AO_*` prefix. **Non-breaking / additive.**
+
+  Environment-variable names now live in a single source-of-truth module,
+  `packages/core/src/env.ts` (exported as `ENV` / `ENV_PREFIX` from
+  `@made-by-moonlight/athene-core`). The read side prefers the canonical
+  `ATHENE_*` name and transparently falls back to the legacy `AO_*` name
+  (`getEnvString` / `isEnvFlagEnabled`). The set side emits BOTH names on every
+  spawned child process (`withLegacyEnvAliases`), and generated agent hook scripts
+  (claude-code metadata/subagent-blocker bash + node variants, the gh/git PATH
+  wrappers) read with the same `ATHENE_*`-preferred, `AO_*`-fallback logic.
+
+  What this means:
+  - New code and docs should prefer `ATHENE_*` (e.g. `ATHENE_CONFIG_PATH`,
+    `ATHENE_SHELL`, `ATHENE_PUBLIC_URL`).
+  - Existing setups keep working unchanged: anything exporting `AO_*` — the live
+    `ao` fleet, `~/.ao/bin` wrappers, already-spawned sessions, external scripts,
+    reverse-proxy configs — is still fully honored. `ATHENE_*` wins when both are
+    set.
+
+  Out of scope (unchanged): the `~/.ao/bin` PATH wrappers, `.ao/` workspace
+  directories, the `ao` CLI binary, and the `@made-by-moonlight/athene-*` package
+  names.
+
+### Patch Changes
+
+- f5785e5: Fix global npm install broken by stale pre-rename package names
+
+  `athene start` was failing with "Dependencies not installed" after `npm install -g` because two files still referenced the old short package names from before the `ao → athene` rename:
+  - `packages/athene/bin/postinstall.js` looked for `@made-by-moonlight/cli`, `@made-by-moonlight/core`, and `@made-by-moonlight/web` — packages that no longer exist.
+  - The published 0.9.2 `dist/lib/preflight.js` looked for `@made-by-moonlight/core` instead of `@made-by-moonlight/athene-core`.
+
+  Updated `postinstall.js` to use the correct `athene-cli`, `athene-core`, and `athene-web` names. The CLI source (`preflight.ts`) was already correct and the fix will be included in the rebuilt dist.
+
+- Updated dependencies [5bd7af9]
+- Updated dependencies [dc706d5]
+  - @made-by-moonlight/athene-plugin-agent-claude-code@0.10.0
+  - @made-by-moonlight/athene-core@0.10.0
+  - @made-by-moonlight/athene-web@0.10.0
+  - @made-by-moonlight/athene-plugin-agent-aider@0.10.0
+  - @made-by-moonlight/athene-plugin-agent-codex@0.10.0
+  - @made-by-moonlight/athene-plugin-agent-cursor@0.10.0
+  - @made-by-moonlight/athene-plugin-agent-grok@0.2.0
+  - @made-by-moonlight/athene-plugin-agent-kimicode@0.10.0
+  - @made-by-moonlight/athene-plugin-agent-opencode@0.10.0
+  - @made-by-moonlight/athene-plugin-notifier-composio@0.10.0
+  - @made-by-moonlight/athene-plugin-notifier-dashboard@0.10.0
+  - @made-by-moonlight/athene-plugin-notifier-desktop@0.10.0
+  - @made-by-moonlight/athene-plugin-notifier-discord@0.10.0
+  - @made-by-moonlight/athene-plugin-notifier-openclaw@0.10.0
+  - @made-by-moonlight/athene-plugin-notifier-slack@0.10.0
+  - @made-by-moonlight/athene-plugin-notifier-webhook@0.10.0
+  - @made-by-moonlight/athene-plugin-runtime-process@0.10.0
+  - @made-by-moonlight/athene-plugin-runtime-tmux@0.10.0
+  - @made-by-moonlight/athene-plugin-scm-github@0.10.0
+  - @made-by-moonlight/athene-plugin-terminal-iterm2@0.10.0
+  - @made-by-moonlight/athene-plugin-terminal-web@0.10.0
+  - @made-by-moonlight/athene-plugin-tracker-github@0.10.0
+  - @made-by-moonlight/athene-plugin-tracker-linear@0.10.0
+  - @made-by-moonlight/athene-plugin-workspace-clone@0.10.0
+  - @made-by-moonlight/athene-plugin-workspace-worktree@0.10.0
+
 ## 0.9.2
 
 ### Patch Changes

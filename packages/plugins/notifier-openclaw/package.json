@@ -1,6 +1,6 @@
 {
   "name": "@made-by-moonlight/athene-plugin-notifier-openclaw",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "Notifier plugin: OpenClaw webhook notifications",
   "license": "MIT",
   "type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "@made-by-moonlight/athene-plugin-runtime-tmux",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "Runtime plugin: tmux sessions",
   "license": "MIT",
   "type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "@made-by-moonlight/athene-plugin-scm-github",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "SCM plugin: GitHub (PRs, CI, reviews)",
   "license": "MIT",
   "type": "module",
