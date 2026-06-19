@@ -1569,15 +1569,6 @@ describe("subagent-blocker script — runtime behavior", () => {
     expect(parsed.hookSpecificOutput.permissionDecision).toBe("deny");
   });
 
-  it("meta-orchestrator + Task general-purpose → deny JSON", () => {
-    const out = runBlocker(
-      JSON.stringify({ tool_name: "Task", tool_input: { subagent_type: "general-purpose" } }),
-      "meta-orchestrator",
-    );
-    const parsed = JSON.parse(out);
-    expect(parsed.hookSpecificOutput.permissionDecision).toBe("deny");
-  });
-
   it("orchestrator + Task with missing subagent_type → deny JSON", () => {
     const out = runBlocker(JSON.stringify({ tool_name: "Task", tool_input: {} }), "orchestrator");
     const parsed = JSON.parse(out);

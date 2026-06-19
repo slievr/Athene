@@ -674,10 +674,10 @@ process.exit(0);
  * interpretation, no platform branching. JSON is parsed from stdin.
  *
  * Runtime-gated, not scaffold-time: the script is installed in every
- * workspace but no-ops (exit 0, no output) unless `process.env.AO_CALLER_TYPE`
- * is an orchestrating role (`orchestrator` or `meta-orchestrator`) — both
- * delegate all work through `ao spawn` and forbid native subagents — so worker
- * sessions are unaffected and `setupWorkspaceHooks` stays role-agnostic.
+ * workspace but no-ops (exit 0, no output) unless
+ * `process.env.AO_CALLER_TYPE === "orchestrator"`, so worker sessions
+ * (`AO_CALLER_TYPE === "agent"`) are unaffected and `setupWorkspaceHooks`
+ * stays role-agnostic.
  *
  * Fails open: any non-Task/Agent tool, a non-orchestrator caller, or
  * unparseable stdin exits 0 with no output. Exported for testing.
@@ -691,11 +691,10 @@ export const SUBAGENT_BLOCKER_SCRIPT_NODE = `#!/usr/bin/env node
 
 const { readFileSync } = require("node:fs");
 
-// Runtime gating: only act in orchestrating sessions (orchestrator /
-// meta-orchestrator). Workers and every other caller type are unaffected even
+// Runtime gating: only act in orchestrator sessions. Worker sessions
+// (AO_CALLER_TYPE === "agent") and every other caller type are unaffected even
 // though the hook is installed everywhere.
-const callerType = process.env.AO_CALLER_TYPE;
-if (callerType !== "orchestrator" && callerType !== "meta-orchestrator") {
+if (process.env.AO_CALLER_TYPE !== "orchestrator") {
   process.exit(0);
 }
 
