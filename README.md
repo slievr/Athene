@@ -11,7 +11,7 @@
 Spawn parallel AI coding agents, each in its own git worktree. Agents autonomously fix CI failures, address review comments, and open PRs — you supervise from one dashboard.
 
 [![GitHub stars](https://img.shields.io/github/stars/slievr/Athene?style=flat-square)](https://github.com/slievr/Athene/stargazers)
-[![npm version](https://img.shields.io/npm/v/%40aoagents%2Fao?style=flat-square)](https://www.npmjs.com/package/@made-by-moonlight/athene)
+[![npm version](https://img.shields.io/npm/v/%40made-by-moonlight%2Fathene?style=flat-square)](https://www.npmjs.com/package/@made-by-moonlight/athene)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![PRs merged](https://img.shields.io/badge/PRs_merged-61-brightgreen?style=flat-square)](https://github.com/slievr/Athene/pulls?q=is%3Amerged)
 [![Tests](https://img.shields.io/badge/test_cases-3%2C288-blue?style=flat-square)](https://github.com/slievr/Athene/releases/tag/metrics-v1)
@@ -47,7 +47,7 @@ Athene manages fleets of AI coding agents working in parallel on your codebase. 
 
 > **Prerequisites:** [Node.js 20.18.3+](https://nodejs.org), [Git 2.25+](https://git-scm.com), [`gh` CLI](https://cli.github.com), and:
 > - **macOS / Linux:** [tmux](https://github.com/tmux/tmux/wiki/Installing) — install via `brew install tmux` or `sudo apt install tmux`.
-> - **Windows:** PowerShell 7+ recommended. tmux is **not** required — AO uses native ConPTY via the `runtime-process` plugin (the default on Windows). Set `ATHENE_SHELL=bash` if you have Git Bash and prefer it (the legacy `AO_SHELL` is still honored).
+> - **Windows:** PowerShell 7+ recommended. tmux is **not** required — Athene uses native ConPTY via the `runtime-process` plugin (the default on Windows). Set `ATHENE_SHELL=bash` if you have Git Bash and prefer it (the legacy `AO_SHELL` is still honored).
 
 ### Install
 
@@ -90,7 +90,7 @@ Generate the completion file from the installed CLI:
 
 ```bash
 mkdir -p ~/.zsh/completions
-athene completion zsh > ~/.zsh/completions/_ao
+athene completion zsh > ~/.zsh/completions/_athene
 ```
 
 Then make sure the directory is on your `fpath` before `compinit` runs:
@@ -101,14 +101,14 @@ autoload -Uz compinit
 compinit
 ```
 
-For Oh My Zsh, install the same generated file into a custom plugin directory and add `ao` to your plugin list:
+For Oh My Zsh, install the same generated file into a custom plugin directory and add `athene` to your plugin list:
 
 ```bash
-mkdir -p "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/ao"
-athene completion zsh > "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/ao/_ao"
+mkdir -p "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/athene"
+athene completion zsh > "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/athene/_athene"
 ```
 
-If you are contributing from a source checkout, you can also symlink the repo copy at [`completions/_ao`](completions/_ao).
+If you are contributing from a source checkout, you can also symlink the repo copy at [`completions/_athene`](completions/_athene).
 
 ### Start
 
@@ -140,7 +140,7 @@ athene start ~/path/to/another-repo
 4. **Reactions handle feedback** — CI failures and review comments are automatically routed back to the agent
 5. **You review and merge** — you only get pulled in when human judgment is needed
 
-The orchestrator agent uses the [AO CLI](docs/CLI.md) internally to manage sessions. You don't need to learn or use the CLI — the dashboard and orchestrator handle everything.
+The orchestrator agent uses the [Athene CLI](docs/CLI.md) internally to manage sessions. You don't need to learn or use the CLI — the dashboard and orchestrator handle everything.
 
 ## Configuration
 
@@ -187,9 +187,9 @@ See [`agent-orchestrator.yaml.example`](agent-orchestrator.yaml.example) for the
 
 ## Remote Access
 
-AO keeps your Mac awake while running, so you can access the dashboard remotely (e.g., via Tailscale from your phone) without the machine going to sleep.
+Athene keeps your Mac awake while running, so you can access the dashboard remotely (e.g., via Tailscale from your phone) without the machine going to sleep.
 
-**How it works:** On macOS, AO automatically holds an idle-sleep prevention assertion using `caffeinate`. When AO exits, the assertion is released.
+**How it works:** On macOS, Athene automatically holds an idle-sleep prevention assertion using `caffeinate`. When Athene exits, the assertion is released.
 
 ```yaml
 # agent-orchestrator.yaml
@@ -198,11 +198,11 @@ power:
   preventIdleSleep: true  # Default on macOS; no-op on Linux and Windows
 ```
 
-Set to `false` if you want to allow idle sleep while AO runs.
+Set to `false` if you want to allow idle sleep while Athene runs.
 
 **Lid-close limitation:** macOS enforces lid-close sleep at the hardware level — no userspace assertion can override it. If you need remote access while traveling with the lid closed, use [clamshell mode](https://support.apple.com/en-us/102505) (external power + display + input device).
 
-**Linux / Windows:** AO does not currently hold a wake assertion on these platforms. On Linux, idle-sleep behaviour is governed by your desktop environment / `systemd-logind`; configure that directly. On Windows, set the OS power plan if remote access matters while idle.
+**Linux / Windows:** Athene does not currently hold a wake assertion on these platforms. On Linux, idle-sleep behaviour is governed by your desktop environment / `systemd-logind`; configure that directly. On Windows, set the OS power plan if remote access matters while idle.
 
 ## Plugin Architecture
 
@@ -233,7 +233,7 @@ Running one AI agent in a terminal is easy. Running 30 across different issues, 
 | Doc                                      | What it covers                                               |
 | ---------------------------------------- | ------------------------------------------------------------ |
 | [Setup Guide](SETUP.md)                  | Detailed installation, configuration, and troubleshooting    |
-| [CLI Reference](docs/CLI.md)             | All `ao` commands (mostly used by the orchestrator agent)    |
+| [CLI Reference](docs/CLI.md)             | All `athene` commands (mostly used by the orchestrator agent) |
 | [Examples](examples/)                    | Config templates (GitHub, Linear, multi-project, auto-merge) |
 | [Development Guide](docs/DEVELOPMENT.md) | Architecture, conventions, plugin pattern                    |
 | [Contributing](CONTRIBUTING.md)          | How to contribute, build plugins, PR process                 |
