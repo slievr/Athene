@@ -99,8 +99,8 @@ describe("SidebarOrchestrators", () => {
     expect(row!.querySelector(".sidebar-session-dot")).toBeNull();
   });
 
-  it("renders nothing when there are no orchestrators", () => {
-    const { container } = render(
+  it("renders Parliament label with create button when there are no orchestrators", () => {
+    render(
       <SidebarOrchestrators
         collapsed={false}
         metaOrchestrators={[]}
@@ -110,7 +110,8 @@ describe("SidebarOrchestrators", () => {
         onNavigate={() => {}}
       />,
     );
-    expect(container.firstChild).toBeNull();
+    expect(screen.getByText("Parliament")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /new meta orchestrator/i })).toBeInTheDocument();
   });
 
   it("renders the collapsed glyph/dot cluster without inline styles", () => {

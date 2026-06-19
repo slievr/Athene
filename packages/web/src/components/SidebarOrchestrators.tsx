@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getProjectColor, projectColorBgClass } from "@/lib/project-color";
 import { getAttentionLevel, type DashboardSession } from "@/lib/types";
@@ -67,8 +67,64 @@ export function SidebarOrchestrators({
 }: SidebarOrchestratorsProps) {
   const router = useRouter();
   const [startingMeta, setStartingMeta] = useState<Set<string>>(new Set());
+  const [showCreate, setShowCreate] = useState(false);
+  const [createName, setCreateName] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const createInputRef = useRef<HTMLInputElement>(null);
 
-  if (metaOrchestrators.length === 0 && orchestrators.length === 0) return null;
+  useEffect(() => {
+    if (showCreate) createInputRef.current?.focus();
+  }, [showCreate]);
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = createName.trim();
+    if (!name) return;
+    setCreating(true);
+    setCreateError(null);
+    try {
+      const res = await fetch("/api/meta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, scope: "all" }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setCreateError(data.error ?? "Failed to create");
+        return;
+      }
+      setShowCreate(false);
+      setCreateName("");
+      router.refresh();
+    } catch {
+      setCreateError("Network error");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  if (metaOrchestrators.length === 0 && orchestrators.length === 0 && !showCreate) {
+    if (collapsed) return null;
+    return (
+      <div className="project-sidebar__orchestrators">
+        <div className="project-sidebar__nav-label">
+          <span>Parliament</span>
+          <button
+            type="button"
+            className="project-sidebar__add-btn"
+            aria-label="New meta orchestrator"
+            onClick={() => setShowCreate(true)}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleClick =
     (href: string, session?: DashboardSession) => (e: React.MouseEvent) => {
@@ -140,7 +196,70 @@ export function SidebarOrchestrators({
     <div className="project-sidebar__orchestrators">
       <div className="project-sidebar__nav-label">
         <span>Parliament</span>
+        <button
+          type="button"
+          className="project-sidebar__add-btn"
+          aria-label="New meta orchestrator"
+          onClick={() => {
+            setShowCreate((v) => !v);
+            setCreateError(null);
+            setCreateName("");
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
       </div>
+      {showCreate && (
+        <form
+          onSubmit={handleCreateSubmit}
+          className="project-sidebar__orch-create-form"
+        >
+          <input
+            ref={createInputRef}
+            type="text"
+            value={createName}
+            onChange={(e) => {
+              setCreateName(e.target.value);
+              setCreateError(null);
+            }}
+            placeholder="Name"
+            className="project-sidebar__orch-create-input"
+            disabled={creating}
+            aria-label="Meta orchestrator name"
+          />
+          {createError && (
+            <span className="project-sidebar__orch-create-error">{createError}</span>
+          )}
+          <div className="project-sidebar__orch-create-actions">
+            <button
+              type="submit"
+              className="project-sidebar__orch-create-submit"
+              disabled={creating || !createName.trim()}
+            >
+              {creating ? (
+                <span className="project-sidebar__orch-start-spinner" aria-hidden="true" />
+              ) : (
+                "Create"
+              )}
+            </button>
+            <button
+              type="button"
+              className="project-sidebar__orch-create-cancel"
+              onClick={() => {
+                setShowCreate(false);
+                setCreateName("");
+                setCreateError(null);
+              }}
+              disabled={creating}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
       {showMeta ? (
         <>
           {showBothGroups ? (
