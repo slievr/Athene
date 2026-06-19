@@ -50,23 +50,23 @@ export function resolveNodeModulesPackage(fromDir, ...segments) {
 }
 
 export function findWebDir() {
-  const directWebDir = findPackageUp(__dirname, "@made-by-moonlight", "web");
+  const directWebDir = findPackageUp(__dirname, "@made-by-moonlight", "athene-web");
   if (directWebDir) return directWebDir;
 
-  const cliDir = findPackageUp(__dirname, "@made-by-moonlight", "cli");
+  const cliDir = findPackageUp(__dirname, "@made-by-moonlight", "athene-cli");
   if (!cliDir) return null;
 
-  return resolveNodeModulesPackage(cliDir, "@made-by-moonlight", "web");
+  return resolveNodeModulesPackage(cliDir, "@made-by-moonlight", "athene-web");
 }
 
 export function findBetterSqlite3Dir() {
   const directBetterSqlite3Dir = findPackageUp(__dirname, "better-sqlite3");
   if (directBetterSqlite3Dir) return directBetterSqlite3Dir;
 
-  const cliDir = findPackageUp(__dirname, "@made-by-moonlight", "cli");
+  const cliDir = findPackageUp(__dirname, "@made-by-moonlight", "athene-cli");
   if (!cliDir) return null;
 
-  const coreDir = resolveNodeModulesPackage(cliDir, "@made-by-moonlight", "core");
+  const coreDir = resolveNodeModulesPackage(cliDir, "@made-by-moonlight", "athene-core");
   if (!coreDir) return null;
 
   return (
