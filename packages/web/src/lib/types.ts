@@ -24,6 +24,7 @@ export type {
   CanonicalRuntimeState,
   CanonicalRuntimeReason,
   DashboardAttentionZoneMode,
+  ContextWindowUsage,
 } from "@made-by-moonlight/athene-core/types";
 
 import {
@@ -48,6 +49,7 @@ import {
   type CanonicalRuntimeState,
   type CanonicalRuntimeReason,
   type DashboardAttentionZoneMode,
+  type ContextWindowUsage,
 } from "@made-by-moonlight/athene-core/types";
 import type { AgentReportedState } from "@made-by-moonlight/athene-core";
 
@@ -119,6 +121,8 @@ export interface DashboardSession {
   summary: string | null;
   /** True when the summary is a low-quality fallback (e.g. truncated spawn prompt) */
   summaryIsFallback: boolean;
+  /** Live context-window occupancy for the agent's most recent turn (null/undefined when unavailable). */
+  contextWindow?: ContextWindowUsage | null;
   createdAt: string;
   lastActivityAt: string;
   pr: DashboardPR | null;

@@ -9,6 +9,7 @@ import { DashboardNotificationButton } from "./DashboardNotificationButton";
 import { SessionDetailPRCard } from "./SessionDetailPRCard";
 import { askAgentToFix } from "./session-detail-agent-actions";
 import { StatusBadge } from "./StatusBadge";
+import { ContextWindowBadge } from "./ContextWindowBadge";
 import { buildGitHubBranchUrl } from "./session-detail-utils";
 import { projectDashboardPath } from "@/lib/routes";
 import { GitBranchIcon, OrchestratorZonePills } from "./SessionDetailHeader.parts";
@@ -164,6 +165,7 @@ export function SessionDetailHeader({
           </div>
           <div className="topbar-session-pills">
             <StatusBadge session={session} variant="pill" />
+            <ContextWindowBadge contextWindow={session.contextWindow} />
             {orchestratorZones ? <OrchestratorZonePills zones={orchestratorZones} /> : null}
           </div>
         </div>
@@ -199,6 +201,7 @@ export function SessionDetailHeader({
             ) : null}
           </div>
           <StatusBadge session={session} variant="pill" />
+          <ContextWindowBadge contextWindow={session.contextWindow} />
           <span className="dashboard-app-header__session-id topbar-mobile-only">{session.id}</span>
         </>
       )}

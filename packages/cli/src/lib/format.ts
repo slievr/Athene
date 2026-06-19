@@ -1,5 +1,13 @@
 import chalk from "chalk";
-import type { CIStatus, ReviewDecision, ActivityState } from "@made-by-moonlight/athene-core";
+import type {
+  CIStatus,
+  ReviewDecision,
+  ActivityState,
+  ContextWindowUsage,
+} from "@made-by-moonlight/athene-core";
+
+/** Fraction above which a session's context window is flagged as nearly full. */
+export const CONTEXT_WINDOW_WARN_PCT = 0.8;
 
 export function header(title: string): string {
   const line = "─".repeat(76);
@@ -102,6 +110,25 @@ export function activityIcon(activity: ActivityState | null): string {
     case null:
       return chalk.dim("unknown");
   }
+}
+
+/** Compact token count: 145000 → "145k", 1000000 → "1.0M". */
+export function formatTokenCount(tokens: number): string {
+  if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(1)}M`;
+  if (tokens >= 1_000) return `${Math.round(tokens / 1_000)}k`;
+  return String(tokens);
+}
+
+/**
+ * Format context-window occupancy for terminal output, e.g. "ctx 145k/200k (73%)".
+ * Flags occupancy over {@link CONTEXT_WINDOW_WARN_PCT} with a red warning marker.
+ */
+export function formatContextWindow(ctx: ContextWindowUsage): string {
+  const pct = Math.round(ctx.pct * 100);
+  const label = `ctx ${formatTokenCount(ctx.usedTokens)}/${formatTokenCount(ctx.limitTokens)} (${pct}%)`;
+  if (ctx.pct > CONTEXT_WINDOW_WARN_PCT) return chalk.red(`⚠ ${label}`);
+  if (pct >= 60) return chalk.yellow(label);
+  return chalk.dim(label);
 }
 
 // eslint-disable-next-line no-control-regex

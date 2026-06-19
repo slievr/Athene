@@ -8,6 +8,7 @@ import {
   type ActivityDetection,
   type ActivityState,
   type CostEstimate,
+  type ContextWindowUsage,
   type PluginModule,
   type ProjectConfig,
   type ProcessProbeResult,
@@ -761,18 +762,22 @@ export const manifest = {
 // JSONL Helpers
 // =============================================================================
 
+interface UsageFields {
+  input_tokens?: number;
+  output_tokens?: number;
+  cache_read_input_tokens?: number;
+  cache_creation_input_tokens?: number;
+}
+
 interface JsonlLine {
   type?: string;
   summary?: string;
-  message?: { content?: string; role?: string };
+  model?: string;
+  // Newer Claude Code JSONL nests usage and model under `message`.
+  message?: { content?: string; role?: string; model?: string; usage?: UsageFields };
   // Cost/usage fields
   costUSD?: number;
-  usage?: {
-    input_tokens?: number;
-    output_tokens?: number;
-    cache_read_input_tokens?: number;
-    cache_creation_input_tokens?: number;
-  };
+  usage?: UsageFields;
   inputTokens?: number;
   outputTokens?: number;
   estimatedCostUsd?: number;
@@ -920,6 +925,44 @@ function extractCost(lines: JsonlLine[]): CostEstimate | undefined {
     outputTokens,
     estimatedCostUsd: totalCost,
   };
+}
+
+/** Standard context-window limit for Claude 4.x Opus/Sonnet models. */
+export const DEFAULT_CONTEXT_LIMIT_TOKENS = 200_000;
+/** Context-window limit for the 1M ("[1m]") model variants. */
+export const MILLION_CONTEXT_LIMIT_TOKENS = 1_000_000;
+
+/**
+ * Map a model id from the JSONL to its context-window limit in tokens.
+ * The 1M-context variants carry a `[1m]` marker in the model id (e.g.
+ * `claude-opus-4-8[1m]`); everything else uses the standard 200k window.
+ */
+export function contextLimitForModel(model: string | undefined): number {
+  if (model && /\[?1m\]?/i.test(model)) {
+    return MILLION_CONTEXT_LIMIT_TOKENS;
+  }
+  return DEFAULT_CONTEXT_LIMIT_TOKENS;
+}
+
+/**
+ * Compute live context-window occupancy from the LAST usage entry in the JSONL
+ * (not a sum). The most recent assistant turn's input + cache-read +
+ * cache-creation tokens are exactly what currently fills the context window.
+ */
+export function extractContextWindow(lines: JsonlLine[]): ContextWindowUsage | undefined {
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i];
+    const usage = line?.message?.usage ?? line?.usage;
+    if (!usage) continue;
+    const usedTokens =
+      (usage.input_tokens ?? 0) +
+      (usage.cache_read_input_tokens ?? 0) +
+      (usage.cache_creation_input_tokens ?? 0);
+    if (usedTokens <= 0) continue;
+    const limitTokens = contextLimitForModel(line?.message?.model ?? line?.model);
+    return { usedTokens, limitTokens, pct: usedTokens / limitTokens };
+  }
+  return undefined;
 }
 
 // =============================================================================
@@ -1286,6 +1329,7 @@ function createClaudeCodeAgent(): Agent {
         agentSessionId,
         metadata: { claudeSessionUuid: agentSessionId },
         cost: extractCost(lines),
+        contextWindow: extractContextWindow(lines),
       };
     },
 

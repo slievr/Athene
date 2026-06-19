@@ -719,12 +719,28 @@ export interface AgentSessionInfo {
   metadata?: Record<string, string>;
   /** Estimated cost so far */
   cost?: CostEstimate;
+  /**
+   * Live context-window occupancy for the agent's most recent turn.
+   * Unlike {@link cost} (cumulative across the whole session), this reflects
+   * how full the context window is *right now*. Optional — agents that cannot
+   * introspect per-turn token usage omit it.
+   */
+  contextWindow?: ContextWindowUsage;
 }
 
 export interface CostEstimate {
   inputTokens: number;
   outputTokens: number;
   estimatedCostUsd: number;
+}
+
+export interface ContextWindowUsage {
+  /** Tokens occupying the context window on the last turn (input + cache read + cache creation). */
+  usedTokens: number;
+  /** The model's maximum context-window size in tokens. */
+  limitTokens: number;
+  /** Fraction of the limit currently in use, 0..1. */
+  pct: number;
 }
 
 // =============================================================================
