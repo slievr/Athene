@@ -8,10 +8,10 @@ name: Release
 # @made-by-moonlight/* packages to npm, then this workflow tags and creates the GitHub
 # release.
 #
-# Publishing uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret required.
-# id-token: write lets GitHub Actions mint an OIDC token; the npm CLI exchanges
-# it automatically for a short-lived publish credential.
-# See: https://docs.npmjs.com/trusted-publishers
+# Publishing uses an NPM_TOKEN secret (Automation token from npmjs.com).
+# Add it under repo Settings → Secrets → Actions → NPM_TOKEN.
+# Note: npm Trusted Publishing (OIDC) does not work here because changeset publish
+# calls pnpm publish, which does not implement npm's OIDC token exchange.
 
 on:
   workflow_run:
@@ -30,7 +30,6 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
-  id-token: write # npm provenance via OIDC
 
 jobs:
   release:
@@ -50,6 +49,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+          registry-url: "https://registry.npmjs.org"
       - run: echo "HUSKY=0" >> $GITHUB_ENV
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r build
@@ -75,11 +75,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Publish when there are no pending changesets (Version Packages PR was merged).
-      # Running pnpm release directly gives the npm CLI full access to the OIDC
-      # environment for Trusted Publishing authentication.
       - name: Publish to npm
         if: steps.changesets.outputs.hasChangesets == 'false'
         run: pnpm release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Determine release state. Each downstream step (tag push, GH
       # release creation) is gated on its own piece of state so the
