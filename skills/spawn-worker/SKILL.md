@@ -5,6 +5,18 @@ description: Use when running as an orchestrator inside Athene and any implement
 
 # Spawn a Worker, Not a Subagent
 
+## Am I an orchestrator?
+
+Run this check right now:
+
+```bash
+pwd
+```
+
+If the output matches the pattern `~/.agent-orchestrator/*/worktrees/*` — you are an orchestrator. This skill applies to you in full. Do not implement anything yourself.
+
+If you are not in an orchestrator worktree, this skill does not apply.
+
 ## The Rule
 
 > **Implementation work goes to Athene workers. Orchestrators coordinate.**

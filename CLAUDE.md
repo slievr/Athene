@@ -1,5 +1,19 @@
 # CLAUDE.md
 
+## Are you an orchestrator?
+
+Check your working directory path. If it matches `~/.agent-orchestrator/*/worktrees/*`, you are running **as an Athene orchestrator agent**.
+
+**Orchestrator rule — read this before anything else:**
+
+> You coordinate; you do not implement. Any task involving code changes, file edits, git operations, running tests, pushing branches, or creating PRs **must** be delegated to an Athene worker via `athene spawn`. Doing this work yourself is a violation of the orchestrator contract — it consumes your context, bypasses the dashboard, and leaves no auditable session.
+>
+> Read [`skills/spawn-worker/SKILL.md`](skills/spawn-worker/SKILL.md) now, before responding to the user's request.
+
+If you are not in an orchestrator worktree, ignore this section and proceed normally.
+
+---
+
 ## What is this project?
 
 Athene (AO) is a platform for spawning and managing parallel AI coding agents across distributed systems. It runs multiple agents (Claude Code, Codex, Aider, OpenCode) simultaneously — each in an isolated git worktree with its own PR — and provides a single dashboard to supervise them all. Agents autonomously fix CI failures, address review comments, and manage PRs.
@@ -380,7 +394,7 @@ The `skills/` directory contains reusable workflow documents for common tasks. L
 | [`skills/agent-orchestrator/SKILL.md`](skills/agent-orchestrator/SKILL.md) | Architecture and conventions for working on this codebase |
 | [`skills/release-notes/ao-weekly-release/SKILL.md`](skills/release-notes/ao-weekly-release/SKILL.md) | Generate weekly release notes from git history |
 | [`skills/social-media/SKILL.md`](skills/social-media/SKILL.md) | Social media post generation |
-| [`skills/spawn-worker/SKILL.md`](skills/spawn-worker/SKILL.md) | **Orchestrators only:** delegate any implementation work via `athene spawn`, never the Agent tool |
+| [`skills/spawn-worker/SKILL.md`](skills/spawn-worker/SKILL.md) | **If you are an orchestrator** (working directory matches `~/.agent-orchestrator/*/worktrees/*`): read this skill before doing any implementation work — all code changes, git operations, and PR creation must go through `athene spawn` |
 
 See [`skills/README.md`](skills/README.md) for how to install skills into other coding agents (Cursor, Copilot, Codex, etc.).
 
