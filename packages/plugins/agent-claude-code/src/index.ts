@@ -659,6 +659,93 @@ process.exit(0);
 `;
 
 // =============================================================================
+// Subagent Blocker Hook Script
+// =============================================================================
+
+/**
+ * PreToolUse hook that blocks native Claude subagent dispatch (the `Task` /
+ * `Agent` tools) in ORCHESTRATOR sessions only. Orchestrators must delegate
+ * implementation work through `ao spawn` (a tracked worker session with a
+ * worktree, branch, lifecycle, and dashboard visibility); only read-only
+ * Explore / Plan investigation agents are permitted.
+ *
+ * Implemented in Node.js and invoked the same way on every platform
+ * (`node .claude/subagent-blocker.cjs`) — no bash, no jq, no shebang
+ * interpretation, no platform branching. JSON is parsed from stdin.
+ *
+ * Runtime-gated, not scaffold-time: the script is installed in every
+ * workspace but no-ops (exit 0, no output) unless
+ * `process.env.AO_CALLER_TYPE === "orchestrator"`, so worker sessions
+ * (`AO_CALLER_TYPE === "agent"`) are unaffected and `setupWorkspaceHooks`
+ * stays role-agnostic.
+ *
+ * Fails open: any non-Task/Agent tool, a non-orchestrator caller, or
+ * unparseable stdin exits 0 with no output. Exported for testing.
+ */
+export const SUBAGENT_BLOCKER_SCRIPT_NODE = `#!/usr/bin/env node
+// Subagent Blocker Hook for Athene
+//
+// Blocks native Claude subagent dispatch (Task/Agent) in orchestrator
+// sessions. Orchestrators delegate via \`ao spawn\`; only read-only
+// Explore/Plan investigation agents are allowed. No-ops for workers.
+
+const { readFileSync } = require("node:fs");
+
+// Runtime gating: only act in orchestrator sessions. Worker sessions
+// (AO_CALLER_TYPE === "agent") and every other caller type are unaffected even
+// though the hook is installed everywhere.
+if (process.env.AO_CALLER_TYPE !== "orchestrator") {
+  process.exit(0);
+}
+
+let inputRaw = "";
+try {
+  inputRaw = readFileSync(0, "utf-8");
+} catch {
+  process.exit(0);
+}
+
+let payload;
+try {
+  payload = JSON.parse(inputRaw || "{}");
+} catch {
+  process.exit(0);
+}
+
+const toolName = typeof payload.tool_name === "string" ? payload.tool_name : "";
+if (toolName !== "Task" && toolName !== "Agent") {
+  process.exit(0);
+}
+
+const toolInput =
+  payload.tool_input && typeof payload.tool_input === "object" ? payload.tool_input : {};
+const subagentType =
+  typeof toolInput.subagent_type === "string" ? toolInput.subagent_type.toLowerCase() : "";
+
+// Read-only investigation agents are permitted from the orchestrator.
+if (subagentType === "explore" || subagentType === "plan") {
+  process.exit(0);
+}
+
+const reason =
+  "Orchestrator sessions must not dispatch native subagents. Delegate " +
+  "implementation work through \`ao spawn\`, which creates a tracked worker " +
+  "session (worktree, branch, lifecycle polling, dashboard visibility). Only " +
+  "read-only Explore/Plan investigation agents are permitted from the orchestrator.";
+
+process.stdout.write(
+  JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: reason,
+    },
+  }) + "\\n",
+);
+process.exit(0);
+`;
+
+// =============================================================================
 // Plugin Manifest
 // =============================================================================
 
@@ -931,6 +1018,7 @@ function upsertHookEntry(
 function buildHookRegistrations(
   metadataCommand: string,
   activityCommand: string,
+  subagentBlockerCommand: string,
 ): HookRegistration[] {
   const METADATA_IDS = [
     "metadata-updater.sh",
@@ -938,6 +1026,7 @@ function buildHookRegistrations(
     "metadata-updater.js",
   ] as const;
   const ACTIVITY_IDS = ["activity-updater.sh", "activity-updater.cjs"] as const;
+  const SUBAGENT_BLOCKER_IDS = ["subagent-blocker.cjs"] as const;
 
   const regs: HookRegistration[] = [
     {
@@ -946,6 +1035,19 @@ function buildHookRegistrations(
       command: metadataCommand,
       timeout: 5000,
       identifiers: METADATA_IDS,
+    },
+    // Subagent-blocker: PreToolUse on Task|Agent only. Runtime-gated to
+    // orchestrator sessions inside the script — installed everywhere, no-ops
+    // for workers. Blocks native subagent dispatch so implementation work
+    // goes through `ao spawn` (read-only Explore/Plan agents stay allowed).
+    {
+      event: "PreToolUse",
+      matcher: "Task|Agent",
+      command: subagentBlockerCommand,
+      // JSON parse + at most one stdout write — keep the timeout short so a
+      // stuck hook never stalls a tool call.
+      timeout: 2000,
+      identifiers: SUBAGENT_BLOCKER_IDS,
     },
   ];
 
@@ -1022,6 +1124,13 @@ async function setupHookInWorkspace(workspacePath: string): Promise<void> {
     activityCommand = ".claude/activity-updater.sh";
   }
 
+  // Subagent-blocker is always a Node .cjs invoked via `node` on every
+  // platform: it parses JSON from stdin and is runtime-gated to orchestrator
+  // sessions, so no shebang/chmod and no platform branching is required.
+  const subagentBlockerPath = join(claudeDir, "subagent-blocker.cjs");
+  await writeFile(subagentBlockerPath, SUBAGENT_BLOCKER_SCRIPT_NODE, "utf-8");
+  const subagentBlockerCommand = "node .claude/subagent-blocker.cjs";
+
   let existingSettings: Record<string, unknown> = {};
   if (existsSync(settingsPath)) {
     try {
@@ -1033,7 +1142,11 @@ async function setupHookInWorkspace(workspacePath: string): Promise<void> {
   }
 
   const hooks = (existingSettings["hooks"] as Record<string, unknown>) ?? {};
-  for (const reg of buildHookRegistrations(metadataCommand, activityCommand)) {
+  for (const reg of buildHookRegistrations(
+    metadataCommand,
+    activityCommand,
+    subagentBlockerCommand,
+  )) {
     upsertHookEntry(hooks, reg);
   }
   existingSettings["hooks"] = hooks;
