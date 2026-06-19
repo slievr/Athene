@@ -60,22 +60,26 @@ jobs:
       # public repo blocks a malformed version bump before it reaches npm.
       - run: node scripts/check-publishable-deps.mjs
 
-      # changesets/action manages the "Version Packages" PR — when there
-      # are pending changesets it opens/updates the PR; when there are
-      # none (i.e. that PR was just merged) it runs the `publish:` command
-      # (`pnpm release` = `pnpm -r build && changeset publish`) to publish
-      # the @made-by-moonlight/* packages to npm. The tag + GitHub release steps below
-      # then run for the same version-bump commit.
-      #
+      # changesets/action manages the "Version Packages" PR only.
+      # Publishing is done in a separate step so that GitHub's OIDC env vars
+      # (ACTIONS_ID_TOKEN_REQUEST_URL / _TOKEN) are available to the npm CLI
+      # directly — changesets/action runs publish as a subprocess and does not
+      # forward those vars, which causes ENEEDAUTH with Trusted Publishing.
       - uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b
         id: changesets
         with:
           version: pnpm changeset version
-          publish: pnpm release
           title: "chore: version packages"
           commit: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Publish when there are no pending changesets (Version Packages PR was merged).
+      # Running pnpm release directly gives the npm CLI full access to the OIDC
+      # environment for Trusted Publishing authentication.
+      - name: Publish to npm
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: pnpm release
 
       # Determine release state. Each downstream step (tag push, GH
       # release creation) is gated on its own piece of state so the
