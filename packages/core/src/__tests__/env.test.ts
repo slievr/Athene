@@ -30,12 +30,12 @@ describe("env module", () => {
     const legacy = legacyEnvName(canonical);
 
     beforeEach(() => {
-      delete process.env[canonical];
-      delete process.env[legacy];
+      Reflect.deleteProperty(process.env, canonical);
+      Reflect.deleteProperty(process.env, legacy);
     });
     afterEach(() => {
-      delete process.env[canonical];
-      delete process.env[legacy];
+      Reflect.deleteProperty(process.env, canonical);
+      Reflect.deleteProperty(process.env, legacy);
     });
 
     it("returns undefined when neither is set", () => {
@@ -65,12 +65,12 @@ describe("env module", () => {
     const legacy = legacyEnvName(canonical);
 
     beforeEach(() => {
-      delete process.env[canonical];
-      delete process.env[legacy];
+      Reflect.deleteProperty(process.env, canonical);
+      Reflect.deleteProperty(process.env, legacy);
     });
     afterEach(() => {
-      delete process.env[canonical];
-      delete process.env[legacy];
+      Reflect.deleteProperty(process.env, canonical);
+      Reflect.deleteProperty(process.env, legacy);
     });
 
     it("is true when only the legacy AO_ flag is '1'", () => {

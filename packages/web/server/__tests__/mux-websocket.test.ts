@@ -997,7 +997,7 @@ describe("TerminalManager.open — tmux target args (regression for #1714)", () 
         expect((statSync(helperPath).mode & 0o111) !== 0).toBe(true);
       }
     } finally {
-      delete process.env[ENV.NODE_PTY_SPAWN_HELPER_PATH];
+      Reflect.deleteProperty(process.env, ENV.NODE_PTY_SPAWN_HELPER_PATH);
       rmSync(tempRoot, { recursive: true, force: true });
     }
   });
