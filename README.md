@@ -19,11 +19,6 @@ Athene manages fleets of AI coding agents working in parallel on your codebase. 
 
 **Agent-agnostic** (Claude Code, Codex, Aider) · **Runtime-agnostic** (tmux, ConPTY/process, Docker) · **Tracker-agnostic** (GitHub, Linear)
 
-## See it in action
-
-- [Watch the demo on X](https://x.com/agent_wrapper/status/2026329204405723180) — AI agents building their own orchestrator
-- [Read the article on X](https://x.com/agent_wrapper/status/2025986105485733945) — The Self-Improving AI System That Built Itself
-
 ## Quick Start
 
 > **Prerequisites:** [Node.js 20.18.3+](https://nodejs.org), [Git 2.25+](https://git-scm.com), [`gh` CLI](https://cli.github.com), and:
