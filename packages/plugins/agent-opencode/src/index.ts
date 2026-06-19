@@ -1,4 +1,6 @@
 import {
+  ENV,
+  withLegacyEnvAliases,
   DEFAULT_READY_THRESHOLD_MS,
   DEFAULT_ACTIVE_WINDOW_MS,
   shellEscape,
@@ -251,10 +253,10 @@ function createOpenCodeAgent(): Agent {
 
     getEnvironment(config: AgentLaunchConfig): Record<string, string> {
       const env: Record<string, string> = {};
-      env["AO_SESSION_ID"] = config.sessionId;
-      // NOTE: AO_PROJECT_ID is the caller's responsibility (spawn.ts sets it)
+      env[ENV.SESSION_ID] = config.sessionId;
+      // NOTE: ATHENE_PROJECT_ID is the caller's responsibility (spawn.ts sets it)
       if (config.issueId) {
-        env["AO_ISSUE_ID"] = config.issueId;
+        env[ENV.ISSUE_ID] = config.issueId;
       }
 
       // Point Bun's embedded shared-library extraction at an AO-owned temp
@@ -268,7 +270,7 @@ function createOpenCodeAgent(): Agent {
 
       // PATH and GH_PATH are injected by session-manager for all agents.
 
-      return env;
+      return withLegacyEnvAliases(env);
     },
 
     detectActivity(terminalOutput: string): ActivityState {

@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import chalk from "chalk";
 import { parseDocument } from "yaml";
-import { CONFIG_SCHEMA_URL, findConfigFile, isCanonicalGlobalConfigPath } from "@made-by-moonlight/athene-core";
+import { CONFIG_SCHEMA_URL, ENV, findConfigFile, getEnvString, isCanonicalGlobalConfigPath } from "@made-by-moonlight/athene-core";
 import {
   applyNotifierRoutingPreset,
   getNotifierRoutingState,
@@ -66,7 +66,7 @@ interface ResolvedDesktopSetup {
 }
 
 function currentPlatform(): NodeJS.Platform | string {
-  return process.env["AO_DESKTOP_SETUP_PLATFORM"] ?? platform();
+  return getEnvString(ENV.DESKTOP_SETUP_PLATFORM) ?? platform();
 }
 
 function stringValue(value: unknown): string | undefined {
@@ -95,7 +95,7 @@ function packageDirFromImport(): string | null {
 }
 
 export function getBundledNotifierAppPath(): string | null {
-  const override = process.env["AO_NOTIFIER_MACOS_APP_PATH"];
+  const override = getEnvString(ENV.NOTIFIER_MACOS_APP_PATH);
   if (override) return override;
 
   const packageDir = packageDirFromImport();
@@ -108,7 +108,7 @@ export function getBundledNotifierAppPath(): string | null {
 }
 
 export function getInstalledNotifierAppPath(): string {
-  return process.env["AO_DESKTOP_APP_INSTALL_PATH"] ?? join(homedir(), "Applications", APP_NAME);
+  return getEnvString(ENV.DESKTOP_APP_INSTALL_PATH) ?? join(homedir(), "Applications", APP_NAME);
 }
 
 export function getNotifierExecutablePath(appPath: string): string {

@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { ENV } from "@made-by-moonlight/athene-core";
+import type * as AtheneCore from "@made-by-moonlight/athene-core";
 
 const { mockLoadConfig, mockGetGlobalConfigPath, MockConfigNotFoundError } = vi.hoisted(() => {
   const mockLoadConfig = vi.fn();
@@ -16,11 +18,15 @@ const { mockLoadConfig, mockGetGlobalConfigPath, MockConfigNotFoundError } = vi.
   return { mockLoadConfig, mockGetGlobalConfigPath, MockConfigNotFoundError };
 });
 
-vi.mock("@made-by-moonlight/athene-core", () => ({
-  loadConfig: mockLoadConfig,
-  getGlobalConfigPath: mockGetGlobalConfigPath,
-  ConfigNotFoundError: MockConfigNotFoundError,
-}));
+vi.mock("@made-by-moonlight/athene-core", async () => {
+  const { ENV } = await vi.importActual<typeof AtheneCore>("@made-by-moonlight/athene-core");
+  return {
+    ENV,
+    loadConfig: mockLoadConfig,
+    getGlobalConfigPath: mockGetGlobalConfigPath,
+    ConfigNotFoundError: MockConfigNotFoundError,
+  };
+});
 
 describe("project-name fallback discovery", () => {
   beforeEach(() => {
@@ -29,7 +35,7 @@ describe("project-name fallback discovery", () => {
     mockLoadConfig.mockReset();
     mockGetGlobalConfigPath.mockClear();
     mockGetGlobalConfigPath.mockReturnValue("/tmp/global-config.yaml");
-    delete process.env["AO_CONFIG_PATH"];
+    Reflect.deleteProperty(process.env, ENV.CONFIG_PATH);
   });
 
   it("falls back to discovered local config when the canonical global config is missing", async () => {
@@ -165,7 +171,7 @@ describe("project-name fallback discovery", () => {
     expect(getProjectName()).toBe("Athene");
   });
 
-  it("ignores ambient AO_CONFIG_PATH when discovering the local repo project", async () => {
+  it("ignores ambient ATHENE_CONFIG_PATH when discovering the local repo project", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "ao-project-name-"));
     const repoRoot = join(tempRoot, "agent-orchestrator");
     const webDir = join(repoRoot, "packages", "web");
@@ -196,7 +202,7 @@ describe("project-name fallback discovery", () => {
       degradedProjects: {},
     };
 
-    process.env["AO_CONFIG_PATH"] = "/tmp/ambient-config.yaml";
+    process.env[ENV.CONFIG_PATH] = "/tmp/ambient-config.yaml";
     mockLoadConfig.mockImplementation((configPath?: string) => {
       if (configPath === "/tmp/global-config.yaml") {
         return globalConfig;

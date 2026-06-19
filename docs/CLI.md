@@ -74,4 +74,4 @@ and add `ao` to the `plugins=(...)` list in `~/.zshrc`.
 
 ## Multi-Project Rollout
 
-Portfolio mode is enabled by default. Users do not need to set `AO_ENABLE_PORTFOLIO` unless they explicitly want to disable portfolio/project-management flows.
+Portfolio mode is enabled by default. Users do not need to set `ATHENE_ENABLE_PORTFOLIO` unless they explicitly want to disable portfolio/project-management flows.

@@ -19,7 +19,11 @@ describe("Config Loading", () => {
     originalCwd = process.cwd();
     originalEnv = { ...process.env };
 
-    // Clear AO_CONFIG_PATH to ensure test isolation
+    // Clear both the canonical ATHENE_* and legacy AO_* config env vars to ensure
+    // test isolation — config resolution is dual-read, and this process may inherit
+    // AO_CONFIG_PATH from the AO session that spawned the test run.
+    delete process.env.ATHENE_CONFIG_PATH;
+    delete process.env.ATHENE_GLOBAL_CONFIG;
     delete process.env.AO_CONFIG_PATH;
     delete process.env.AO_GLOBAL_CONFIG;
     process.env.HOME = testDir;
@@ -52,7 +56,7 @@ describe("Config Loading", () => {
       expect(realpathSync(found!)).toBe(realpathSync(configPath));
     });
 
-    it("should prioritize AO_CONFIG_PATH env var", () => {
+    it("should prioritize ATHENE_CONFIG_PATH env var", () => {
       // Create config in a different location
       const customDir = join(testDir, "custom");
       mkdirSync(customDir);
@@ -64,7 +68,7 @@ describe("Config Loading", () => {
       writeFileSync(localConfig, "projects: {}");
 
       // Set env var to point to custom location
-      process.env["AO_CONFIG_PATH"] = customConfig;
+      process.env["ATHENE_CONFIG_PATH"] = customConfig;
 
       const found = findConfigFile();
       expect(found).toBe(customConfig);
@@ -97,7 +101,7 @@ projects:
       );
     });
 
-    it("should load config from AO_CONFIG_PATH env var", () => {
+    it("should load config from ATHENE_CONFIG_PATH env var", () => {
       const configPath = join(testDir, "test-config.yaml");
       writeFileSync(
         configPath,
@@ -111,7 +115,7 @@ projects:
 `,
       );
 
-      process.env["AO_CONFIG_PATH"] = configPath;
+      process.env["ATHENE_CONFIG_PATH"] = configPath;
 
       const config = loadConfig();
       expect(config.port).toBe(4000);
@@ -243,7 +247,7 @@ projects:
       writeFileSync(envConfig, "port: 3001\nprojects: {}");
       writeFileSync(explicitConfig, "port: 3002\nprojects: {}");
 
-      process.env["AO_CONFIG_PATH"] = envConfig;
+      process.env["ATHENE_CONFIG_PATH"] = envConfig;
 
       const config = loadConfig(explicitConfig);
       expect(config.port).toBe(3002); // Should use explicit, not env
@@ -256,7 +260,7 @@ projects:
       writeFileSync(envConfig, "port: 3001\nprojects: {}");
       writeFileSync(localConfig, "port: 3002\nprojects: {}");
 
-      process.env["AO_CONFIG_PATH"] = envConfig;
+      process.env["ATHENE_CONFIG_PATH"] = envConfig;
 
       const config = loadConfig();
       expect(config.port).toBe(3001); // Should use env, not local

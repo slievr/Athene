@@ -10,6 +10,8 @@ import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import {
+  ENV,
+  isEnvFlagEnabled,
   isWindows,
   killProcessTree,
   markDaemonShutdownHandlerInstalled,
@@ -107,9 +109,9 @@ function resolveNextBin(): string {
 
 // Start Next.js production server
 const port = process.env["PORT"] || "3000";
-const pathBasedMux = process.env["AO_PATH_BASED_MUX"] === "1";
+const pathBasedMux = isEnvFlagEnabled(ENV.PATH_BASED_MUX);
 
-// When AO_PATH_BASED_MUX=1, single-port-server.js owns PORT and Next.js is
+// When ATHENE_PATH_BASED_MUX=1, single-port-server.js owns PORT and Next.js is
 // shifted to PORT + 1000 (overridable via NEXT_INTERNAL_PORT). The proxy
 // forwards HTTP to Next.js and tunnels `/ao-terminal-mux` WS upgrades to
 // direct-terminal-ws. Default off — Next.js stays on PORT directly.

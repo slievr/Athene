@@ -1,4 +1,6 @@
 import {
+  ENV,
+  withLegacyEnvAliases,
   DEFAULT_READY_THRESHOLD_MS,
   DEFAULT_ACTIVE_WINDOW_MS,
   PROCESS_PROBE_INDETERMINATE,
@@ -156,9 +158,9 @@ function createGrokAgent(): Agent {
 
     getEnvironment(config: AgentLaunchConfig): Record<string, string> {
       const env: Record<string, string> = {};
-      env["AO_SESSION_ID"] = config.sessionId;
+      env[ENV.SESSION_ID] = config.sessionId;
       if (config.issueId) {
-        env["AO_ISSUE_ID"] = config.issueId;
+        env[ENV.ISSUE_ID] = config.issueId;
       }
 
       const sandbox = getConfiguredSandbox(config);
@@ -166,7 +168,7 @@ function createGrokAgent(): Agent {
         env["GROK_SANDBOX"] = sandbox;
       }
 
-      return env;
+      return withLegacyEnvAliases(env);
     },
 
     detectActivity(terminalOutput: string): ActivityState {

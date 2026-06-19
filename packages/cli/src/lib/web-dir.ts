@@ -9,6 +9,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { resolve, dirname } from "node:path";
 import { existsSync } from "node:fs";
+import { ENV, withLegacyEnvAliases } from "@made-by-moonlight/athene-core";
 import { formatCommandError } from "./cli-errors.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -137,7 +138,7 @@ export async function buildDashboardEnv(
 
   // Pass config path so dashboard uses the same config as the CLI
   if (configPath) {
-    env["AO_CONFIG_PATH"] = configPath;
+    env[ENV.CONFIG_PATH] = configPath;
   }
 
   env["PORT"] = String(port);
@@ -172,7 +173,9 @@ export async function buildDashboardEnv(
   env["NEXT_PUBLIC_TERMINAL_PORT"] = String(resolvedTerminal);
   env["NEXT_PUBLIC_DIRECT_TERMINAL_PORT"] = String(resolvedDirect);
 
-  return env;
+  // Emit both ATHENE_* and AO_* so the dashboard and any child processes it
+  // spawns can be read by old (`AO_*`) and new (`ATHENE_*`) consumers alike.
+  return withLegacyEnvAliases(env);
 }
 
 /**

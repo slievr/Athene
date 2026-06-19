@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import type { Command } from "commander";
 import chalk from "chalk";
 import {
+  ENV,
   getGlobalConfigPath,
   isCanonicalGlobalConfigPath,
   isWindows,
@@ -38,11 +39,11 @@ function isTTY(): boolean {
  * the install. The route would respond 202 "started" and absolutely nothing
  * would happen.
  *
- * /api/update sets `AO_NON_INTERACTIVE_INSTALL=1` on the spawn env so we can
+ * /api/update sets `ATHENE_NON_INTERACTIVE_INSTALL=1` on the spawn env so we can
  * distinguish "API kicked this off, please install without prompting" from
  * "user piped output and we shouldn't surprise-install."
  */
-export const NON_INTERACTIVE_INSTALL_ENV = "AO_NON_INTERACTIVE_INSTALL";
+export const NON_INTERACTIVE_INSTALL_ENV = ENV.NON_INTERACTIVE_INSTALL;
 
 function isApiInvoked(): boolean {
   return process.env[NON_INTERACTIVE_INSTALL_ENV] === "1";
@@ -322,7 +323,7 @@ function runAoLifecycleCommand(
       stdio: "inherit",
       shell: isWindows(),
       windowsHide: true,
-      env: opts.configPath ? { ...process.env, AO_CONFIG_PATH: opts.configPath } : process.env,
+      env: opts.configPath ? { ...process.env, [ENV.CONFIG_PATH]: opts.configPath } : process.env,
     });
     child.on("error", (error) => {
       console.error(chalk.yellow(`Could not run ao ${args.join(" ")}: ${error.message}`));

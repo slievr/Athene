@@ -335,8 +335,8 @@ function createSpawnChild(options?: {
 
 beforeEach(async () => {
   tmpDir = mkdtempSync(join(tmpdir(), "ao-start-test-"));
-  originalAoGlobalConfig = process.env["AO_GLOBAL_CONFIG"];
-  process.env["AO_GLOBAL_CONFIG"] = join(tmpDir, "global-agent-orchestrator.yaml");
+  originalAoGlobalConfig = process.env["ATHENE_GLOBAL_CONFIG"];
+  process.env["ATHENE_GLOBAL_CONFIG"] = join(tmpDir, "global-agent-orchestrator.yaml");
 
   program = new Command();
   program.exitOverride();
@@ -471,8 +471,8 @@ beforeEach(async () => {
 
 afterEach(() => {
   if (cwdSpy) cwdSpy.mockRestore();
-  if (originalAoGlobalConfig === undefined) delete process.env["AO_GLOBAL_CONFIG"];
-  else process.env["AO_GLOBAL_CONFIG"] = originalAoGlobalConfig;
+  if (originalAoGlobalConfig === undefined) delete process.env["ATHENE_GLOBAL_CONFIG"];
+  else process.env["ATHENE_GLOBAL_CONFIG"] = originalAoGlobalConfig;
   rmSync(tmpDir, { recursive: true, force: true });
   vi.restoreAllMocks();
 });
@@ -2308,8 +2308,8 @@ describe("start command — platform-aware runtime fallback", () => {
   it("athene start <project> while daemon alive but project removed: attaches to existing daemon (no second dashboard)", async () => {
     // Force the global-config fallback to use mockConfigRef.current rather
     // than reading the test machine's real ~/.agent-orchestrator/config.yaml.
-    const origGlobalEnv = process.env["AO_GLOBAL_CONFIG"];
-    process.env["AO_GLOBAL_CONFIG"] = join(tmpDir, "no-such-global.yaml");
+    const origGlobalEnv = process.env["ATHENE_GLOBAL_CONFIG"];
+    process.env["ATHENE_GLOBAL_CONFIG"] = join(tmpDir, "no-such-global.yaml");
 
     try {
       mockConfigRef.current = makeConfig({
@@ -2356,8 +2356,8 @@ describe("start command — platform-aware runtime fallback", () => {
       expect(output).toContain("Attaching to running AO instance");
       expect(output).toContain("reattached to running daemon");
     } finally {
-      if (origGlobalEnv === undefined) delete process.env["AO_GLOBAL_CONFIG"];
-      else process.env["AO_GLOBAL_CONFIG"] = origGlobalEnv;
+      if (origGlobalEnv === undefined) delete process.env["ATHENE_GLOBAL_CONFIG"];
+      else process.env["ATHENE_GLOBAL_CONFIG"] = origGlobalEnv;
     }
   });
 });
@@ -2415,7 +2415,7 @@ describe("start command — autoCreateConfig", () => {
     expect(parsed.agent).toBe("claude-code");
     expect(parsed.workspace).toBe("worktree");
 
-    const globalConfigPath = process.env["AO_GLOBAL_CONFIG"]!;
+    const globalConfigPath = process.env["ATHENE_GLOBAL_CONFIG"]!;
     const globalContent = readFileSync(globalConfigPath, "utf-8");
     const globalParsed = parseYaml(globalContent) as {
       defaults?: { notifiers?: unknown[] };
@@ -2459,7 +2459,7 @@ describe("start command — autoCreateConfig", () => {
     vi.spyOn(callerContext, "isHumanCaller").mockReturnValue(false);
 
     writeFileSync(
-      process.env["AO_GLOBAL_CONFIG"]!,
+      process.env["ATHENE_GLOBAL_CONFIG"]!,
       [
         "projects:",
         `  ${basename(tmpDir)}:`,
@@ -2534,10 +2534,10 @@ describe("start command — already-running detection", () => {
     const repoDir = join(tmpDir, "registered-repo");
     createFakeRepo(repoDir, "https://github.com/org/registered-repo.git");
 
-    // Point AO_GLOBAL_CONFIG at a non-existent file so the global lookup
+    // Point ATHENE_GLOBAL_CONFIG at a non-existent file so the global lookup
     // falls back to mockConfigRef.current.
-    const origGlobalEnv = process.env["AO_GLOBAL_CONFIG"];
-    process.env["AO_GLOBAL_CONFIG"] = join(tmpDir, "no-such-global.yaml");
+    const origGlobalEnv = process.env["ATHENE_GLOBAL_CONFIG"];
+    process.env["ATHENE_GLOBAL_CONFIG"] = join(tmpDir, "no-such-global.yaml");
 
     try {
       mockIsAlreadyRunning.mockResolvedValue({
@@ -2574,8 +2574,8 @@ describe("start command — already-running detection", () => {
       expect(output).toContain("my-app");
       expect(output).toContain("already registered and running");
     } finally {
-      if (origGlobalEnv === undefined) delete process.env["AO_GLOBAL_CONFIG"];
-      else process.env["AO_GLOBAL_CONFIG"] = origGlobalEnv;
+      if (origGlobalEnv === undefined) delete process.env["ATHENE_GLOBAL_CONFIG"];
+      else process.env["ATHENE_GLOBAL_CONFIG"] = origGlobalEnv;
     }
   });
 
@@ -2583,7 +2583,7 @@ describe("start command — already-running detection", () => {
     const repoDir = join(tmpDir, "new-repo");
     createFakeRepo(repoDir, "https://github.com/org/new-repo.git");
 
-    // Point AO_GLOBAL_CONFIG at a real file in tmpDir so addProjectToConfig
+    // Point ATHENE_GLOBAL_CONFIG at a real file in tmpDir so addProjectToConfig
     // routes through registerProjectInGlobalConfig.
     const globalConfigPath = join(tmpDir, "global-config.yaml");
     const { stringify: yamlStringify } = await import("yaml");
@@ -2611,10 +2611,10 @@ describe("start command — already-running detection", () => {
       ),
     );
 
-    const origGlobalEnv = process.env["AO_GLOBAL_CONFIG"];
-    const origConfigEnv = process.env["AO_CONFIG_PATH"];
-    process.env["AO_GLOBAL_CONFIG"] = globalConfigPath;
-    process.env["AO_CONFIG_PATH"] = globalConfigPath;
+    const origGlobalEnv = process.env["ATHENE_GLOBAL_CONFIG"];
+    const origConfigEnv = process.env["ATHENE_CONFIG_PATH"];
+    process.env["ATHENE_GLOBAL_CONFIG"] = globalConfigPath;
+    process.env["ATHENE_CONFIG_PATH"] = globalConfigPath;
 
     try {
       mockConfigRef.current = makeConfig({
@@ -2675,10 +2675,10 @@ describe("start command — already-running detection", () => {
       expect(output).toContain("Orchestrator session ready");
       expect(output).toContain("Opening dashboard");
     } finally {
-      if (origGlobalEnv === undefined) delete process.env["AO_GLOBAL_CONFIG"];
-      else process.env["AO_GLOBAL_CONFIG"] = origGlobalEnv;
-      if (origConfigEnv === undefined) delete process.env["AO_CONFIG_PATH"];
-      else process.env["AO_CONFIG_PATH"] = origConfigEnv;
+      if (origGlobalEnv === undefined) delete process.env["ATHENE_GLOBAL_CONFIG"];
+      else process.env["ATHENE_GLOBAL_CONFIG"] = origGlobalEnv;
+      if (origConfigEnv === undefined) delete process.env["ATHENE_CONFIG_PATH"];
+      else process.env["ATHENE_CONFIG_PATH"] = origConfigEnv;
     }
   });
 
@@ -2849,7 +2849,7 @@ describe("start command — already-running detection", () => {
       repoDir,
       "https://github.com/org/agent-orchestrator.git",
     );
-    const globalConfigPath = process.env["AO_GLOBAL_CONFIG"]!;
+    const globalConfigPath = process.env["ATHENE_GLOBAL_CONFIG"]!;
     const { stringify: yamlStringify } = await import("yaml");
     writeFileSync(
       globalConfigPath,
@@ -3001,9 +3001,9 @@ describe("start command — path-based deduplication in addProjectToConfig", () 
       ),
     );
 
-    // Set AO_CONFIG_PATH so findConfigFile() finds our config in the path-arg branch
-    const origEnv = process.env["AO_CONFIG_PATH"];
-    process.env["AO_CONFIG_PATH"] = configPath;
+    // Set ATHENE_CONFIG_PATH so findConfigFile() finds our config in the path-arg branch
+    const origEnv = process.env["ATHENE_CONFIG_PATH"];
+    process.env["ATHENE_CONFIG_PATH"] = configPath;
 
     try {
       // Pass repoDir as a local path arg — enters the path-argument branch
@@ -3021,8 +3021,8 @@ describe("start command — path-based deduplication in addProjectToConfig", () 
       const parsed = parseYaml(content) as { projects: Record<string, unknown> };
       expect(Object.keys(parsed.projects)).toEqual(["my-app"]);
     } finally {
-      if (origEnv === undefined) delete process.env["AO_CONFIG_PATH"];
-      else process.env["AO_CONFIG_PATH"] = origEnv;
+      if (origEnv === undefined) delete process.env["ATHENE_CONFIG_PATH"];
+      else process.env["ATHENE_CONFIG_PATH"] = origEnv;
     }
   });
 
@@ -3059,9 +3059,9 @@ describe("start command — path-based deduplication in addProjectToConfig", () 
       ),
     );
 
-    // Set AO_CONFIG_PATH so findConfigFile() finds our config
-    const origEnv = process.env["AO_CONFIG_PATH"];
-    process.env["AO_CONFIG_PATH"] = configPath;
+    // Set ATHENE_CONFIG_PATH so findConfigFile() finds our config
+    const origEnv = process.env["ATHENE_CONFIG_PATH"];
+    process.env["ATHENE_CONFIG_PATH"] = configPath;
 
     try {
       // Pass repoDir as path arg. The path-argument branch's path-match check
@@ -3081,8 +3081,8 @@ describe("start command — path-based deduplication in addProjectToConfig", () 
       const parsed = parseYaml(content) as { projects: Record<string, unknown> };
       expect(Object.keys(parsed.projects)).toEqual(["old-name"]);
     } finally {
-      if (origEnv === undefined) delete process.env["AO_CONFIG_PATH"];
-      else process.env["AO_CONFIG_PATH"] = origEnv;
+      if (origEnv === undefined) delete process.env["ATHENE_CONFIG_PATH"];
+      else process.env["ATHENE_CONFIG_PATH"] = origEnv;
     }
   });
 });
@@ -3129,10 +3129,10 @@ describe("start command — global registry mutations", () => {
     });
     (mockConfigRef.current as Record<string, unknown>).configPath = globalConfigPath;
 
-    const origEnv = process.env["AO_CONFIG_PATH"];
-    const origGlobalEnv = process.env["AO_GLOBAL_CONFIG"];
-    process.env["AO_CONFIG_PATH"] = globalConfigPath;
-    process.env["AO_GLOBAL_CONFIG"] = globalConfigPath;
+    const origEnv = process.env["ATHENE_CONFIG_PATH"];
+    const origGlobalEnv = process.env["ATHENE_GLOBAL_CONFIG"];
+    process.env["ATHENE_CONFIG_PATH"] = globalConfigPath;
+    process.env["ATHENE_GLOBAL_CONFIG"] = globalConfigPath;
 
     const shell = await import("../../src/lib/shell.js");
     vi.mocked(shell.git).mockImplementation(async (args: string[], workingDir?: string) => {
@@ -3190,10 +3190,10 @@ describe("start command — global registry mutations", () => {
       const localAddedConfig = readFileSync(join(addedRepoDir, "agent-orchestrator.yaml"), "utf-8");
       expect(localAddedConfig).not.toContain("projects:");
     } finally {
-      if (origEnv === undefined) delete process.env["AO_CONFIG_PATH"];
-      else process.env["AO_CONFIG_PATH"] = origEnv;
-      if (origGlobalEnv === undefined) delete process.env["AO_GLOBAL_CONFIG"];
-      else process.env["AO_GLOBAL_CONFIG"] = origGlobalEnv;
+      if (origEnv === undefined) delete process.env["ATHENE_CONFIG_PATH"];
+      else process.env["ATHENE_CONFIG_PATH"] = origEnv;
+      if (origGlobalEnv === undefined) delete process.env["ATHENE_GLOBAL_CONFIG"];
+      else process.env["ATHENE_GLOBAL_CONFIG"] = origGlobalEnv;
     }
   });
 
@@ -3235,10 +3235,10 @@ describe("start command — global registry mutations", () => {
     });
     (mockConfigRef.current as Record<string, unknown>).configPath = globalConfigPath;
 
-    const origEnv = process.env["AO_CONFIG_PATH"];
-    const origGlobalEnv = process.env["AO_GLOBAL_CONFIG"];
-    process.env["AO_CONFIG_PATH"] = globalConfigPath;
-    process.env["AO_GLOBAL_CONFIG"] = globalConfigPath;
+    const origEnv = process.env["ATHENE_CONFIG_PATH"];
+    const origGlobalEnv = process.env["ATHENE_GLOBAL_CONFIG"];
+    process.env["ATHENE_CONFIG_PATH"] = globalConfigPath;
+    process.env["ATHENE_GLOBAL_CONFIG"] = globalConfigPath;
 
     const detectAgent = await import("../../src/lib/detect-agent.js");
     vi.mocked(detectAgent.detectAvailableAgents).mockResolvedValue([
@@ -3279,10 +3279,10 @@ describe("start command — global registry mutations", () => {
         value: originalStdoutTty,
         configurable: true,
       });
-      if (origEnv === undefined) delete process.env["AO_CONFIG_PATH"];
-      else process.env["AO_CONFIG_PATH"] = origEnv;
-      if (origGlobalEnv === undefined) delete process.env["AO_GLOBAL_CONFIG"];
-      else process.env["AO_GLOBAL_CONFIG"] = origGlobalEnv;
+      if (origEnv === undefined) delete process.env["ATHENE_CONFIG_PATH"];
+      else process.env["ATHENE_CONFIG_PATH"] = origEnv;
+      if (origGlobalEnv === undefined) delete process.env["ATHENE_GLOBAL_CONFIG"];
+      else process.env["ATHENE_GLOBAL_CONFIG"] = origGlobalEnv;
     }
   });
 

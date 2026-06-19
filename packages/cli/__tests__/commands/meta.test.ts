@@ -85,13 +85,13 @@ describe("loadMetaRegistryConfig", () => {
     globalPath = join(tempRoot, "config.yaml");
     // Point getGlobalConfigPath() at our temp global config (independent of cwd /
     // the worktree's own agent-orchestrator.yaml).
-    originalAoGlobalConfig = process.env["AO_GLOBAL_CONFIG"];
-    process.env["AO_GLOBAL_CONFIG"] = globalPath;
+    originalAoGlobalConfig = process.env["ATHENE_GLOBAL_CONFIG"];
+    process.env["ATHENE_GLOBAL_CONFIG"] = globalPath;
   });
 
   afterEach(() => {
-    if (originalAoGlobalConfig === undefined) delete process.env["AO_GLOBAL_CONFIG"];
-    else process.env["AO_GLOBAL_CONFIG"] = originalAoGlobalConfig;
+    if (originalAoGlobalConfig === undefined) delete process.env["ATHENE_GLOBAL_CONFIG"];
+    else process.env["ATHENE_GLOBAL_CONFIG"] = originalAoGlobalConfig;
     rmSync(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   });
 

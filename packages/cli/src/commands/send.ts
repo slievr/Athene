@@ -7,6 +7,8 @@ import {
   type Agent,
   type OpenCodeSessionManager,
   type Session,
+  ENV,
+  getEnvString,
   loadConfig,
 } from "@made-by-moonlight/athene-core";
 import { exec, tmux } from "../lib/shell.js";
@@ -141,8 +143,8 @@ export function registerSend(program: Command): void {
         // worker, worker → worker). The receiver gets the message as raw
         // terminal input with no `from:` metadata, so the prefix is the only
         // way to identify who's writing. Humans running athene send from their
-        // own terminal have no AO_SESSION_ID and stay unprefixed.
-        const senderSessionId = process.env["AO_SESSION_ID"];
+        // own terminal have no ATHENE_SESSION_ID and stay unprefixed.
+        const senderSessionId = getEnvString(ENV.SESSION_ID);
         const message = senderSessionId
           ? `[from ${senderSessionId}] ${rawMessage}`
           : rawMessage;

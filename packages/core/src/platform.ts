@@ -2,6 +2,7 @@ import { execFile as execFileCb } from "node:child_process";
 import { promisify } from "node:util";
 import { homedir, userInfo } from "node:os";
 import { existsSync } from "node:fs";
+import { ENV, getEnvString } from "./env.js";
 
 const execFileAsync = promisify(execFileCb);
 
@@ -86,10 +87,10 @@ function findOnPath(name: string): string | null {
 }
 
 function resolveWindowsShell(): ShellInfo {
-  // Explicit override — set AO_SHELL to an absolute path or shell name
+  // Explicit override — set ATHENE_SHELL to an absolute path or shell name
   // (e.g. "powershell.exe", "pwsh", "cmd.exe", "bash"). Args are inferred
   // from the basename so cmd / bash / sh are usable, not just PowerShell.
-  const override = process.env["AO_SHELL"];
+  const override = getEnvString(ENV.SHELL);
   if (override) {
     return { cmd: override, args: inferShellArgsFlag(override) };
   }
@@ -122,7 +123,7 @@ function resolveWindowsShell(): ShellInfo {
 
   // Last resort: cmd.exe. Note that agent launch commands often use PowerShell
   // syntax (e.g. the `&` call operator) and will fail under cmd.exe. Setting
-  // AO_SHELL is the supported escape hatch.
+  // ATHENE_SHELL is the supported escape hatch.
   const comspec = process.env["ComSpec"] || "cmd.exe";
   return { cmd: comspec, args: (c) => ["/c", c] };
 }

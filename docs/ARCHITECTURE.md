@@ -321,13 +321,13 @@ graph LR
 `getShell()` in `packages/core/src/platform.ts` is platform-aware and cached:
 
 - **Unix**: `/bin/sh -c` (always; never `$SHELL` — non-interactive launches must not depend on the user's login shell).
-- **Windows** (`resolveWindowsShell`): in priority order — `AO_SHELL` env override → `pwsh` on PATH → `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe` (absolute path, robust to degraded PATH) → `powershell` on PATH → `%ComSpec%` (`cmd.exe`, last resort).
+- **Windows** (`resolveWindowsShell`): in priority order — `ATHENE_SHELL` env override → `pwsh` on PATH → `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe` (absolute path, robust to degraded PATH) → `powershell` on PATH → `%ComSpec%` (`cmd.exe`, last resort).
 
-Args are inferred from the basename: `cmd` → `/c`, `bash`/`sh`/`zsh` → `-c`, anything PowerShell-shaped → `-Command`. `AO_SHELL` is the supported escape hatch (e.g. for Git Bash users).
+Args are inferred from the basename: `cmd` → `/c`, `bash`/`sh`/`zsh` → `-c`, anything PowerShell-shaped → `-Command`. `ATHENE_SHELL` is the supported escape hatch (e.g. for Git Bash users).
 
 ### Other Windows-specific touch points
 
-- **CLI** — `athene start` no longer detaches its dashboard child on Windows (so Ctrl+C reaches the whole console group); `forwardSignalsToChild` is Unix-only. `athene stop` calls `sweepWindowsPtyHosts()` before terminating the parent. `script-runner.ts` runs `.ps1` siblings of `.sh` scripts directly on Windows; otherwise it tries `AO_BASH_PATH` then auto-detects Git Bash (WSL bash is excluded — it sees Linux paths from a Windows cwd).
+- **CLI** — `athene start` no longer detaches its dashboard child on Windows (so Ctrl+C reaches the whole console group); `forwardSignalsToChild` is Unix-only. `athene stop` calls `sweepWindowsPtyHosts()` before terminating the parent. `script-runner.ts` runs `.ps1` siblings of `.sh` scripts directly on Windows; otherwise it tries `ATHENE_BASH_PATH` then auto-detects Git Bash (WSL bash is excluded — it sees Linux paths from a Windows cwd).
 - **Agent plugins** — `setupPathWrapperWorkspace()` generates `.cjs` + `.cmd` wrapper pairs (instead of bash scripts) for `gh`/`git` interception. `formatLaunchCommand` for codex / kimicode prepends `& ` so PowerShell parses the quoted binary path as a call expression. `agent-claude-code` ships a Node.js metadata-updater (`.cjs`) hook in place of the bash version; system-prompt files are inlined rather than `$(cat …)`-substituted.
 - **Path-equality** — `packages/cli/src/lib/path-equality.ts` (`pathsEqual`, `canonicalCompareKey`) handles NTFS case-insensitivity and drive-letter case differences when comparing project paths in `athene start`.
 - **`stopStaleWindowsPtyHosts(projectDir)`** in `packages/web/src/lib/windows-pty-cleanup.ts` is a defensive sweeper used by the dashboard to clean up orphan pty-hosts found via a PowerShell `Get-CimInstance Win32_Process` query.

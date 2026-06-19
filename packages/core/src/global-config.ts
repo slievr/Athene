@@ -5,6 +5,7 @@ import { homedir } from "node:os";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { z } from "zod";
 import { atomicWriteFileSync } from "./atomic-write.js";
+import { ENV, getEnvString } from "./env.js";
 import { detectScmPlatform } from "./config-generator.js";
 import { withFileLockSync } from "./file-lock.js";
 import { ProjectResolveError, type ProjectResolveErrorKind } from "./types.js";
@@ -76,18 +77,19 @@ export interface RegisterProjectOptions {
  * Return the canonical path to the global config file.
  *
  * Priority:
- *   1. AO_GLOBAL_CONFIG environment variable (explicit global config override)
+ *   1. ATHENE_GLOBAL_CONFIG environment variable (explicit global config override)
  *   2. $XDG_CONFIG_HOME/agent-orchestrator/config.yaml
  *   3. ~/.agent-orchestrator/config.yaml  (default)
  *
- * NOTE: This intentionally does NOT read AO_CONFIG_PATH. That env var is used
+ * NOTE: This intentionally does NOT read ATHENE_CONFIG_PATH. That env var is used
  * by findConfigFile() to locate any config (including project-local ones).
  * Using it here would risk overwriting a project-local config with global-format
  * YAML when registry helpers call this function.
  */
 export function getGlobalConfigPath(): string {
-  if (process.env["AO_GLOBAL_CONFIG"]) {
-    return resolve(process.env["AO_GLOBAL_CONFIG"]);
+  const globalConfigOverride = getEnvString(ENV.GLOBAL_CONFIG);
+  if (globalConfigOverride) {
+    return resolve(globalConfigOverride);
   }
 
   const xdgConfigHome = process.env["XDG_CONFIG_HOME"];

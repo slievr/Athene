@@ -41,7 +41,7 @@ if ($SkipSmoke -and $SmokeOnly) {
     exit 1
 }
 
-$TargetBranch = if ($env:AO_UPDATE_BRANCH) { $env:AO_UPDATE_BRANCH } else { 'main' }
+$TargetBranch = if ($env:ATHENE_UPDATE_BRANCH) { $env:ATHENE_UPDATE_BRANCH } elseif ($env:AO_UPDATE_BRANCH) { $env:AO_UPDATE_BRANCH } else { 'main' }
 
 function Test-AoRepoRoot([string]$path) {
     return (Test-Path (Join-Path $path 'packages/athene/bin/athene.js')) -and
@@ -60,12 +60,13 @@ function Find-RepoRootFrom([string]$start) {
 }
 
 function Resolve-RepoRoot {
+    if ($env:ATHENE_REPO_ROOT) { return $env:ATHENE_REPO_ROOT }
     if ($env:AO_REPO_ROOT) { return $env:AO_REPO_ROOT }
     $fromScript = Find-RepoRootFrom $PSScriptRoot
     if ($fromScript) { return $fromScript }
     $fromCwd = Find-RepoRootFrom (Get-Location).Path
     if ($fromCwd) { return $fromCwd }
-    Write-Error "Unable to find Athene repo root. Fix: run via athene update or set AO_REPO_ROOT."
+    Write-Error "Unable to find Athene repo root. Fix: run via athene update or set ATHENE_REPO_ROOT."
     exit 1
 }
 

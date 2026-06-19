@@ -1,4 +1,6 @@
 import {
+  ENV,
+  withLegacyEnvAliases,
   DEFAULT_READY_THRESHOLD_MS,
   DEFAULT_ACTIVE_WINDOW_MS,
   isWindows,
@@ -199,13 +201,13 @@ function createKimicodeAgent(): Agent {
 
     getEnvironment(config: AgentLaunchConfig): Record<string, string> {
       const env: Record<string, string> = {};
-      env["AO_SESSION_ID"] = config.sessionId;
+      env[ENV.SESSION_ID] = config.sessionId;
       if (config.issueId) {
-        env["AO_ISSUE_ID"] = config.issueId;
+        env[ENV.ISSUE_ID] = config.issueId;
       }
 
       // PATH and GH_PATH are injected by session-manager for all agents.
-      return env;
+      return withLegacyEnvAliases(env);
     },
 
     detectActivity(terminalOutput: string): ActivityState {

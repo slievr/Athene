@@ -51,6 +51,13 @@ vi.mock("../../src/lib/running-state.js", () => ({
 }));
 
 vi.mock("@made-by-moonlight/athene-core", () => ({
+  ENV: { CONFIG_PATH: "ATHENE_CONFIG_PATH", PUBLIC_URL: "ATHENE_PUBLIC_URL" },
+  getEnvString: (name: string) => {
+    const primary = process.env[name];
+    if (primary !== undefined && primary !== "") return primary;
+    const legacy = process.env[name.replace(/^ATHENE_/, "AO_")];
+    return legacy !== undefined && legacy !== "" ? legacy : primary;
+  },
   loadConfig: () => mockConfigRef.current,
   isMac: () => mockIsMacRef.current,
   isWindows: () => mockIsWindowsRef.current,

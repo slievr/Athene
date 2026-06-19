@@ -285,8 +285,10 @@ All importable from `@made-by-moonlight/athene-core` unless noted:
 
 ### Environment variables to know about
 
-- `AO_SHELL` — overrides `getShell()` resolution (escape hatch for Git Bash users on Windows). Args inferred from basename: `cmd` → `/c`, `bash`/`sh`/`zsh` → `-c`, anything else → `-Command`.
-- `AO_BASH_PATH` — used by `script-runner.ts` on Windows to locate bash before falling back to Git Bash auto-detection. WSL bash is excluded (it sees Linux paths from a Windows cwd, breaking script semantics).
+> **Prefix:** `ATHENE_*` is the canonical/preferred prefix. The legacy `AO_*` prefix is still fully supported — reads fall back to `AO_*` and every spawned child carries both names. Define names once in `packages/core/src/env.ts` (`ENV` / `ENV_PREFIX`); read via `getEnvString`/`isEnvFlagEnabled` and emit both via `withLegacyEnvAliases` (all exported from `@made-by-moonlight/athene-core`). Never read `process.env["ATHENE_…"]`/`["AO_…"]` directly — go through the helpers so the fallback stays centralized.
+
+- `ATHENE_SHELL` (legacy: `AO_SHELL`) — overrides `getShell()` resolution (escape hatch for Git Bash users on Windows). Args inferred from basename: `cmd` → `/c`, `bash`/`sh`/`zsh` → `-c`, anything else → `-Command`.
+- `ATHENE_BASH_PATH` — used by `script-runner.ts` on Windows to locate bash before falling back to Git Bash auto-detection. WSL bash is excluded (it sees Linux paths from a Windows cwd, breaking script semantics).
 
 ## Conventions
 
@@ -516,7 +518,7 @@ All agent plugins (claude-code, codex, aider, opencode, etc.) must implement the
 - **PATH wrappers** (Codex, Aider, OpenCode): `~/.ao/bin/gh` and `~/.ao/bin/git` intercept commands. Call `setupPathWrapperWorkspace(workspacePath)` — it installs wrappers to `~/.ao/bin/` and writes session context to `.ao/AGENTS.md` (gitignored, does not modify tracked files).
 
 **Environment requirements:**
-- All agents must set `AO_SESSION_ID` and optionally `AO_ISSUE_ID`
+- All agents must set `ATHENE_SESSION_ID` and optionally `ATHENE_ISSUE_ID`
 - All agents using PATH wrappers must prepend `~/.ao/bin` to PATH
 - Use `normalizeAgentPermissionMode` from `@made-by-moonlight/athene-core` (not a local duplicate)
 

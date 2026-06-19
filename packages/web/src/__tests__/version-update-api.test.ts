@@ -4,6 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { EventEmitter } from "node:events";
+import { ENV, legacyEnvName } from "@made-by-moonlight/athene-core";
 import type * as AoCoreType from "@made-by-moonlight/athene-core";
 import type * as ChildProcessType from "node:child_process";
 
@@ -251,7 +252,12 @@ describe("POST /api/update", () => {
       expect.objectContaining({
         detached: true,
         stdio: "ignore",
-        env: expect.objectContaining({ AO_NON_INTERACTIVE_INSTALL: "1" }),
+        env: expect.objectContaining({
+          [ENV.NON_INTERACTIVE_INSTALL]: "1",
+          // Dual-set: the legacy AO_ alias must also be present so older
+          // CLI installs that only read AO_NON_INTERACTIVE_INSTALL still work.
+          [legacyEnvName(ENV.NON_INTERACTIVE_INSTALL)]: "1",
+        }),
       }),
     );
     expect(mockChildUnref).toHaveBeenCalledTimes(1);
@@ -269,7 +275,7 @@ describe("POST /api/update", () => {
       expect.objectContaining({
         detached: true,
         stdio: "ignore",
-        env: expect.objectContaining({ AO_NON_INTERACTIVE_INSTALL: "1" }),
+        env: expect.objectContaining({ [ENV.NON_INTERACTIVE_INSTALL]: "1" }),
       }),
     );
     expect(mockChildUnref).toHaveBeenCalledTimes(1);

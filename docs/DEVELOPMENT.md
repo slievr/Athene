@@ -433,7 +433,7 @@ tmux attach -t {hash}-{prefix}-{num}
 athene session attach <sessionId>
 
 # Enable verbose logging
-AO_LOG_LEVEL=debug athene start
+ATHENE_LOG_LEVEL=debug athene start
 ```
 
 ---

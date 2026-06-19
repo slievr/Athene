@@ -82,7 +82,7 @@ describe("buildPrompt split output", () => {
     expect(systemPrompt).toContain("## Talking to the Orchestrator");
     expect(systemPrompt).toContain('athene send test-orchestrator "<your message>"');
     // No env vars or shell-syntax variants — literal ID only.
-    expect(systemPrompt).not.toContain("AO_ORCHESTRATOR_SESSION_ID");
+    expect(systemPrompt).not.toContain("ATHENE_ORCHESTRATOR_SESSION_ID");
     expect(systemPrompt).not.toContain("$env:");
     expect(systemPrompt).not.toContain("%AO");
   });

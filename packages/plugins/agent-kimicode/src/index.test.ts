@@ -375,16 +375,24 @@ describe("getLaunchCommand", () => {
 describe("getEnvironment", () => {
   const agent = create();
 
-  it("sets AO_SESSION_ID", () => {
+  it("sets ATHENE_SESSION_ID", () => {
     const env = agent.getEnvironment(makeLaunchConfig());
-    expect(env["AO_SESSION_ID"]).toBe("sess-1");
+    expect(env["ATHENE_SESSION_ID"]).toBe("sess-1");
   });
 
-  it("sets AO_ISSUE_ID only when provided", () => {
-    expect(agent.getEnvironment(makeLaunchConfig()).AO_ISSUE_ID).toBeUndefined();
-    expect(agent.getEnvironment(makeLaunchConfig({ issueId: "GH-42" })).AO_ISSUE_ID).toBe(
+  it("sets ATHENE_ISSUE_ID only when provided", () => {
+    expect(agent.getEnvironment(makeLaunchConfig()).ATHENE_ISSUE_ID).toBeUndefined();
+    expect(agent.getEnvironment(makeLaunchConfig({ issueId: "GH-42" })).ATHENE_ISSUE_ID).toBe(
       "GH-42",
     );
+  });
+
+  it("also emits legacy AO_SESSION_ID alias (dual-set)", () => {
+    const env = agent.getEnvironment(makeLaunchConfig({ issueId: "GH-42" }));
+    expect(env["AO_SESSION_ID"]).toBe("sess-1");
+    expect(env["AO_SESSION_ID"]).toBe(env["ATHENE_SESSION_ID"]);
+    expect(env["AO_ISSUE_ID"]).toBe("GH-42");
+    expect(env["AO_ISSUE_ID"]).toBe(env["ATHENE_ISSUE_ID"]);
   });
 
   // PATH and GH_PATH are not set here — session-manager injects them for

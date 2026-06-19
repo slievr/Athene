@@ -28,8 +28,8 @@ EOF
   shift
 done
 
-REPO_ROOT="${AO_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-SCRIPT_LAYOUT="${AO_SCRIPT_LAYOUT:-}"
+REPO_ROOT="${ATHENE_REPO_ROOT:-${AO_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}}"
+SCRIPT_LAYOUT="${ATHENE_SCRIPT_LAYOUT:-${AO_SCRIPT_LAYOUT:-}}"
 if [ -z "$SCRIPT_LAYOUT" ]; then
   if [ -f "$REPO_ROOT/package.json" ] && [ -f "$REPO_ROOT/dist/index.js" ] && [ ! -d "$REPO_ROOT/packages" ]; then
     SCRIPT_LAYOUT="package-install"
@@ -79,8 +79,9 @@ expand_home() {
 }
 
 find_config() {
-  if [ -n "${AO_CONFIG_PATH:-}" ] && [ -f "$AO_CONFIG_PATH" ]; then
-    printf '%s\n' "$AO_CONFIG_PATH"
+  local config_path_override="${ATHENE_CONFIG_PATH:-${AO_CONFIG_PATH:-}}"
+  if [ -n "$config_path_override" ] && [ -f "$config_path_override" ]; then
+    printf '%s\n' "$config_path_override"
     return 0
   fi
 
@@ -373,7 +374,7 @@ check_config_dirs() {
 
 check_stale_temp_files() {
   local temp_root stale_count deleted_count
-  temp_root="${AO_DOCTOR_TMP_ROOT:-${TMPDIR:-/tmp}/agent-orchestrator}"
+  temp_root="${ATHENE_DOCTOR_TMP_ROOT:-${AO_DOCTOR_TMP_ROOT:-${TMPDIR:-/tmp}/agent-orchestrator}}"
   if [ ! -d "$temp_root" ]; then
     pass "temp root exists check skipped because $temp_root does not exist"
     return

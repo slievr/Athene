@@ -314,8 +314,8 @@ describe("AO_METADATA_HELPER", () => {
 
   it("validates environment in shared _ao_validate_env", () => {
     expect(AO_METADATA_HELPER).toContain("_ao_validate_env()");
-    expect(AO_METADATA_HELPER).toContain("AO_DATA_DIR");
-    expect(AO_METADATA_HELPER).toContain("AO_SESSION");
+    expect(AO_METADATA_HELPER).toContain("ATHENE_DATA_DIR");
+    expect(AO_METADATA_HELPER).toContain("ATHENE_SESSION");
   });
 
   it("validates trusted roots for path traversal prevention", () => {

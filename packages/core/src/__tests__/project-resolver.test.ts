@@ -36,19 +36,19 @@ describe("project resolver", () => {
     mkdirSync(tempRoot, { recursive: true });
     originalHome = process.env["HOME"];
     originalUserProfile = process.env["USERPROFILE"];
-    originalGlobalConfig = process.env["AO_GLOBAL_CONFIG"];
+    originalGlobalConfig = process.env["ATHENE_GLOBAL_CONFIG"];
     process.env["HOME"] = tempRoot;
     process.env["USERPROFILE"] = tempRoot;
-    process.env["AO_GLOBAL_CONFIG"] = configPath;
+    process.env["ATHENE_GLOBAL_CONFIG"] = configPath;
   });
 
   afterEach(() => {
     process.env["HOME"] = originalHome;
     process.env["USERPROFILE"] = originalUserProfile;
     if (originalGlobalConfig === undefined) {
-      delete process.env["AO_GLOBAL_CONFIG"];
+      delete process.env["ATHENE_GLOBAL_CONFIG"];
     } else {
-      process.env["AO_GLOBAL_CONFIG"] = originalGlobalConfig;
+      process.env["ATHENE_GLOBAL_CONFIG"] = originalGlobalConfig;
     }
     rmSync(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   });

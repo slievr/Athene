@@ -31,11 +31,11 @@ describe.skipIf(!canRun)("CLI first-run config generation (integration)", () => 
     globalConfigPath = join(tmpHome, "global-agent-orchestrator.yaml");
 
     originalHome = process.env["HOME"];
-    originalAoGlobalConfig = process.env["AO_GLOBAL_CONFIG"];
-    originalAoConfigPath = process.env["AO_CONFIG_PATH"];
+    originalAoGlobalConfig = process.env["ATHENE_GLOBAL_CONFIG"];
+    originalAoConfigPath = process.env["ATHENE_CONFIG_PATH"];
     process.env["HOME"] = tmpHome;
-    process.env["AO_GLOBAL_CONFIG"] = globalConfigPath;
-    delete process.env["AO_CONFIG_PATH"];
+    process.env["ATHENE_GLOBAL_CONFIG"] = globalConfigPath;
+    delete process.env["ATHENE_CONFIG_PATH"];
 
     mkdirSync(repoPath, { recursive: true });
     await execFileAsync("git", ["init"], { cwd: repoPath });
@@ -55,10 +55,10 @@ describe.skipIf(!canRun)("CLI first-run config generation (integration)", () => 
   afterEach(async () => {
     if (originalHome === undefined) delete process.env["HOME"];
     else process.env["HOME"] = originalHome;
-    if (originalAoGlobalConfig === undefined) delete process.env["AO_GLOBAL_CONFIG"];
-    else process.env["AO_GLOBAL_CONFIG"] = originalAoGlobalConfig;
-    if (originalAoConfigPath === undefined) delete process.env["AO_CONFIG_PATH"];
-    else process.env["AO_CONFIG_PATH"] = originalAoConfigPath;
+    if (originalAoGlobalConfig === undefined) delete process.env["ATHENE_GLOBAL_CONFIG"];
+    else process.env["ATHENE_GLOBAL_CONFIG"] = originalAoGlobalConfig;
+    if (originalAoConfigPath === undefined) delete process.env["ATHENE_CONFIG_PATH"];
+    else process.env["ATHENE_CONFIG_PATH"] = originalAoConfigPath;
     await rm(tmpHome, { recursive: true, force: true }).catch(() => {});
   });
 
@@ -66,10 +66,15 @@ describe.skipIf(!canRun)("CLI first-run config generation (integration)", () => 
     const env: NodeJS.ProcessEnv = {
       ...process.env,
       HOME: tmpHome,
-      AO_GLOBAL_CONFIG: globalConfigPath,
+      ATHENE_GLOBAL_CONFIG: globalConfigPath,
     };
+    // Clear both the canonical and legacy config-path vars: env resolution is
+    // dual-read, and this process may inherit AO_CONFIG_PATH/AO_GLOBAL_CONFIG
+    // from the AO session running the test, which would otherwise win.
+    delete env["ATHENE_CONFIG_PATH"];
     delete env["AO_CONFIG_PATH"];
-    env["AO_CALLER_TYPE"] = "agent";
+    delete env["AO_GLOBAL_CONFIG"];
+    env["ATHENE_CALLER_TYPE"] = "agent";
 
     await execFileAsync(
       tsxBin,

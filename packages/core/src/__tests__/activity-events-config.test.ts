@@ -36,18 +36,18 @@ describe("activity events: config loading", () => {
     configPath = join(tempRoot, ".agent-orchestrator", "config.yaml");
     mkdirSync(tempRoot, { recursive: true });
     originalHome = process.env["HOME"];
-    originalGlobalConfig = process.env["AO_GLOBAL_CONFIG"];
+    originalGlobalConfig = process.env["ATHENE_GLOBAL_CONFIG"];
     process.env["HOME"] = tempRoot;
-    process.env["AO_GLOBAL_CONFIG"] = configPath;
+    process.env["ATHENE_GLOBAL_CONFIG"] = configPath;
     vi.mocked(recordActivityEvent).mockClear();
   });
 
   afterEach(() => {
     process.env["HOME"] = originalHome;
     if (originalGlobalConfig === undefined) {
-      delete process.env["AO_GLOBAL_CONFIG"];
+      delete process.env["ATHENE_GLOBAL_CONFIG"];
     } else {
-      process.env["AO_GLOBAL_CONFIG"] = originalGlobalConfig;
+      process.env["ATHENE_GLOBAL_CONFIG"] = originalGlobalConfig;
     }
     rmSync(tempRoot, { recursive: true, force: true });
   });

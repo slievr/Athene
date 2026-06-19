@@ -13,7 +13,7 @@
 
 import { spawn } from "node:child_process";
 import { NextResponse, type NextRequest } from "next/server";
-import { isWindows } from "@made-by-moonlight/athene-core";
+import { ENV, isWindows, withLegacyEnvAliases } from "@made-by-moonlight/athene-core";
 import { getServices } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
@@ -81,12 +81,12 @@ export async function POST(_req: NextRequest) {
       stdio: "ignore",
       shell: isWindows(),
       windowsHide: true,
-      // AO_NON_INTERACTIVE_INSTALL=1 tells the CLI's handleNpmUpdate to skip
+      // ATHENE_NON_INTERACTIVE_INSTALL=1 tells the CLI's handleNpmUpdate to skip
       // the isTTY gate and run the install. Without this, stdio:"ignore"
       // makes isTTY() return false, the CLI falls into the "print the
       // command and exit" branch, and the dashboard's "Update" button is
       // effectively a no-op (banner returns 202, nothing installs).
-      env: { ...process.env, AO_NON_INTERACTIVE_INSTALL: "1" },
+      env: withLegacyEnvAliases({ ...process.env, [ENV.NON_INTERACTIVE_INSTALL]: "1" }),
     });
     child.on("error", () => {
       // Swallow async spawn errors (ENOENT etc.) so they don't become

@@ -961,9 +961,34 @@ describe("session attach", () => {
 });
 
 describe("session claim-pr", () => {
-  afterEach(() => {
+  // The CLI now dual-reads ATHENE_*/AO_* session names. Clear the legacy AO_*
+  // variants (which the surrounding test environment may set) so resolution
+  // reflects only what each test sets explicitly.
+  const savedLegacy = {
+    sessionName: process.env["AO_SESSION_NAME"],
+    session: process.env["AO_SESSION"],
+  };
+
+  beforeEach(() => {
+    delete process.env["ATHENE_SESSION_NAME"];
+    delete process.env["ATHENE_SESSION"];
     delete process.env["AO_SESSION_NAME"];
     delete process.env["AO_SESSION"];
+  });
+
+  afterEach(() => {
+    delete process.env["ATHENE_SESSION_NAME"];
+    delete process.env["ATHENE_SESSION"];
+    if (savedLegacy.sessionName === undefined) {
+      delete process.env["AO_SESSION_NAME"];
+    } else {
+      process.env["AO_SESSION_NAME"] = savedLegacy.sessionName;
+    }
+    if (savedLegacy.session === undefined) {
+      delete process.env["AO_SESSION"];
+    } else {
+      process.env["AO_SESSION"] = savedLegacy.session;
+    }
   });
 
   it("claims a PR for an explicit session", async () => {
@@ -986,8 +1011,8 @@ describe("session claim-pr", () => {
     expect(output).toContain("feat/existing-pr");
   });
 
-  it("uses AO_SESSION_NAME when session argument is omitted", async () => {
-    process.env["AO_SESSION_NAME"] = "app-7";
+  it("uses ATHENE_SESSION_NAME when session argument is omitted", async () => {
+    process.env["ATHENE_SESSION_NAME"] = "app-7";
 
     await program.parseAsync(["node", "test", "session", "claim-pr", "42"]);
 

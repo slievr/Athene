@@ -27,8 +27,8 @@ describe("portfolio-registry", () => {
   beforeEach(() => {
     tempRoot = join(tmpdir(), `ao-portfolio-${Date.now()}-${Math.random().toString(16).slice(2)}`);
     mkdirSync(tempRoot, { recursive: true });
-    oldGlobalConfig = process.env["AO_GLOBAL_CONFIG"];
-    oldConfigPath = process.env["AO_CONFIG_PATH"];
+    oldGlobalConfig = process.env["ATHENE_GLOBAL_CONFIG"];
+    oldConfigPath = process.env["ATHENE_CONFIG_PATH"];
     oldHome = process.env["HOME"];
     oldUserProfile = process.env["USERPROFILE"];
     process.env["HOME"] = tempRoot;
@@ -36,10 +36,10 @@ describe("portfolio-registry", () => {
   });
 
   afterEach(() => {
-    if (oldGlobalConfig === undefined) delete process.env["AO_GLOBAL_CONFIG"];
-    else process.env["AO_GLOBAL_CONFIG"] = oldGlobalConfig;
-    if (oldConfigPath === undefined) delete process.env["AO_CONFIG_PATH"];
-    else process.env["AO_CONFIG_PATH"] = oldConfigPath;
+    if (oldGlobalConfig === undefined) delete process.env["ATHENE_GLOBAL_CONFIG"];
+    else process.env["ATHENE_GLOBAL_CONFIG"] = oldGlobalConfig;
+    if (oldConfigPath === undefined) delete process.env["ATHENE_CONFIG_PATH"];
+    else process.env["ATHENE_CONFIG_PATH"] = oldConfigPath;
     if (oldHome === undefined) delete process.env["HOME"];
     else process.env["HOME"] = oldHome;
     if (oldUserProfile === undefined) delete process.env["USERPROFILE"];
@@ -47,7 +47,7 @@ describe("portfolio-registry", () => {
     rmSync(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   });
 
-  it("reads projects from the canonical global config path instead of AO_CONFIG_PATH discovery", () => {
+  it("reads projects from the canonical global config path instead of ATHENE_CONFIG_PATH discovery", () => {
     const globalConfigPath = join(tempRoot, "global-config.yaml");
     const conflictingConfigPath = join(tempRoot, "agent-orchestrator.yaml");
     const canonicalRepo = join(tempRoot, "canonical");
@@ -55,8 +55,8 @@ describe("portfolio-registry", () => {
     mkdirSync(canonicalRepo, { recursive: true });
     mkdirSync(conflictingRepo, { recursive: true });
 
-    process.env["AO_GLOBAL_CONFIG"] = globalConfigPath;
-    process.env["AO_CONFIG_PATH"] = conflictingConfigPath;
+    process.env["ATHENE_GLOBAL_CONFIG"] = globalConfigPath;
+    process.env["ATHENE_CONFIG_PATH"] = conflictingConfigPath;
 
     saveGlobalConfig(
       makeGlobalConfig({
@@ -95,7 +95,7 @@ describe("portfolio-registry", () => {
     mkdirSync(apiRepo, { recursive: true });
     mkdirSync(webRepo, { recursive: true });
 
-    process.env["AO_GLOBAL_CONFIG"] = globalConfigPath;
+    process.env["ATHENE_GLOBAL_CONFIG"] = globalConfigPath;
 
     saveGlobalConfig(
       makeGlobalConfig({

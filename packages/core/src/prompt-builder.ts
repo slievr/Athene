@@ -28,7 +28,7 @@ export const BASE_AGENT_PROMPT = `You are an AI coding agent managed by the Athe
 - If reviewers request changes, the orchestrator will forward their comments — address each one, push fixes, and reply to the comments.
 
 ## Reporting Progress to AO
-The orchestrator infers your status from runtime signals, but explicit reports are always preferred — they are accurate and fresh. Run these commands from the session shell (AO_SESSION_ID is pre-set for you):
+The orchestrator infers your status from runtime signals, but explicit reports are always preferred — they are accurate and fresh. Run these commands from the session shell (ATHENE_SESSION_ID is pre-set for you):
 
 - \`athene acknowledge\` — run once after reading the initial task so AO knows you picked it up.
 - \`athene report working\` — declare you are actively making progress (useful after pauses or long thinking blocks).
@@ -64,7 +64,7 @@ export const BASE_AGENT_PROMPT_NO_REPO = `You are an AI coding agent managed by 
 - No remote repository is configured — work locally. PR, CI, and review features are unavailable.
 
 ## Reporting Progress to AO
-Explicit reports help the orchestrator track your state accurately. Run these from the session shell (AO_SESSION_ID is pre-set):
+Explicit reports help the orchestrator track your state accurately. Run these from the session shell (ATHENE_SESSION_ID is pre-set):
 - \`athene acknowledge\` — run once after reading the initial task.
 - \`athene report working\` / \`waiting\` / \`needs-input\` — declare your current phase.
 - \`athene report pr-created --pr-url <url>\` or \`draft-pr-created\` / \`ready-for-review\` — declare non-terminal PR workflow events when relevant.

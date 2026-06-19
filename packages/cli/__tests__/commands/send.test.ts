@@ -48,6 +48,13 @@ vi.mock("../../src/lib/session-utils.js", () => ({
 }));
 
 vi.mock("@made-by-moonlight/athene-core", () => ({
+  ENV: { SESSION_ID: "ATHENE_SESSION_ID" },
+  getEnvString: (name: string) => {
+    const primary = process.env[name];
+    if (primary !== undefined && primary !== "") return primary;
+    const legacy = process.env[name.replace(/^ATHENE_/, "AO_")];
+    return legacy !== undefined && legacy !== "" ? legacy : primary;
+  },
   loadConfig: () => {
     if (!mockConfigRef.current) {
       throw new Error("no config");
@@ -69,6 +76,7 @@ let consoleSpy: ReturnType<typeof vi.spyOn>;
 let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 let exitSpy: ReturnType<typeof vi.spyOn>;
 let savedSessionEnv: string | undefined;
+let savedLegacySessionEnv: string | undefined;
 
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -88,10 +96,13 @@ beforeEach(() => {
   mockConfigRef.current = null;
   mockExec.mockResolvedValue({ stdout: "", stderr: "" });
   // Tests assume the caller is a human (no AO session). Tests that need to
-  // simulate session-to-session sends override AO_SESSION_ID explicitly. This
+  // simulate session-to-session sends override ATHENE_SESSION_ID explicitly. This
   // matters because the test process itself often runs inside an AO worker,
-  // which would leak its own AO_SESSION_ID into the auto-prefix logic.
-  savedSessionEnv = process.env["AO_SESSION_ID"];
+  // which would leak its own session ID into the auto-prefix logic. The CLI
+  // dual-reads ATHENE_SESSION_ID/AO_SESSION_ID, so clear both names.
+  savedSessionEnv = process.env["ATHENE_SESSION_ID"];
+  savedLegacySessionEnv = process.env["AO_SESSION_ID"];
+  delete process.env["ATHENE_SESSION_ID"];
   delete process.env["AO_SESSION_ID"];
 });
 
@@ -100,8 +111,10 @@ afterEach(() => {
   consoleSpy.mockRestore();
   consoleErrorSpy.mockRestore();
   exitSpy.mockRestore();
-  if (savedSessionEnv === undefined) delete process.env["AO_SESSION_ID"];
-  else process.env["AO_SESSION_ID"] = savedSessionEnv;
+  if (savedSessionEnv === undefined) delete process.env["ATHENE_SESSION_ID"];
+  else process.env["ATHENE_SESSION_ID"] = savedSessionEnv;
+  if (savedLegacySessionEnv === undefined) delete process.env["AO_SESSION_ID"];
+  else process.env["AO_SESSION_ID"] = savedLegacySessionEnv;
 });
 
 describe("send command", () => {
@@ -284,9 +297,9 @@ describe("send command", () => {
     });
   });
 
-  describe("auto-prefix from AO_SESSION_ID", () => {
-    it("prefixes the message with [from <session>] when AO_SESSION_ID is set", async () => {
-      process.env["AO_SESSION_ID"] = "app-7";
+  describe("auto-prefix from ATHENE_SESSION_ID", () => {
+    it("prefixes the message with [from <session>] when ATHENE_SESSION_ID is set", async () => {
+      process.env["ATHENE_SESSION_ID"] = "app-7";
       mockTmux.mockImplementation(async (...args: string[]) => {
         if (args[0] === "has-session") return "";
         if (args[0] === "capture-pane") return "❯ ";
@@ -305,8 +318,28 @@ describe("send command", () => {
       ]);
     });
 
-    it("does not prefix when AO_SESSION_ID is unset (human caller)", async () => {
-      // beforeEach already deletes AO_SESSION_ID — exercise that path.
+    it("prefixes from the legacy AO_SESSION_ID when ATHENE_SESSION_ID is unset (dual-read)", async () => {
+      process.env["AO_SESSION_ID"] = "app-9";
+      mockTmux.mockImplementation(async (...args: string[]) => {
+        if (args[0] === "has-session") return "";
+        if (args[0] === "capture-pane") return "❯ ";
+        return "";
+      });
+      mockDetectActivity.mockReturnValueOnce("idle").mockReturnValueOnce("active");
+
+      await program.parseAsync(["node", "test", "send", "app-orchestrator", "hi", "boss"]);
+
+      expect(mockExec).toHaveBeenCalledWith("tmux", [
+        "send-keys",
+        "-t",
+        "app-orchestrator",
+        "-l",
+        "[from app-9] hi boss",
+      ]);
+    });
+
+    it("does not prefix when ATHENE_SESSION_ID is unset (human caller)", async () => {
+      // beforeEach already deletes ATHENE_SESSION_ID — exercise that path.
       mockTmux.mockImplementation(async (...args: string[]) => {
         if (args[0] === "has-session") return "";
         if (args[0] === "capture-pane") return "❯ ";
@@ -326,7 +359,7 @@ describe("send command", () => {
     });
 
     it("auto-prefixes when delivering through SessionManager.send too", async () => {
-      process.env["AO_SESSION_ID"] = "app-orchestrator";
+      process.env["ATHENE_SESSION_ID"] = "app-orchestrator";
       mockConfigRef.current = {
         configPath: "/tmp/agent-orchestrator.yaml",
         defaults: {

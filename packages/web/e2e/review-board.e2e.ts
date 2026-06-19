@@ -8,6 +8,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, type Locator, type Page } from "playwright";
 import { createCodeReviewStore } from "../../core/src/code-review-store.ts";
+import { ENV } from "../../core/src/env.ts";
 import {
   createInitialCanonicalLifecycle,
   deriveLegacyStatus,
@@ -226,12 +227,12 @@ async function startWebServer(fixture: Fixture): Promise<ServerHandle> {
     env: {
       ...process.env,
       HOME: fixture.homeDir,
-      AO_GLOBAL_CONFIG: fixture.globalConfigPath,
-      AO_CONFIG_PATH: fixture.localConfigPath,
-      AO_CODE_REVIEW_COMMAND: buildFindingReviewCommand(1_000),
+      [ENV.GLOBAL_CONFIG]: fixture.globalConfigPath,
+      [ENV.CONFIG_PATH]: fixture.localConfigPath,
+      [ENV.CODE_REVIEW_COMMAND]: buildFindingReviewCommand(1_000),
       PORT: String(port),
       NEXT_TELEMETRY_DISABLED: "1",
-      AO_NO_UPDATE_NOTIFIER: "1",
+      [ENV.NO_UPDATE_NOTIFIER]: "1",
       AGENT_ORCHESTRATOR_CI: "1",
     },
   });
@@ -316,8 +317,8 @@ function createFixture(): Fixture {
   );
 
   process.env["HOME"] = homeDir;
-  process.env["AO_GLOBAL_CONFIG"] = globalConfigPath;
-  process.env["AO_CONFIG_PATH"] = localConfigPath;
+  process.env[ENV.GLOBAL_CONFIG] = globalConfigPath;
+  process.env[ENV.CONFIG_PATH] = localConfigPath;
 
   const createdAt = new Date("2026-05-13T10:00:00.000Z");
   const workerLifecycle = createInitialCanonicalLifecycle("worker", createdAt);
@@ -416,9 +417,9 @@ function runAoCli(fixture: Fixture, args: string[]): string {
     env: {
       ...process.env,
       HOME: fixture.homeDir,
-      AO_GLOBAL_CONFIG: fixture.globalConfigPath,
-      AO_CONFIG_PATH: fixture.localConfigPath,
-      AO_NO_UPDATE_NOTIFIER: "1",
+      [ENV.GLOBAL_CONFIG]: fixture.globalConfigPath,
+      [ENV.CONFIG_PATH]: fixture.localConfigPath,
+      [ENV.NO_UPDATE_NOTIFIER]: "1",
       AGENT_ORCHESTRATOR_CI: "1",
     },
   });
@@ -432,9 +433,9 @@ function runAoCliAsync(fixture: Fixture, args: string[]): Promise<string> {
       env: {
         ...process.env,
         HOME: fixture.homeDir,
-        AO_GLOBAL_CONFIG: fixture.globalConfigPath,
-        AO_CONFIG_PATH: fixture.localConfigPath,
-        AO_NO_UPDATE_NOTIFIER: "1",
+        [ENV.GLOBAL_CONFIG]: fixture.globalConfigPath,
+        [ENV.CONFIG_PATH]: fixture.localConfigPath,
+        [ENV.NO_UPDATE_NOTIFIER]: "1",
         AGENT_ORCHESTRATOR_CI: "1",
       },
     });
@@ -857,7 +858,7 @@ async function main(): Promise<void> {
       // Best effort cleanup; tmux sessions and fixture files still need cleanup.
     }
     killReviewBoardTmuxSessions(fixture);
-    if (process.env["AO_E2E_KEEP_ARTIFACTS"] !== "1") {
+    if (process.env[ENV.E2E_KEEP_ARTIFACTS] !== "1") {
       rmSync(fixture.rootDir, { recursive: true, force: true });
     } else {
       process.stdout.write(`\nKept e2e fixture at ${fixture.rootDir}\n`);

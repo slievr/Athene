@@ -27,6 +27,10 @@ reusing the same on-disk state.
   / `.yml`, `~/.ao/bin/`, `{workspace}/.ao/`, `~/.cache/ao/`, and the `AO_*` env vars
   (`AO_GLOBAL_CONFIG`, `AO_SESSION_ID`, …). These are user state and cross-tool compatibility
   surfaces; keeping them verbatim is what lets `athene` reuse the existing portfolio config.
+  - **Update (env-var aliasing):** `ATHENE_*` names are now *also* accepted as the canonical/preferred
+    aliases for every `AO_*` env var. The `AO_*` prefix is **retained and fully supported** per the
+    compatibility decision above — reads prefer `ATHENE_*` and fall back to `AO_*`, and spawned
+    children emit both names. This is additive, not a rename: nothing about `AO_*` is removed.
 
 ## Implementation
 

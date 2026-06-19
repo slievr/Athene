@@ -3,6 +3,9 @@ import ora from "ora";
 import type { Command } from "commander";
 import { resolve } from "node:path";
 import {
+  ENV,
+  getEnvString,
+  legacyEnvName,
   loadConfig,
   recordActivityEvent,
   resolveSpawnTarget,
@@ -23,7 +26,7 @@ import { projectSessionUrl } from "../lib/routes.js";
  * Auto-detect the project ID from the config.
  * - If only one project exists, use it.
  * - If multiple projects exist, match cwd against project paths.
- * - Falls back to AO_PROJECT_ID env var (set when called from an agent session).
+ * - Falls back to ATHENE_PROJECT_ID env var (set when called from an agent session).
  */
 function autoDetectProject(config: OrchestratorConfig): string {
   const projectIds = Object.keys(config.projects);
@@ -34,8 +37,8 @@ function autoDetectProject(config: OrchestratorConfig): string {
     return projectIds[0];
   }
 
-  // Try AO_PROJECT_ID env var (set by AO when spawning agent sessions)
-  const envProject = process.env.AO_PROJECT_ID;
+  // Try ATHENE_PROJECT_ID env var (set by AO when spawning agent sessions)
+  const envProject = getEnvString(ENV.PROJECT_ID);
   if (envProject && config.projects[envProject]) {
     return envProject;
   }
@@ -206,7 +209,7 @@ export interface SpawnOwner {
 /**
  * Resolve the effective owner flags, auto-stamping meta ownership from the
  * environment when no explicit flag is given. A meta orchestrator's runtime sets
- * `AO_CALLER_TYPE=meta-orchestrator` + `AO_META_NAME=<name>`, which a worker it
+ * `ATHENE_CALLER_TYPE=meta-orchestrator` + `ATHENE_META_NAME=<name>`, which a worker it
  * dispatches via `athene spawn` inherits — so meta-dispatched workers are tagged
  * automatically and the agent cannot forget. Explicit `--owner-kind`/`--meta-owner`
  * flags always win (override). Pure — no I/O.
@@ -216,8 +219,10 @@ export function effectiveOwnerOptions(
   env: NodeJS.ProcessEnv,
 ): { ownerKind?: string; metaOwner?: string } {
   if (opts.ownerKind || opts.metaOwner) return opts; // explicit flags take precedence
-  if (env.AO_CALLER_TYPE === "meta-orchestrator" && env.AO_META_NAME) {
-    return { ownerKind: "meta", metaOwner: env.AO_META_NAME };
+  const callerType = env[ENV.CALLER_TYPE] ?? env[legacyEnvName(ENV.CALLER_TYPE)];
+  const metaName = env[ENV.META_NAME] ?? env[legacyEnvName(ENV.META_NAME)];
+  if (callerType === "meta-orchestrator" && metaName) {
+    return { ownerKind: "meta", metaOwner: metaName };
   }
   return opts;
 }

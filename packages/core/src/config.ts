@@ -16,6 +16,7 @@ import { resolve, join, dirname, basename } from "node:path";
 import { homedir } from "node:os";
 import { parse as parseYaml } from "yaml";
 import { z } from "zod";
+import { ENV, getEnvString } from "./env.js";
 import {
   ConfigNotFoundError,
   ProjectResolveError,
@@ -831,15 +832,16 @@ function applyDefaultReactions(config: OrchestratorConfig): OrchestratorConfig {
  * Search for config file in standard locations.
  *
  * Search order:
- * 1. AO_CONFIG_PATH environment variable (if set)
+ * 1. ATHENE_CONFIG_PATH environment variable (if set)
  * 2. Search up directory tree from CWD (like git)
  * 3. Explicit startDir (if provided)
  * 4. Home directory locations
  */
 export function findConfigFile(startDir?: string): string | null {
   // 1. Check environment variable override
-  if (process.env["AO_CONFIG_PATH"]) {
-    const envPath = resolve(process.env["AO_CONFIG_PATH"]);
+  const configPathOverride = getEnvString(ENV.CONFIG_PATH);
+  if (configPathOverride) {
+    const envPath = resolve(configPathOverride);
     if (existsSync(envPath)) {
       return envPath;
     }
@@ -1035,8 +1037,8 @@ export function validateWrappedConfig(raw: unknown): OrchestratorConfig {
 
 /** Load and validate config from a YAML file */
 export function loadConfig(configPath?: string): LoadedConfig {
-  // Priority: 1. Explicit param, 2. Search (including AO_CONFIG_PATH env var)
-  // findConfigFile treats AO_CONFIG_PATH as authoritative when present.
+  // Priority: 1. Explicit param, 2. Search (including ATHENE_CONFIG_PATH env var)
+  // findConfigFile treats ATHENE_CONFIG_PATH as authoritative when present.
   const path = configPath ?? findConfigFile();
 
   if (!path) {
