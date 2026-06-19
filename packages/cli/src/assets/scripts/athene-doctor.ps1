@@ -32,9 +32,10 @@ Options:
     exit 0
 }
 
-# AO_REPO_ROOT and AO_SCRIPT_LAYOUT are exported by runRepoScript().
-$RepoRoot = if ($env:AO_REPO_ROOT) { $env:AO_REPO_ROOT } else { (Resolve-Path (Join-Path $PSScriptRoot '..')).Path }
-$ScriptLayout = $env:AO_SCRIPT_LAYOUT
+# ATHENE_REPO_ROOT and ATHENE_SCRIPT_LAYOUT are exported by runRepoScript()
+# (with legacy AO_* aliases for backward compatibility).
+$RepoRoot = if ($env:ATHENE_REPO_ROOT) { $env:ATHENE_REPO_ROOT } elseif ($env:AO_REPO_ROOT) { $env:AO_REPO_ROOT } else { (Resolve-Path (Join-Path $PSScriptRoot '..')).Path }
+$ScriptLayout = if ($env:ATHENE_SCRIPT_LAYOUT) { $env:ATHENE_SCRIPT_LAYOUT } else { $env:AO_SCRIPT_LAYOUT }
 if (-not $ScriptLayout) {
     if ((Test-Path (Join-Path $RepoRoot 'package.json')) -and
         (Test-Path (Join-Path $RepoRoot 'dist/index.js')) -and
@@ -66,8 +67,9 @@ function Expand-HomePath([string]$p) {
 }
 
 function Find-AoConfig {
-    if ($env:AO_CONFIG_PATH -and (Test-Path $env:AO_CONFIG_PATH)) {
-        return $env:AO_CONFIG_PATH
+    $configPathOverride = if ($env:ATHENE_CONFIG_PATH) { $env:ATHENE_CONFIG_PATH } else { $env:AO_CONFIG_PATH }
+    if ($configPathOverride -and (Test-Path $configPathOverride)) {
+        return $configPathOverride
     }
     $current = Get-Location | Select-Object -ExpandProperty Path
     while ($current) {
@@ -299,7 +301,7 @@ function Check-ConfigDirs {
 }
 
 function Check-StaleTempFiles {
-    $tempRoot = if ($env:AO_DOCTOR_TMP_ROOT) { $env:AO_DOCTOR_TMP_ROOT } else { Join-Path $env:TEMP 'agent-orchestrator' }
+    $tempRoot = if ($env:ATHENE_DOCTOR_TMP_ROOT) { $env:ATHENE_DOCTOR_TMP_ROOT } elseif ($env:AO_DOCTOR_TMP_ROOT) { $env:AO_DOCTOR_TMP_ROOT } else { Join-Path $env:TEMP 'agent-orchestrator' }
     if (-not (Test-Path $tempRoot)) {
         Write-Pass "temp root exists check skipped because $tempRoot does not exist"
         return

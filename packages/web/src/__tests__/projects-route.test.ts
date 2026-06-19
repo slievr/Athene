@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { NextRequest } from "next/server";
 import {
+  ENV,
   generateExternalId,
   loadGlobalConfig,
   registerProjectInGlobalConfig,
@@ -40,24 +41,24 @@ describe("POST /api/projects", () => {
   beforeEach(() => {
     vi.resetModules();
     invalidatePortfolioServicesCache.mockReset();
-    oldGlobalConfig = process.env["AO_GLOBAL_CONFIG"];
-    oldConfigPath = process.env["AO_CONFIG_PATH"];
+    oldGlobalConfig = process.env[ENV.GLOBAL_CONFIG];
+    oldConfigPath = process.env[ENV.CONFIG_PATH];
     tempRoot = mkdtempSync(path.join(tmpdir(), "ao-projects-route-"));
     configPath = path.join(tempRoot, "config.yaml");
-    process.env["AO_GLOBAL_CONFIG"] = configPath;
-    process.env["AO_CONFIG_PATH"] = configPath;
+    process.env[ENV.GLOBAL_CONFIG] = configPath;
+    process.env[ENV.CONFIG_PATH] = configPath;
   });
 
   afterEach(() => {
     if (oldGlobalConfig === undefined) {
-      delete process.env["AO_GLOBAL_CONFIG"];
+      Reflect.deleteProperty(process.env, ENV.GLOBAL_CONFIG);
     } else {
-      process.env["AO_GLOBAL_CONFIG"] = oldGlobalConfig;
+      process.env[ENV.GLOBAL_CONFIG] = oldGlobalConfig;
     }
     if (oldConfigPath === undefined) {
-      delete process.env["AO_CONFIG_PATH"];
+      Reflect.deleteProperty(process.env, ENV.CONFIG_PATH);
     } else {
-      process.env["AO_CONFIG_PATH"] = oldConfigPath;
+      process.env[ENV.CONFIG_PATH] = oldConfigPath;
     }
     rmSync(tempRoot, { recursive: true, force: true });
   });
@@ -88,7 +89,7 @@ describe("POST /api/projects", () => {
     });
   });
 
-  it("reads projects from the canonical global config even when AO_CONFIG_PATH points elsewhere", async () => {
+  it("reads projects from the canonical global config even when ATHENE_CONFIG_PATH points elsewhere", async () => {
     const healthyDir = path.join(tempRoot, "healthy");
     mkdirSync(healthyDir, { recursive: true });
     const healthyId = registerProjectInGlobalConfig("healthy", "Healthy", healthyDir);
@@ -105,7 +106,7 @@ describe("POST /api/projects", () => {
         "",
       ].join("\n"),
     );
-    process.env["AO_CONFIG_PATH"] = ambientConfigPath;
+    process.env[ENV.CONFIG_PATH] = ambientConfigPath;
 
     const { GET } = await import("@/app/api/projects/route");
     const response = await GET();
@@ -177,7 +178,7 @@ describe("POST /api/projects", () => {
         "",
       ].join("\n"),
     );
-    process.env["AO_CONFIG_PATH"] = localConfigPath;
+    process.env[ENV.CONFIG_PATH] = localConfigPath;
 
     const { POST } = await import("@/app/api/projects/route");
     const response = await POST(
@@ -338,24 +339,24 @@ describe("POST /api/projects/reload", () => {
   beforeEach(() => {
     vi.resetModules();
     invalidatePortfolioServicesCache.mockReset();
-    oldGlobalConfig = process.env["AO_GLOBAL_CONFIG"];
-    oldConfigPath = process.env["AO_CONFIG_PATH"];
+    oldGlobalConfig = process.env[ENV.GLOBAL_CONFIG];
+    oldConfigPath = process.env[ENV.CONFIG_PATH];
     tempRoot = mkdtempSync(path.join(tmpdir(), "ao-projects-reload-"));
     configPath = path.join(tempRoot, "config.yaml");
-    process.env["AO_GLOBAL_CONFIG"] = configPath;
-    process.env["AO_CONFIG_PATH"] = configPath;
+    process.env[ENV.GLOBAL_CONFIG] = configPath;
+    process.env[ENV.CONFIG_PATH] = configPath;
   });
 
   afterEach(() => {
     if (oldGlobalConfig === undefined) {
-      delete process.env["AO_GLOBAL_CONFIG"];
+      Reflect.deleteProperty(process.env, ENV.GLOBAL_CONFIG);
     } else {
-      process.env["AO_GLOBAL_CONFIG"] = oldGlobalConfig;
+      process.env[ENV.GLOBAL_CONFIG] = oldGlobalConfig;
     }
     if (oldConfigPath === undefined) {
-      delete process.env["AO_CONFIG_PATH"];
+      Reflect.deleteProperty(process.env, ENV.CONFIG_PATH);
     } else {
-      process.env["AO_CONFIG_PATH"] = oldConfigPath;
+      process.env[ENV.CONFIG_PATH] = oldConfigPath;
     }
     rmSync(tempRoot, { recursive: true, force: true });
   });
@@ -382,7 +383,7 @@ describe("POST /api/projects/reload", () => {
     expect(invalidatePortfolioServicesCache).toHaveBeenCalledTimes(1);
   });
 
-  it("reload reads counts from the canonical global config even when AO_CONFIG_PATH diverges", async () => {
+  it("reload reads counts from the canonical global config even when ATHENE_CONFIG_PATH diverges", async () => {
     const healthyDir = path.join(tempRoot, "healthy");
     mkdirSync(healthyDir, { recursive: true });
     registerProjectInGlobalConfig("healthy", "Healthy", healthyDir);
@@ -399,7 +400,7 @@ describe("POST /api/projects/reload", () => {
         "",
       ].join("\n"),
     );
-    process.env["AO_CONFIG_PATH"] = ambientConfigPath;
+    process.env[ENV.CONFIG_PATH] = ambientConfigPath;
 
     const { POST } = await import("@/app/api/projects/reload/route");
     const response = await POST();
@@ -428,7 +429,7 @@ describe("POST /api/projects/reload", () => {
         "",
       ].join("\n"),
     );
-    process.env["AO_CONFIG_PATH"] = localConfigPath;
+    process.env[ENV.CONFIG_PATH] = localConfigPath;
 
     const { POST } = await import("@/app/api/projects/reload/route");
     const response = await POST();

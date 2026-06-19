@@ -95,6 +95,17 @@ const SLACK_BAD_WEBHOOK_URL = testHttpsUrl(["hooks", "slack", "com"], "/services
 const SLACK_NEW_WEBHOOK_URL = testHttpsUrl(["hooks", "slack", "com"], "/services/TNEW/BNEW/new");
 
 vi.mock("@made-by-moonlight/athene-core", () => ({
+  ENV: {
+    DESKTOP_SETUP_PLATFORM: "ATHENE_DESKTOP_SETUP_PLATFORM",
+    DESKTOP_APP_INSTALL_PATH: "ATHENE_DESKTOP_APP_INSTALL_PATH",
+    NOTIFIER_MACOS_APP_PATH: "ATHENE_NOTIFIER_MACOS_APP_PATH",
+  },
+  getEnvString: (name: string) => {
+    const primary = process.env[name];
+    if (primary !== undefined && primary !== "") return primary;
+    const legacy = process.env[name.replace(/^ATHENE_/, "AO_")];
+    return legacy !== undefined && legacy !== "" ? legacy : primary;
+  },
   CONFIG_SCHEMA_URL:
     "https://raw.githubusercontent.com/slievr/Athene/main/schema/config.schema.json",
   DEFAULT_DASHBOARD_NOTIFICATION_LIMIT: 50,
@@ -2680,9 +2691,9 @@ describe("setup desktop command", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     process.env = { ...originalEnv };
-    process.env["AO_DESKTOP_SETUP_PLATFORM"] = "darwin";
-    process.env["AO_NOTIFIER_MACOS_APP_PATH"] = sourceApp;
-    process.env["AO_DESKTOP_APP_INSTALL_PATH"] = targetApp;
+    process.env["ATHENE_DESKTOP_SETUP_PLATFORM"] = "darwin";
+    process.env["ATHENE_NOTIFIER_MACOS_APP_PATH"] = sourceApp;
+    process.env["ATHENE_DESKTOP_APP_INSTALL_PATH"] = targetApp;
     mockFindConfigFile.mockReturnValue("/tmp/agent-orchestrator.yaml");
     mockReadFileSync.mockReturnValue(MINIMAL_CONFIG);
     mockWriteFileSync.mockImplementation(() => {});
@@ -3119,7 +3130,7 @@ projects:
   });
 
   it("exits on non-macOS install attempts", async () => {
-    process.env["AO_DESKTOP_SETUP_PLATFORM"] = "linux";
+    process.env["ATHENE_DESKTOP_SETUP_PLATFORM"] = "linux";
     const program = createProgram();
     const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("process.exit");

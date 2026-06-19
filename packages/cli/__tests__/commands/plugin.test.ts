@@ -101,7 +101,7 @@ describe("plugin command", () => {
     configPath = join(tempDir, "agent-orchestrator.yaml");
     registryCachePath = join(tempDir, "plugin-registry-cache.json");
     writeConfig(configPath);
-    process.env["AO_PLUGIN_REGISTRY_CACHE_PATH"] = registryCachePath;
+    process.env["ATHENE_PLUGIN_REGISTRY_CACHE_PATH"] = registryCachePath;
 
     mockFindConfigFile.mockReturnValue(configPath);
     mockRunSetupAction.mockReset();
@@ -144,8 +144,8 @@ describe("plugin command", () => {
   });
 
   afterEach(() => {
-    delete process.env["AO_PLUGIN_REGISTRY_CACHE_PATH"];
-    delete process.env["AO_PLUGIN_REGISTRY_URL"];
+    delete process.env["ATHENE_PLUGIN_REGISTRY_CACHE_PATH"];
+    delete process.env["ATHENE_PLUGIN_REGISTRY_URL"];
     rmSync(tempDir, { recursive: true, force: true });
     vi.unstubAllGlobals();
     vi.restoreAllMocks();

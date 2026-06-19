@@ -105,6 +105,7 @@ import {
   setupPathWrapperWorkspace,
   PREFERRED_GH_PATH,
 } from "./agent-workspace-hooks.js";
+import { ENV, getEnvString, withLegacyEnvAliases } from "./env.js";
 
 const execFileAsync = promisify(execFile);
 const OPENCODE_DISCOVERY_TIMEOUT_MS = 10_000;
@@ -1765,25 +1766,25 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
         sessionId: tmuxName ?? sessionId, // Use tmux name for runtime if available
         workspacePath,
         launchCommand,
-        environment: {
+        environment: withLegacyEnvAliases({
           ...environment,
           ...(opencodeConfigFile ? { OPENCODE_CONFIG: opencodeConfigFile } : {}),
           ...(project.env ?? {}),
           PATH: buildAgentPath(environment["PATH"] ?? process.env["PATH"]),
           GH_PATH: PREFERRED_GH_PATH,
-          ...(process.env["AO_AGENT_GH_TRACE"] && {
-            AO_AGENT_GH_TRACE: process.env["AO_AGENT_GH_TRACE"],
+          ...(getEnvString(ENV.AGENT_GH_TRACE) && {
+            [ENV.AGENT_GH_TRACE]: getEnvString(ENV.AGENT_GH_TRACE),
           }),
-          AO_SESSION: sessionId,
-          AO_DATA_DIR: sessionsDir, // Pass sessions directory (not root dataDir)
-          AO_SESSION_NAME: sessionId, // User-facing session name
-          ...(tmuxName && { AO_TMUX_NAME: tmuxName }), // Tmux session name if using new arch
-          AO_CALLER_TYPE: "agent",
-          AO_PROJECT_ID: spawnConfig.projectId,
-          AO_CONFIG_PATH: config.configPath,
+          [ENV.SESSION]: sessionId,
+          [ENV.DATA_DIR]: sessionsDir, // Pass sessions directory (not root dataDir)
+          [ENV.SESSION_NAME]: sessionId, // User-facing session name
+          ...(tmuxName && { [ENV.TMUX_NAME]: tmuxName }), // Tmux session name if using new arch
+          [ENV.CALLER_TYPE]: "agent",
+          [ENV.PROJECT_ID]: spawnConfig.projectId,
+          [ENV.CONFIG_PATH]: config.configPath,
           ...(config.port !== undefined &&
-            config.port !== null && { AO_PORT: String(config.port) }),
-        },
+            config.port !== null && { [ENV.PORT]: String(config.port) }),
+        }),
       });
       const rt = plugins.runtime;
       cleanupStack.push(() => rt.destroy(handle));
@@ -2244,24 +2245,24 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
         sessionId: tmuxName ?? sessionId,
         workspacePath,
         launchCommand,
-        environment: {
+        environment: withLegacyEnvAliases({
           ...environment,
           ...(project.env ?? {}),
           PATH: buildAgentPath(environment["PATH"] ?? process.env["PATH"]),
           GH_PATH: PREFERRED_GH_PATH,
-          ...(process.env["AO_AGENT_GH_TRACE"] && {
-            AO_AGENT_GH_TRACE: process.env["AO_AGENT_GH_TRACE"],
+          ...(getEnvString(ENV.AGENT_GH_TRACE) && {
+            [ENV.AGENT_GH_TRACE]: getEnvString(ENV.AGENT_GH_TRACE),
           }),
-          AO_SESSION: sessionId,
-          AO_DATA_DIR: sessionsDir,
-          AO_SESSION_NAME: sessionId,
-          ...(tmuxName && { AO_TMUX_NAME: tmuxName }),
-          AO_CALLER_TYPE: "orchestrator",
-          AO_PROJECT_ID: orchestratorConfig.projectId,
-          AO_CONFIG_PATH: config.configPath,
+          [ENV.SESSION]: sessionId,
+          [ENV.DATA_DIR]: sessionsDir,
+          [ENV.SESSION_NAME]: sessionId,
+          ...(tmuxName && { [ENV.TMUX_NAME]: tmuxName }),
+          [ENV.CALLER_TYPE]: "orchestrator",
+          [ENV.PROJECT_ID]: orchestratorConfig.projectId,
+          [ENV.CONFIG_PATH]: config.configPath,
           ...(config.port !== undefined &&
-            config.port !== null && { AO_PORT: String(config.port) }),
-        },
+            config.port !== null && { [ENV.PORT]: String(config.port) }),
+        }),
       });
     } catch (err) {
       // Outer envelope catches and emits session.spawn_failed; this step emit
@@ -2730,20 +2731,20 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
         sessionId,
         workspacePath,
         launchCommand,
-        environment: {
+        environment: withLegacyEnvAliases({
           ...environment,
           PATH: buildAgentPath(environment["PATH"] ?? process.env["PATH"]),
           GH_PATH: PREFERRED_GH_PATH,
-          AO_SESSION: sessionId,
-          AO_DATA_DIR: sessionsDir,
-          AO_SESSION_NAME: sessionId,
-          AO_CALLER_TYPE: "meta-orchestrator",
-          AO_PROJECT_ID: "_meta",
-          AO_META_NAME: name,
-          AO_CONFIG_PATH: config.configPath,
+          [ENV.SESSION]: sessionId,
+          [ENV.DATA_DIR]: sessionsDir,
+          [ENV.SESSION_NAME]: sessionId,
+          [ENV.CALLER_TYPE]: "meta-orchestrator",
+          [ENV.PROJECT_ID]: "_meta",
+          [ENV.META_NAME]: name,
+          [ENV.CONFIG_PATH]: config.configPath,
           ...(config.port !== undefined &&
-            config.port !== null && { AO_PORT: String(config.port) }),
-        },
+            config.port !== null && { [ENV.PORT]: String(config.port) }),
+        }),
       });
     } catch (err) {
       await cleanup();
@@ -4219,24 +4220,24 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
       sessionId: tmuxName ?? sessionId,
       workspacePath,
       launchCommand,
-      environment: {
+      environment: withLegacyEnvAliases({
         ...environment,
         ...(opencodeConfigPath ? { OPENCODE_CONFIG: opencodeConfigPath } : {}),
         ...(project.env ?? {}),
         PATH: buildAgentPath(environment["PATH"] ?? process.env["PATH"]),
         GH_PATH: PREFERRED_GH_PATH,
-        ...(process.env["AO_AGENT_GH_TRACE"] && {
-          AO_AGENT_GH_TRACE: process.env["AO_AGENT_GH_TRACE"],
+        ...(getEnvString(ENV.AGENT_GH_TRACE) && {
+          [ENV.AGENT_GH_TRACE]: getEnvString(ENV.AGENT_GH_TRACE),
         }),
-        AO_SESSION: sessionId,
-        AO_DATA_DIR: sessionsDir,
-        AO_SESSION_NAME: sessionId,
-        ...(tmuxName && { AO_TMUX_NAME: tmuxName }),
-        AO_CALLER_TYPE: "agent",
-        ...(projectId && { AO_PROJECT_ID: projectId }),
-        AO_CONFIG_PATH: config.configPath,
-        ...(config.port !== undefined && config.port !== null && { AO_PORT: String(config.port) }),
-      },
+        [ENV.SESSION]: sessionId,
+        [ENV.DATA_DIR]: sessionsDir,
+        [ENV.SESSION_NAME]: sessionId,
+        ...(tmuxName && { [ENV.TMUX_NAME]: tmuxName }),
+        [ENV.CALLER_TYPE]: "agent",
+        ...(projectId && { [ENV.PROJECT_ID]: projectId }),
+        [ENV.CONFIG_PATH]: config.configPath,
+        ...(config.port !== undefined && config.port !== null && { [ENV.PORT]: String(config.port) }),
+      }),
     });
 
     // 9. Update metadata — reset lifecycle to working state

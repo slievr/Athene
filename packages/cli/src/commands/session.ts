@@ -3,7 +3,9 @@ import { connect as netConnect } from "node:net";
 import chalk from "chalk";
 import type { Command } from "commander";
 import {
+  ENV,
   generateConfigHash,
+  getEnvString,
   isOrchestratorSession,
   isTerminalSession,
   isWindows,
@@ -450,7 +452,7 @@ export function registerSession(program: Command): void {
     .command("claim-pr")
     .description("Attach an existing PR to a session")
     .argument("<pr>", "Pull request number or URL")
-    .argument("[session]", "Session name (defaults to AO_SESSION_NAME/AO_SESSION)")
+    .argument("[session]", `Session name (defaults to ${ENV.SESSION_NAME}/${ENV.SESSION})`)
     .option("--assign-on-github", "Assign the PR to the authenticated GitHub user")
     .action(
       async (
@@ -460,7 +462,7 @@ export function registerSession(program: Command): void {
       ) => {
         const config = loadConfig();
         const resolvedSession =
-          sessionName ?? process.env["AO_SESSION_NAME"] ?? process.env["AO_SESSION"];
+          sessionName ?? getEnvString(ENV.SESSION_NAME) ?? getEnvString(ENV.SESSION);
 
         if (!resolvedSession) {
           console.error(

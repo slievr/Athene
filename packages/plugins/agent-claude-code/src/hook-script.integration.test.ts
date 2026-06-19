@@ -54,8 +54,8 @@ function runHook(opts: {
       input,
       env: {
         ...process.env,
-        AO_SESSION: sessionId,
-        AO_DATA_DIR: sessionsDir,
+        ATHENE_SESSION: sessionId,
+        ATHENE_DATA_DIR: sessionsDir,
         HOME: testDir,
       },
       encoding: "utf-8",

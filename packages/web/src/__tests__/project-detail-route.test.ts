@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { NextRequest } from "next/server";
 import {
+  ENV,
   getProjectDir,
   loadGlobalConfig,
   registerProjectInGlobalConfig,
@@ -44,19 +45,19 @@ describe("/api/projects/[id]", () => {
         kill: vi.fn().mockResolvedValue({ cleaned: true, alreadyTerminated: false }),
       },
     });
-    oldGlobalConfig = process.env["AO_GLOBAL_CONFIG"];
+    oldGlobalConfig = process.env[ENV.GLOBAL_CONFIG];
     oldHome = process.env["HOME"];
     tempRoot = mkdtempSync(path.join(tmpdir(), "ao-project-detail-route-"));
     configPath = path.join(tempRoot, "config.yaml");
-    process.env["AO_GLOBAL_CONFIG"] = configPath;
+    process.env[ENV.GLOBAL_CONFIG] = configPath;
     process.env["HOME"] = tempRoot;
   });
 
   afterEach(() => {
     if (oldGlobalConfig === undefined) {
-      delete process.env["AO_GLOBAL_CONFIG"];
+      Reflect.deleteProperty(process.env, ENV.GLOBAL_CONFIG);
     } else {
-      process.env["AO_GLOBAL_CONFIG"] = oldGlobalConfig;
+      process.env[ENV.GLOBAL_CONFIG] = oldGlobalConfig;
     }
     if (oldHome === undefined) {
       delete process.env["HOME"];
@@ -158,7 +159,7 @@ describe("/api/projects/[id]", () => {
         "",
       ].join("\n"),
     );
-    process.env["AO_CONFIG_PATH"] = localConfigPath;
+    process.env[ENV.CONFIG_PATH] = localConfigPath;
 
     const { GET } = await import("@/app/api/projects/[id]/route");
     const response = await GET(makeRequest("GET"), {

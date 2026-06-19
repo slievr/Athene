@@ -4,7 +4,7 @@ set -euo pipefail
 
 SKIP_SMOKE=false
 SMOKE_ONLY=false
-TARGET_BRANCH="${AO_UPDATE_BRANCH:-main}"
+TARGET_BRANCH="${ATHENE_UPDATE_BRANCH:-${AO_UPDATE_BRANCH:-main}}"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -58,8 +58,9 @@ find_repo_root_from() {
 }
 
 resolve_repo_root() {
-  if [ -n "${AO_REPO_ROOT:-}" ]; then
-    printf '%s\n' "$AO_REPO_ROOT"
+  local repo_root_override="${ATHENE_REPO_ROOT:-${AO_REPO_ROOT:-}}"
+  if [ -n "$repo_root_override" ]; then
+    printf '%s\n' "$repo_root_override"
     return 0
   fi
 
@@ -69,7 +70,7 @@ resolve_repo_root() {
 }
 
 if ! REPO_ROOT="$(resolve_repo_root)"; then
-  printf 'Unable to find Athene repo root. Fix: run via athene update or set AO_REPO_ROOT.\n' >&2
+  printf 'Unable to find Athene repo root. Fix: run via athene update or set ATHENE_REPO_ROOT.\n' >&2
   exit 1
 fi
 

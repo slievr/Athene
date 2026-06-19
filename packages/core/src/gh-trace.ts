@@ -4,6 +4,7 @@ import { constants } from "node:fs";
 import { delimiter, dirname, join } from "node:path";
 import { homedir } from "node:os";
 import { promisify } from "node:util";
+import { ENV, getEnvString } from "./env.js";
 import type { SessionId } from "./types.js";
 
 const execFileAsync = promisify(execFile);
@@ -61,7 +62,7 @@ async function resolveGhBinary(): Promise<string> {
   );
 }
 
-const GH_TRACE_FILE_ENV = "AO_GH_TRACE_FILE";
+const GH_TRACE_FILE_ENV = ENV.GH_TRACE_FILE;
 
 export interface GhTraceContext {
   component: string;
@@ -234,7 +235,7 @@ const ensuredDirs = new Set<string>();
 const warnedTargets = new Set<string>();
 
 async function writeTrace(entry: GhTraceEntry): Promise<void> {
-  const target = process.env[GH_TRACE_FILE_ENV];
+  const target = getEnvString(GH_TRACE_FILE_ENV);
   if (!target) return;
 
   const dir = dirname(target);
@@ -402,7 +403,7 @@ export async function execGhObserved(
 }
 
 export function getGhTraceFilePath(): string | undefined {
-  return process.env[GH_TRACE_FILE_ENV];
+  return getEnvString(GH_TRACE_FILE_ENV);
 }
 
 // Re-export internal utilities for testing — not part of public API.

@@ -19,6 +19,22 @@ export {
 } from "./config.js";
 export { isPortfolioEnabled } from "./feature-flags.js";
 
+// Environment variables — single source of truth for ATHENE_* names
+// (ATHENE_* canonical/preferred; AO_* still supported via read-fallback + dual-set)
+export {
+  ENV_PREFIX,
+  LEGACY_ENV_PREFIX,
+  ENV,
+  legacyEnvName,
+  getEnvString,
+  isEnvFlagEnabled,
+  withLegacyEnvAliases,
+  bashEnvRead,
+  nodeEnvRead,
+  type EnvKey,
+  type EnvName,
+} from "./env.js";
+
 // Plugin registry
 export {
   createPluginRegistry,

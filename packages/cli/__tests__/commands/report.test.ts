@@ -49,7 +49,7 @@ describe("report commands", () => {
     });
 
     process.env = { ...originalEnv };
-    delete process.env["AO_SESSION_ID"];
+    delete process.env["ATHENE_SESSION_ID"];
     process.env["USER"] = "codex";
 
     mockConfigRef.current = {
@@ -82,8 +82,8 @@ describe("report commands", () => {
     exitSpy.mockRestore();
   });
 
-  it("uses AO_SESSION_ID for acknowledge when no explicit session is provided", async () => {
-    process.env["AO_SESSION_ID"] = "app-1";
+  it("uses ATHENE_SESSION_ID for acknowledge when no explicit session is provided", async () => {
+    process.env["ATHENE_SESSION_ID"] = "app-1";
 
     await program.parseAsync(["node", "test", "acknowledge", "--note", "picked up"]);
 
@@ -100,8 +100,8 @@ describe("report commands", () => {
     );
   });
 
-  it("prefers explicit --session over AO_SESSION_ID", async () => {
-    process.env["AO_SESSION_ID"] = "wrong-session";
+  it("prefers explicit --session over ATHENE_SESSION_ID", async () => {
+    process.env["ATHENE_SESSION_ID"] = "wrong-session";
 
     await program.parseAsync(["node", "test", "report", "working", "--session", "app-2"]);
 

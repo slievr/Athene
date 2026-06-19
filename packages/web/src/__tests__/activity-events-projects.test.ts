@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { NextRequest } from "next/server";
-import { recordActivityEvent, registerProjectInGlobalConfig } from "@made-by-moonlight/athene-core";
+import { ENV, recordActivityEvent, registerProjectInGlobalConfig } from "@made-by-moonlight/athene-core";
 
 vi.mock("@made-by-moonlight/athene-core", async () => {
   const actual = await vi.importActual("@made-by-moonlight/athene-core");
@@ -51,21 +51,21 @@ describe("Activity events — project mutation routes", () => {
         kill: vi.fn().mockResolvedValue(undefined),
       },
     });
-    oldGlobalConfig = process.env["AO_GLOBAL_CONFIG"];
-    oldConfigPath = process.env["AO_CONFIG_PATH"];
+    oldGlobalConfig = process.env[ENV.GLOBAL_CONFIG];
+    oldConfigPath = process.env[ENV.CONFIG_PATH];
     oldHome = process.env["HOME"];
     tempRoot = mkdtempSync(path.join(tmpdir(), "ao-activity-projects-"));
     configPath = path.join(tempRoot, "config.yaml");
-    process.env["AO_GLOBAL_CONFIG"] = configPath;
-    process.env["AO_CONFIG_PATH"] = configPath;
+    process.env[ENV.GLOBAL_CONFIG] = configPath;
+    process.env[ENV.CONFIG_PATH] = configPath;
     process.env["HOME"] = tempRoot;
   });
 
   afterEach(() => {
-    if (oldGlobalConfig === undefined) delete process.env["AO_GLOBAL_CONFIG"];
-    else process.env["AO_GLOBAL_CONFIG"] = oldGlobalConfig;
-    if (oldConfigPath === undefined) delete process.env["AO_CONFIG_PATH"];
-    else process.env["AO_CONFIG_PATH"] = oldConfigPath;
+    if (oldGlobalConfig === undefined) Reflect.deleteProperty(process.env, ENV.GLOBAL_CONFIG);
+    else process.env[ENV.GLOBAL_CONFIG] = oldGlobalConfig;
+    if (oldConfigPath === undefined) Reflect.deleteProperty(process.env, ENV.CONFIG_PATH);
+    else process.env[ENV.CONFIG_PATH] = oldConfigPath;
     if (oldHome === undefined) delete process.env["HOME"];
     else process.env["HOME"] = oldHome;
     rmSync(tempRoot, { recursive: true, force: true });

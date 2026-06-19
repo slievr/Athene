@@ -2,7 +2,9 @@ import {
   CodeReviewRunNotExecutableError,
   CodeReviewRunNotFoundError,
   createShellCodeReviewRunner,
+  ENV,
   executeCodeReviewRun,
+  getEnvString,
   SessionNotFoundError,
 } from "@made-by-moonlight/athene-core";
 import { getCorrelationId, jsonWithCorrelation } from "@/lib/observability";
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
       return jsonWithCorrelation({ error: configuredProjectErr }, { status: 404 }, correlationId);
     }
 
-    const command = process.env["AO_CODE_REVIEW_COMMAND"];
+    const command = getEnvString(ENV.CODE_REVIEW_COMMAND);
     const run = await executeCodeReviewRun(
       {
         config,

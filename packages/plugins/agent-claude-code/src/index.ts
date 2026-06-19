@@ -2,6 +2,11 @@ import {
   shellEscape,
   normalizeAgentPermissionMode,
   isWindows,
+  ENV,
+  legacyEnvName,
+  bashEnvRead,
+  nodeEnvRead,
+  withLegacyEnvAliases,
   type Agent,
   type AgentSessionInfo,
   type AgentLaunchConfig,
@@ -48,8 +53,9 @@ export const METADATA_UPDATER_SCRIPT = `#!/usr/bin/env bash
 
 set -euo pipefail
 
-# Configuration
-AO_DATA_DIR="\${AO_DATA_DIR:-$HOME/.ao-sessions}"
+# Configuration — prefer ATHENE_* and fall back to legacy AO_*, then seed locals
+${ENV.DATA_DIR}="\${${ENV.DATA_DIR}:-\${${legacyEnvName(ENV.DATA_DIR)}:-$HOME/.ao-sessions}}"
+${ENV.SESSION}="${bashEnvRead(ENV.SESSION)}"
 
 # Read hook input from stdin
 input=$(cat)
@@ -80,25 +86,25 @@ if [[ "$tool_name" != "Bash" ]]; then
   exit 0
 fi
 
-# Validate AO_SESSION is set
-if [[ -z "\${AO_SESSION:-}" ]]; then
-  echo '{"systemMessage": "AO_SESSION environment variable not set, skipping metadata update"}'
+# Validate ${ENV.SESSION} is set
+if [[ -z "\${${ENV.SESSION}:-}" ]]; then
+  echo '{"systemMessage": "${ENV.SESSION} environment variable not set, skipping metadata update"}'
   exit 0
 fi
 
 # Construct metadata file path
-# AO_DATA_DIR is already set to the project-specific sessions directory
+# ${ENV.DATA_DIR} is already set to the project-specific sessions directory
 # V2 storage uses .json extension
-metadata_file="$AO_DATA_DIR/\${AO_SESSION}.json"
+metadata_file="$${ENV.DATA_DIR}/\${${ENV.SESSION}}.json"
 
 # Fallback to bare filename for pre-migration layouts
 if [[ ! -f "$metadata_file" ]]; then
-  metadata_file="$AO_DATA_DIR/$AO_SESSION"
+  metadata_file="$${ENV.DATA_DIR}/$${ENV.SESSION}"
 fi
 
 # Ensure metadata file exists
 if [[ ! -f "$metadata_file" ]]; then
-  echo '{"systemMessage": "Metadata file not found: '"$AO_DATA_DIR/\${AO_SESSION}"'"}'
+  echo '{"systemMessage": "Metadata file not found: '"$${ENV.DATA_DIR}/\${${ENV.SESSION}}"'"}'
   exit 0
 fi
 
@@ -267,8 +273,8 @@ const { readFileSync, writeFileSync, renameSync, existsSync, realpathSync } = re
 const { join, sep, resolve: resolvePath } = require("node:path");
 const os = require("node:os");
 
-const AO_DATA_DIR = process.env.AO_DATA_DIR || join(process.env.HOME || process.env.USERPROFILE || "", ".ao-sessions");
-const AO_SESSION = process.env.AO_SESSION || "";
+const ${ENV.DATA_DIR} = ${nodeEnvRead(ENV.DATA_DIR)} || join(process.env.HOME || process.env.USERPROFILE || "", ".ao-sessions");
+const ${ENV.SESSION} = ${nodeEnvRead(ENV.SESSION)} || "";
 
 // Read hook input from stdin (fd 0 is cross-platform, no /dev/stdin needed)
 let inputRaw = "";
@@ -303,29 +309,29 @@ if (toolName !== "Bash") {
   process.exit(0);
 }
 
-// Validate AO_SESSION is set
-if (!AO_SESSION) {
-  process.stdout.write(JSON.stringify({ systemMessage: "AO_SESSION environment variable not set, skipping metadata update" }) + "\\n");
+// Validate ${ENV.SESSION} is set
+if (!${ENV.SESSION}) {
+  process.stdout.write(JSON.stringify({ systemMessage: "${ENV.SESSION} environment variable not set, skipping metadata update" }) + "\\n");
   process.exit(0);
 }
 
-// Validate AO_SESSION contains no path traversal components
-if (AO_SESSION.includes("/") || AO_SESSION.includes("\\\\") || AO_SESSION.includes("..")) {
-  process.stdout.write(JSON.stringify({ systemMessage: "AO_SESSION contains invalid path characters, skipping metadata update" }) + "\\n");
+// Validate ${ENV.SESSION} contains no path traversal components
+if (${ENV.SESSION}.includes("/") || ${ENV.SESSION}.includes("\\\\") || ${ENV.SESSION}.includes("..")) {
+  process.stdout.write(JSON.stringify({ systemMessage: "${ENV.SESSION} contains invalid path characters, skipping metadata update" }) + "\\n");
   process.exit(0);
 }
 
-// Validate AO_DATA_DIR is within an allowed base directory (mirrors ao-metadata-helper.sh)
+// Validate ${ENV.DATA_DIR} is within an allowed base directory (mirrors ao-metadata-helper.sh)
 const home = os.homedir();
 let resolvedAoDir;
-try { resolvedAoDir = realpathSync(AO_DATA_DIR); } catch { resolvedAoDir = resolvePath(AO_DATA_DIR); }
+try { resolvedAoDir = realpathSync(${ENV.DATA_DIR}); } catch { resolvedAoDir = resolvePath(${ENV.DATA_DIR}); }
 const allowedBases = [join(home, ".ao"), join(home, ".agent-orchestrator"), os.tmpdir()];
 if (!allowedBases.some((a) => resolvedAoDir === a || resolvedAoDir.startsWith(a + sep))) {
-  process.stdout.write(JSON.stringify({ systemMessage: "AO_DATA_DIR is outside allowed directories, skipping metadata update" }) + "\\n");
+  process.stdout.write(JSON.stringify({ systemMessage: "${ENV.DATA_DIR} is outside allowed directories, skipping metadata update" }) + "\\n");
   process.exit(0);
 }
 
-const metadataFile = join(AO_DATA_DIR, AO_SESSION);
+const metadataFile = join(${ENV.DATA_DIR}, ${ENV.SESSION});
 
 if (!existsSync(metadataFile)) {
   process.stdout.write(JSON.stringify({ systemMessage: "Metadata file not found: " + metadataFile }) + "\\n");
@@ -676,8 +682,8 @@ process.exit(0);
  *
  * Runtime-gated, not scaffold-time: the script is installed in every
  * workspace but no-ops (exit 0, no output) unless
- * `process.env.AO_CALLER_TYPE === "orchestrator"`, so worker sessions
- * (`AO_CALLER_TYPE === "agent"`) are unaffected and `setupWorkspaceHooks`
+ * `process.env.ATHENE_CALLER_TYPE === "orchestrator"`, so worker sessions
+ * (`ATHENE_CALLER_TYPE === "agent"`) are unaffected and `setupWorkspaceHooks`
  * stays role-agnostic.
  *
  * Fails open: any non-Task/Agent tool, a non-orchestrator caller, or
@@ -693,9 +699,9 @@ export const SUBAGENT_BLOCKER_SCRIPT_NODE = `#!/usr/bin/env node
 const { readFileSync } = require("node:fs");
 
 // Runtime gating: only act in orchestrator sessions. Worker sessions
-// (AO_CALLER_TYPE === "agent") and every other caller type are unaffected even
+// (${ENV.CALLER_TYPE} === "agent") and every other caller type are unaffected even
 // though the hook is installed everywhere.
-if (process.env.AO_CALLER_TYPE !== "orchestrator") {
+if (${nodeEnvRead(ENV.CALLER_TYPE)} !== "orchestrator") {
   process.exit(0);
 }
 
@@ -1252,19 +1258,21 @@ function createClaudeCodeAgent(): Agent {
       env["CLAUDECODE"] = "";
 
       // Set session info for introspection
-      env["AO_SESSION_ID"] = config.sessionId;
+      env[ENV.SESSION_ID] = config.sessionId;
 
-      // NOTE: AO_PROJECT_ID is NOT set here - it's the caller's responsibility
+      // NOTE: ATHENE_PROJECT_ID is NOT set here - it's the caller's responsibility
       // to set it based on their metadata path scheme:
       // - spawn.ts sets it to projectId for project-specific directories
       // - start.ts omits it for orchestrator (flat directories)
       // - session manager omits it (flat directories)
 
       if (config.issueId) {
-        env["AO_ISSUE_ID"] = config.issueId;
+        env[ENV.ISSUE_ID] = config.issueId;
       }
 
-      return env;
+      // Emit both ATHENE_* (canonical) and legacy AO_* names so old readers,
+      // the ao fleet, and existing ~/.ao/bin wrappers keep working.
+      return withLegacyEnvAliases(env);
     },
 
     detectActivity(terminalOutput: string): ActivityState {

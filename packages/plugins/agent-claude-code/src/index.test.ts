@@ -342,20 +342,20 @@ describe("getEnvironment", () => {
     expect(env["CLAUDECODE"]).toBe("");
   });
 
-  it("sets AO_SESSION_ID but not AO_PROJECT_ID (caller's responsibility)", () => {
+  it("sets ATHENE_SESSION_ID but not ATHENE_PROJECT_ID (caller's responsibility)", () => {
     const env = agent.getEnvironment(makeLaunchConfig());
-    expect(env["AO_SESSION_ID"]).toBe("sess-1");
-    expect(env["AO_PROJECT_ID"]).toBeUndefined();
+    expect(env["ATHENE_SESSION_ID"]).toBe("sess-1");
+    expect(env["ATHENE_PROJECT_ID"]).toBeUndefined();
   });
 
-  it("sets AO_ISSUE_ID when provided", () => {
+  it("sets ATHENE_ISSUE_ID when provided", () => {
     const env = agent.getEnvironment(makeLaunchConfig({ issueId: "INT-100" }));
-    expect(env["AO_ISSUE_ID"]).toBe("INT-100");
+    expect(env["ATHENE_ISSUE_ID"]).toBe("INT-100");
   });
 
-  it("does not set AO_ISSUE_ID when not provided", () => {
+  it("does not set ATHENE_ISSUE_ID when not provided", () => {
     const env = agent.getEnvironment(makeLaunchConfig());
-    expect(env["AO_ISSUE_ID"]).toBeUndefined();
+    expect(env["ATHENE_ISSUE_ID"]).toBeUndefined();
   });
 });
 
@@ -1366,7 +1366,7 @@ describe("setupWorkspaceHooks on win32", () => {
     expect(METADATA_UPDATER_SCRIPT_NODE).toContain("merged");
   });
 
-  it("Node.js hook script validates AO_DATA_DIR against allowed directories", () => {
+  it("Node.js hook script validates ATHENE_DATA_DIR against allowed directories", () => {
     // Must contain the allowlist check mirroring ao-metadata-helper.sh and
     // the Node.js wrappers in agent-workspace-hooks.ts (C-1 security fix)
     expect(METADATA_UPDATER_SCRIPT_NODE).toContain("allowedBases");
@@ -1514,7 +1514,7 @@ describe("setupWorkspaceHooks — subagent-blocker", () => {
 // subagent-blocker script — runtime behavior (real node subprocess)
 // =========================================================================
 describe("subagent-blocker script — runtime behavior", () => {
-  // The hook script is gated on process.env.AO_CALLER_TYPE and parses JSON
+  // The hook script is gated on process.env.ATHENE_CALLER_TYPE and parses JSON
   // from stdin, so behavior is verified by running the real .cjs as a
   // subprocess. Use the un-mocked node built-ins (the rest of this file mocks
   // node:fs / node:child_process for the registration tests).
@@ -1534,13 +1534,13 @@ describe("subagent-blocker script — runtime behavior", () => {
     realFs.writeFileSync(scriptPath, SUBAGENT_BLOCKER_SCRIPT_NODE, "utf-8");
   });
 
-  /** Run the hook script with the given stdin + AO_CALLER_TYPE; return stdout. */
+  /** Run the hook script with the given stdin + ATHENE_CALLER_TYPE; return stdout. */
   function runBlocker(stdin: string, callerType?: string): string {
     const env = { ...process.env };
     if (callerType === undefined) {
-      delete env.AO_CALLER_TYPE;
+      delete env.ATHENE_CALLER_TYPE;
     } else {
-      env.AO_CALLER_TYPE = callerType;
+      env.ATHENE_CALLER_TYPE = callerType;
     }
     return realExecFileSync("node", [scriptPath], {
       input: stdin,
@@ -1599,7 +1599,7 @@ describe("subagent-blocker script — runtime behavior", () => {
     ).toBe("");
   });
 
-  it("worker (AO_CALLER_TYPE unset) + Task general-purpose → allowed (no output)", () => {
+  it("worker (ATHENE_CALLER_TYPE unset) + Task general-purpose → allowed (no output)", () => {
     expect(
       runBlocker(
         JSON.stringify({ tool_name: "Task", tool_input: { subagent_type: "general-purpose" } }),
@@ -1608,7 +1608,7 @@ describe("subagent-blocker script — runtime behavior", () => {
     ).toBe("");
   });
 
-  it("worker (AO_CALLER_TYPE=agent) + Task general-purpose → allowed (no output)", () => {
+  it("worker (ATHENE_CALLER_TYPE=agent) + Task general-purpose → allowed (no output)", () => {
     // A set-but-non-orchestrating caller type must also be unaffected.
     expect(
       runBlocker(

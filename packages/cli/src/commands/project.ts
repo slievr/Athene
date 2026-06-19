@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import chalk from "chalk";
 import type { Command } from "commander";
 import {
+  ENV,
   getPortfolio,
   getPortfolioSessionCounts,
   isPortfolioEnabled,
@@ -24,7 +25,7 @@ function assertPortfolioEnabled(): void {
   if (isPortfolioEnabled()) return;
   console.error(
     chalk.red(
-      "Portfolio mode is disabled. Unset AO_ENABLE_PORTFOLIO or set it to 1 to use `athene project`.",
+      `Portfolio mode is disabled. Unset ${ENV.ENABLE_PORTFOLIO} or set it to 1 to use \`athene project\`.`,
     ),
   );
   process.exit(1);

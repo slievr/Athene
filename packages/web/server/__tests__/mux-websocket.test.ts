@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Socket } from "node:net";
 import { WebSocket } from "ws";
-import { appendDashboardNotification, isWindows, type OrchestratorEvent } from "@made-by-moonlight/athene-core";
+import { appendDashboardNotification, ENV, isWindows, type OrchestratorEvent } from "@made-by-moonlight/athene-core";
 import type { SessionBroadcaster as SessionBroadcasterType } from "../mux-websocket";
 
 // vi.mock factories run before module-level statements. Hoist the mock
@@ -972,7 +972,7 @@ describe("TerminalManager.open — tmux target args (regression for #1714)", () 
     const helperPath = join(tempRoot, "spawn-helper");
     writeFileSync(helperPath, "#!/bin/sh\nexit 0\n");
     chmodSync(helperPath, 0o644);
-    process.env.AO_NODE_PTY_SPAWN_HELPER_PATH = helperPath;
+    process.env[ENV.NODE_PTY_SPAWN_HELPER_PATH] = helperPath;
 
     const pty = {
       onData: vi.fn(),
@@ -997,7 +997,7 @@ describe("TerminalManager.open — tmux target args (regression for #1714)", () 
         expect((statSync(helperPath).mode & 0o111) !== 0).toBe(true);
       }
     } finally {
-      delete process.env.AO_NODE_PTY_SPAWN_HELPER_PATH;
+      Reflect.deleteProperty(process.env, ENV.NODE_PTY_SPAWN_HELPER_PATH);
       rmSync(tempRoot, { recursive: true, force: true });
     }
   });

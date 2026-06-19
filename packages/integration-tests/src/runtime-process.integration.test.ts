@@ -30,7 +30,7 @@ describe("runtime-process (integration)", () => {
       sessionId,
       workspacePath,
       launchCommand: echoCommand,
-      environment: { AO_TEST: "1" },
+      environment: { ATHENE_TEST: "1" },
     });
 
     expect(handle.id).toBe(sessionId);

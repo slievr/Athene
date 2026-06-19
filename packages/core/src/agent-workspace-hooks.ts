@@ -14,6 +14,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import { randomBytes } from "node:crypto";
 import { isWindows } from "./platform.js";
+import { ENV, bashEnvRead, nodeEnvRead } from "./env.js";
 
 // =============================================================================
 // Constants
@@ -92,8 +93,8 @@ export const AO_METADATA_HELPER = `#!/usr/bin/env bash
 # ── Shared validation ────────────────────────────────────────────────────────
 
 _ao_validate_env() {
-  local ao_dir="\${AO_DATA_DIR:-}"
-  local ao_session="\${AO_SESSION:-}"
+  local ao_dir="${bashEnvRead(ENV.DATA_DIR)}"
+  local ao_session="${bashEnvRead(ENV.SESSION)}"
   [[ -z "\$ao_dir" || -z "\$ao_session" ]] && return 1
   case "\$ao_session" in */* | *..*) return 1 ;; esac
   case "\$ao_dir" in
@@ -107,8 +108,8 @@ _ao_validate_env() {
 
 update_ao_metadata() {
   local key="\$1" value="\$2"
-  local ao_dir="\${AO_DATA_DIR:-}"
-  local ao_session="\${AO_SESSION:-}"
+  local ao_dir="${bashEnvRead(ENV.DATA_DIR)}"
+  local ao_session="${bashEnvRead(ENV.SESSION)}"
 
   [[ -z "\$ao_dir" || -z "\$ao_session" ]] && return 0
 
@@ -190,7 +191,7 @@ update_ao_metadata() {
 read_ao_metadata() {
   local key="\$1"
   _ao_validate_env || return 1
-  local metadata_file="\${AO_DATA_DIR}/\${AO_SESSION}"
+  local metadata_file="${bashEnvRead(ENV.DATA_DIR)}/${bashEnvRead(ENV.SESSION)}"
   [[ -f "\$metadata_file" ]] || return 1
   [[ "\$key" =~ ^[a-zA-Z0-9_-]+$ ]] || return 1
   local line
@@ -202,7 +203,7 @@ read_ao_metadata() {
 
 ao_cache_dir() {
   _ao_validate_env || return 1
-  local d="\${AO_DATA_DIR}/.ghcache/\${AO_SESSION}"
+  local d="${bashEnvRead(ENV.DATA_DIR)}/.ghcache/${bashEnvRead(ENV.SESSION)}"
   mkdir -p "\$d" 2>/dev/null || return 1
   printf '%s' "\$d"
 }
@@ -249,7 +250,7 @@ ao_cache_write() {
  * 1. Caching repeated read-only commands (PR discovery, issue context)
  * 2. Auto-updating session metadata on PR creation
  *
- * Cache storage: $AO_DATA_DIR/.ghcache/$AO_SESSION/{key}.stdout + {key}.ts
+ * Cache storage: $ATHENE_DATA_DIR/.ghcache/$ATHENE_SESSION/{key}.stdout + {key}.ts
  * See D4-wrapper-cache-plan.md for full design rationale.
  */
 export const GH_WRAPPER = `#!/usr/bin/env bash
@@ -308,7 +309,7 @@ _ao_redact_args() {
 
 # Best-effort JSONL tracing for agent-side gh invocations.
 log_gh_invocation() {
-  local trace_file="\${AO_AGENT_GH_TRACE:-}"
+  local trace_file="${bashEnvRead(ENV.AGENT_GH_TRACE)}"
   [[ -z "\$trace_file" ]] && return 0
   command -v jq >/dev/null 2>&1 || return 0
 
@@ -326,11 +327,11 @@ log_gh_invocation() {
     --arg timestamp "\$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
     --arg cwd "\$PWD" \
     --arg operation "\$_ao_op" \
-    --arg aoSession "\${AO_SESSION:-}" \
-    --arg aoSessionName "\${AO_SESSION_NAME:-}" \
-    --arg aoProjectId "\${AO_PROJECT_ID:-}" \
-    --arg aoIssueId "\${AO_ISSUE_ID:-}" \
-    --arg aoCallerType "\${AO_CALLER_TYPE:-}" \
+    --arg aoSession "${bashEnvRead(ENV.SESSION)}" \
+    --arg aoSessionName "${bashEnvRead(ENV.SESSION_NAME)}" \
+    --arg aoProjectId "${bashEnvRead(ENV.PROJECT_ID)}" \
+    --arg aoIssueId "${bashEnvRead(ENV.ISSUE_ID)}" \
+    --arg aoCallerType "${bashEnvRead(ENV.CALLER_TYPE)}" \
     --arg pid "\$\$" \
     --arg wrapperVersion "${WRAPPER_VERSION}" \
     --argjson args "\$args_json" \
@@ -355,7 +356,7 @@ log_gh_invocation "\$@"
 # result: hit | miss-stored | miss-write-failed | miss-negative | miss-error | passthrough
 log_ao_cache() {
   local result="\$1" cache_key="\$2" duration_ms="\${3:-0}" exit_code="\${4:-0}" ok="\${5:-true}"
-  local trace_file="\${AO_AGENT_GH_TRACE:-}"
+  local trace_file="${bashEnvRead(ENV.AGENT_GH_TRACE)}"
   [[ -z "\$trace_file" ]] && return 0
   printf '{"timestamp":"%s","cacheResult":"%s","cacheKey":"%s","pid":%s,"durationMs":%s,"exitCode":%s,"ok":%s}\\n' \
     "\$(date -u +"%Y-%m-%dT%H:%M:%SZ")" "\$result" "\$cache_key" "\$\$" \
@@ -531,8 +532,8 @@ case "\$1/\$2" in
         update_ao_metadata agentReportedPrUrl "\$pr_url"
         # Append to prs field (comma-separated list of all PR URLs for this session).
         # Supports multiple PRs per session — same repo or different repos.
-        _ao_meta_f="\${AO_DATA_DIR}/\${AO_SESSION}.json"
-        [[ -f "\$_ao_meta_f" ]] || _ao_meta_f="\${AO_DATA_DIR}/\${AO_SESSION}"
+        _ao_meta_f="${bashEnvRead(ENV.DATA_DIR)}/${bashEnvRead(ENV.SESSION)}.json"
+        [[ -f "\$_ao_meta_f" ]] || _ao_meta_f="${bashEnvRead(ENV.DATA_DIR)}/${bashEnvRead(ENV.SESSION)}"
         if head -c1 "\$_ao_meta_f" 2>/dev/null | grep -q '{'; then
           existing_prs="\$(jq -r '.prs // empty' "\$_ao_meta_f" 2>/dev/null || echo "")"
         else
@@ -659,15 +660,15 @@ export function buildNodeWrapper(name: "gh" | "git", realBinaryPath: string): st
 
 /**
  * Shared Node.js snippet: updateAoMetadata function used by both gh and git wrappers.
- * Validates session, key, and AO_DATA_DIR before writing metadata.
+ * Validates session, key, and ATHENE_DATA_DIR before writing metadata.
  */
 const NODE_UPDATE_AO_METADATA = `\
 // ---------------------------------------------------------------------------
 // Metadata update (shared by gh/git wrappers)
 // ---------------------------------------------------------------------------
 function updateAoMetadata(key, value) {
-  const aoDir = process.env["AO_DATA_DIR"] || "";
-  const aoSession = process.env["AO_SESSION"] || "";
+  const aoDir = ${nodeEnvRead(ENV.DATA_DIR)} || "";
+  const aoSession = ${nodeEnvRead(ENV.SESSION)} || "";
   if (!aoDir || !aoSession) return;
 
   // Validate session — no path separators or traversal
@@ -802,8 +803,8 @@ if (key === "pr/create" || key === "pr/merge") {
         // Append to prs field — supports multiple PRs per session
         let existingPrs = "";
         try {
-          const aoDir = process.env["AO_DATA_DIR"] || "";
-          const aoSession = process.env["AO_SESSION"] || "";
+          const aoDir = ${nodeEnvRead(ENV.DATA_DIR)} || "";
+          const aoSession = ${nodeEnvRead(ENV.SESSION)} || "";
           if (aoDir && aoSession && /^[a-zA-Z0-9_-]+$/.test(aoSession)) {
             let metaFile = path.join(aoDir, aoSession + ".json");
             if (!fs.existsSync(metaFile)) metaFile = path.join(aoDir, aoSession);

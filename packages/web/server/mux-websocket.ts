@@ -14,7 +14,9 @@ import { type Socket, connect as netConnect } from "node:net";
 import { dirname, join } from "node:path";
 import {
   DEFAULT_DASHBOARD_NOTIFICATION_LIMIT,
+  ENV,
   getEnvDefaults,
+  getEnvString,
   getDashboardNotificationStorePath,
   getNodePtyPrebuildsSubdir,
   isWindows,
@@ -261,7 +263,7 @@ export class NotificationBroadcaster {
   private readonly configPath: string | undefined;
   private readonly storePath: string | null;
 
-  constructor(configPath = process.env["AO_CONFIG_PATH"]) {
+  constructor(configPath = getEnvString(ENV.CONFIG_PATH)) {
     this.configPath = configPath;
     this.storePath = configPath ? getDashboardNotificationStorePath(configPath) : null;
   }
@@ -391,7 +393,7 @@ let ptySpawn: PtySpawn | undefined;
 const nodePtyRequire = createRequire(import.meta.url);
 
 export function resolveNodePtySpawnHelperPath(): string | null {
-  const override = process.env.AO_NODE_PTY_SPAWN_HELPER_PATH;
+  const override = getEnvString(ENV.NODE_PTY_SPAWN_HELPER_PATH);
   if (override) return override;
 
   try {

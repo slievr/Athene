@@ -87,7 +87,7 @@ describe("restore", () => {
     expect(meta!["createdAt"]).toBe("2025-01-01T00:00:00.000Z");
   });
 
-  it("forwards AO_AGENT_GH_TRACE into restored agent runtime env when configured", async () => {
+  it("forwards ATHENE_AGENT_GH_TRACE into restored agent runtime env when configured", async () => {
     const wsPath = join(tmpDir, "ws-app-1-trace");
     mkdirSync(wsPath, { recursive: true });
 
@@ -99,8 +99,8 @@ describe("restore", () => {
       runtimeHandle: makeHandle("rt-old"),
     });
 
-    const previousTrace = process.env["AO_AGENT_GH_TRACE"];
-    process.env["AO_AGENT_GH_TRACE"] = "/tmp/restored-agent-gh-trace-test.jsonl";
+    const previousTrace = process.env["ATHENE_AGENT_GH_TRACE"];
+    process.env["ATHENE_AGENT_GH_TRACE"] = "/tmp/restored-agent-gh-trace-test.jsonl";
 
     try {
       const sm = createSessionManager({ config, registry: mockRegistry });
@@ -109,14 +109,14 @@ describe("restore", () => {
       expect(mockRuntime.create).toHaveBeenCalledWith(
         expect.objectContaining({
           environment: expect.objectContaining({
-            AO_AGENT_GH_TRACE: "/tmp/restored-agent-gh-trace-test.jsonl",
-            AO_CALLER_TYPE: "agent",
+            ATHENE_AGENT_GH_TRACE: "/tmp/restored-agent-gh-trace-test.jsonl",
+            ATHENE_CALLER_TYPE: "agent",
           }),
         }),
       );
     } finally {
-      if (previousTrace === undefined) delete process.env["AO_AGENT_GH_TRACE"];
-      else process.env["AO_AGENT_GH_TRACE"] = previousTrace;
+      if (previousTrace === undefined) delete process.env["ATHENE_AGENT_GH_TRACE"];
+      else process.env["ATHENE_AGENT_GH_TRACE"] = previousTrace;
     }
   });
 

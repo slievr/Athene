@@ -37,7 +37,7 @@ describe("effectiveOwnerOptions (env auto-stamp)", () => {
   it("auto-stamps meta ownership from the meta runtime env", () => {
     const out = effectiveOwnerOptions(
       {},
-      { AO_CALLER_TYPE: "meta-orchestrator", AO_META_NAME: "meta-1" },
+      { ATHENE_CALLER_TYPE: "meta-orchestrator", ATHENE_META_NAME: "meta-1" },
     );
     expect(out).toEqual({ ownerKind: "meta", metaOwner: "meta-1" });
     // ...and validates/stamps cleanly through parseSpawnOwner.
@@ -45,15 +45,35 @@ describe("effectiveOwnerOptions (env auto-stamp)", () => {
   });
 
   it("does not stamp for a per-project orchestrator env", () => {
-    expect(effectiveOwnerOptions({}, { AO_CALLER_TYPE: "orchestrator" })).toEqual({});
+    expect(effectiveOwnerOptions({}, { ATHENE_CALLER_TYPE: "orchestrator" })).toEqual({});
   });
 
   it("does not stamp when meta env is incomplete", () => {
-    expect(effectiveOwnerOptions({}, { AO_CALLER_TYPE: "meta-orchestrator" })).toEqual({});
+    expect(effectiveOwnerOptions({}, { ATHENE_CALLER_TYPE: "meta-orchestrator" })).toEqual({});
   });
 
   it("lets explicit flags override the env", () => {
-    const env = { AO_CALLER_TYPE: "meta-orchestrator", AO_META_NAME: "meta-1" };
+    const env = { ATHENE_CALLER_TYPE: "meta-orchestrator", ATHENE_META_NAME: "meta-1" };
     expect(effectiveOwnerOptions({ ownerKind: "project" }, env)).toEqual({ ownerKind: "project" });
+  });
+
+  it("auto-stamps from the legacy AO_* env names (dual-read)", () => {
+    const out = effectiveOwnerOptions(
+      {},
+      { AO_CALLER_TYPE: "meta-orchestrator", AO_META_NAME: "meta-1" },
+    );
+    expect(out).toEqual({ ownerKind: "meta", metaOwner: "meta-1" });
+  });
+
+  it("prefers the canonical ATHENE_* names over the legacy AO_* names", () => {
+    const out = effectiveOwnerOptions(
+      {},
+      {
+        ATHENE_CALLER_TYPE: "meta-orchestrator",
+        ATHENE_META_NAME: "from-athene",
+        AO_META_NAME: "from-ao",
+      },
+    );
+    expect(out).toEqual({ ownerKind: "meta", metaOwner: "from-athene" });
   });
 });

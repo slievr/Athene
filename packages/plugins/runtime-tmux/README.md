@@ -20,8 +20,8 @@ const handle = await runtime.create({
   workspacePath: "/Users/dev/.worktrees/my-app/my-app-3",
   launchCommand: "claude -p 'Fix bug in auth module'",
   environment: {
-    AO_SESSION_ID: "my-app-3",
-    AO_PROJECT_ID: "my-app",
+    ATHENE_SESSION_ID: "my-app-3",
+    ATHENE_PROJECT_ID: "my-app",
   },
 });
 ```

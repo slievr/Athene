@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { resolveLocalPluginEntrypoint, type InstalledPluginConfig, type PluginSlot } from "@made-by-moonlight/athene-core";
+import { ENV, getEnvString, resolveLocalPluginEntrypoint, type InstalledPluginConfig, type PluginSlot } from "@made-by-moonlight/athene-core";
 
 const registryData = createRequire(import.meta.url)("../assets/plugin-registry.json") as unknown[];
 
@@ -63,7 +63,7 @@ function mergeMarketplaceCatalogs(
 }
 
 export function getMarketplaceRegistryCachePath(): string {
-  const override = process.env["AO_PLUGIN_REGISTRY_CACHE_PATH"];
+  const override = getEnvString(ENV.PLUGIN_REGISTRY_CACHE_PATH);
   if (override && override.trim().length > 0) {
     return override;
   }
@@ -111,7 +111,7 @@ export function loadMarketplaceCatalog(): MarketplacePluginEntry[] {
 }
 
 export async function refreshMarketplaceCatalog(
-  url = process.env["AO_PLUGIN_REGISTRY_URL"] ?? DEFAULT_REMOTE_MARKETPLACE_REGISTRY_URL,
+  url = getEnvString(ENV.PLUGIN_REGISTRY_URL) ?? DEFAULT_REMOTE_MARKETPLACE_REGISTRY_URL,
 ): Promise<MarketplacePluginEntry[]> {
   const response = await fetch(url, { signal: AbortSignal.timeout(MARKETPLACE_FETCH_TIMEOUT_MS) });
   if (!response.ok) {

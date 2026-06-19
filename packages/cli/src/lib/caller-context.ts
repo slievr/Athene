@@ -1,13 +1,15 @@
+import { ENV, getEnvString } from "@made-by-moonlight/athene-core";
+
 export type CallerType = "human" | "orchestrator" | "agent";
 
 /**
  * Detect who is calling the CLI.
- * - If AO_CALLER_TYPE is set, trust it.
+ * - If ATHENE_CALLER_TYPE is set, trust it.
  * - Otherwise, if stdout is a TTY, it's a human.
  * - Non-TTY defaults to "agent".
  */
 export function getCallerType(): CallerType {
-  const env = process.env["AO_CALLER_TYPE"];
+  const env = getEnvString(ENV.CALLER_TYPE);
   if (env === "orchestrator" || env === "agent" || env === "human") {
     return env;
   }

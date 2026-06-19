@@ -10,13 +10,13 @@ This document describes runtime observability emitted by Athene.
 
 ## Emission Model
 
-- **Structured logs**: JSON lines on stderr when enabled by config or `AO_OBSERVABILITY_STDERR`.
+- **Structured logs**: JSON lines on stderr when enabled by config or `ATHENE_OBSERVABILITY_STDERR`.
   - Supported levels: `debug`, `info`, `warn`, `error`.
   - Default level: `warn` (production-safe, avoids high-volume info logs).
   - Default stderr mirroring: disabled.
   - Runtime env vars override YAML:
-    - `AO_LOG_LEVEL=info`
-    - `AO_OBSERVABILITY_STDERR=1`
+    - `ATHENE_LOG_LEVEL=info`
+    - `ATHENE_OBSERVABILITY_STDERR=1`
 - **Durable snapshots**: process-local JSON snapshots under:
   - `~/.agent-orchestrator/{config-hash}-observability/processes/*.json`
 - **Aggregated view**: merged by project via:
@@ -94,5 +94,5 @@ Health records provide current status and failure context per surface:
 
 1. Deploy with default `observability.logLevel: warn` and `observability.stderr: false` to avoid noisy logs.
 2. Validate `/api/observability` and dashboard banner in a canary environment.
-3. If deeper triage is needed, temporarily raise `AO_LOG_LEVEL=info` (or `debug`) and set `AO_OBSERVABILITY_STDERR=1`, then revert to defaults.
+3. If deeper triage is needed, temporarily raise `ATHENE_LOG_LEVEL=info` (or `debug`) and set `ATHENE_OBSERVABILITY_STDERR=1`, then revert to defaults.
 4. Monitor `lastFailureReason` and surface-level `reason` fields before enabling broader rollout.

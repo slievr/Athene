@@ -124,8 +124,8 @@ describe.skipIf(process.platform === "win32")("athene-doctor.sh", () => {
       env: {
         ...process.env,
         PATH: `${binDir}:/bin:/usr/bin`,
-        AO_REPO_ROOT: fakeRepo,
-        AO_CONFIG_PATH: configPath,
+        ATHENE_REPO_ROOT: fakeRepo,
+        ATHENE_CONFIG_PATH: configPath,
       },
       encoding: "utf8",
     });
@@ -176,9 +176,9 @@ describe.skipIf(process.platform === "win32")("athene-doctor.sh", () => {
       env: {
         ...process.env,
         PATH: `${binDir}:/bin:/usr/bin`,
-        AO_REPO_ROOT: fakeRepo,
-        AO_CONFIG_PATH: configPath,
-        AO_DOCTOR_TMP_ROOT: tmpRoot,
+        ATHENE_REPO_ROOT: fakeRepo,
+        ATHENE_CONFIG_PATH: configPath,
+        ATHENE_DOCTOR_TMP_ROOT: tmpRoot,
       },
       encoding: "utf8",
     });
@@ -244,8 +244,8 @@ exit 0`,
       env: {
         ...process.env,
         PATH: `${binDir}:/bin:/usr/bin`,
-        AO_REPO_ROOT: fakeRepo,
-        AO_CONFIG_PATH: configPath,
+        ATHENE_REPO_ROOT: fakeRepo,
+        ATHENE_CONFIG_PATH: configPath,
       },
       encoding: "utf8",
     });
@@ -294,8 +294,8 @@ exit 0`,
       env: {
         ...process.env,
         PATH: `${binDir}:/bin:/usr/bin`,
-        AO_REPO_ROOT: fakeRepo,
-        AO_CONFIG_PATH: configPath,
+        ATHENE_REPO_ROOT: fakeRepo,
+        ATHENE_CONFIG_PATH: configPath,
       },
       encoding: "utf8",
     });
@@ -304,8 +304,8 @@ exit 0`,
       env: {
         ...process.env,
         PATH: `${binDir}:/bin:/usr/bin`,
-        AO_REPO_ROOT: fakeRepo,
-        AO_CONFIG_PATH: configPath,
+        ATHENE_REPO_ROOT: fakeRepo,
+        ATHENE_CONFIG_PATH: configPath,
       },
       encoding: "utf8",
     });
@@ -342,9 +342,9 @@ exit 0`,
       env: {
         ...process.env,
         PATH: `${binDir}:/bin:/usr/bin`,
-        AO_REPO_ROOT: fakeInstall,
-        AO_SCRIPT_LAYOUT: "package-install",
-        AO_CONFIG_PATH: configPath,
+        ATHENE_REPO_ROOT: fakeInstall,
+        ATHENE_SCRIPT_LAYOUT: "package-install",
+        ATHENE_CONFIG_PATH: configPath,
       },
       encoding: "utf8",
     });
@@ -357,5 +357,40 @@ exit 0`,
     expect(result.stdout).toContain("Environment looks healthy");
     expect(result.stdout).not.toContain("dependencies are missing");
     expect(result.stdout).not.toContain("launcher entrypoint is missing");
+  });
+
+  it("reads the legacy AO_REPO_ROOT / AO_CONFIG_PATH env names (dual-read)", () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "ao-doctor-legacy-"));
+    const fakeRepo = createHealthyRepo(tempRoot);
+    const binDir = join(tempRoot, "bin");
+    mkdirSync(binDir, { recursive: true });
+    createHealthyPath(binDir);
+
+    const configPath = join(tempRoot, "agent-orchestrator.yaml");
+    const dataDir = join(tempRoot, "data");
+    const worktreeDir = join(tempRoot, "worktrees");
+    mkdirSync(dataDir, { recursive: true });
+    mkdirSync(worktreeDir, { recursive: true });
+    writeFileSync(
+      configPath,
+      [`dataDir: ${dataDir}`, `worktreeDir: ${worktreeDir}`, "projects: {}"].join("\n"),
+    );
+
+    // Only the legacy AO_* names are set — the script must still resolve them.
+    const result = spawnSync("bash", [scriptPath], {
+      env: {
+        ...process.env,
+        PATH: `${binDir}:/bin:/usr/bin`,
+        AO_REPO_ROOT: fakeRepo,
+        AO_CONFIG_PATH: configPath,
+      },
+      encoding: "utf8",
+    });
+
+    rmSync(tempRoot, { recursive: true, force: true });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("PASS");
+    expect(result.stdout).toContain("Environment looks healthy");
   });
 });

@@ -456,20 +456,28 @@ describe("getLaunchCommand", () => {
 describe("getEnvironment", () => {
   const agent = create();
 
-  it("sets AO_SESSION_ID but not AO_PROJECT_ID (caller's responsibility)", () => {
+  it("sets ATHENE_SESSION_ID but not ATHENE_PROJECT_ID (caller's responsibility)", () => {
     const env = agent.getEnvironment(makeLaunchConfig());
-    expect(env["AO_SESSION_ID"]).toBe("sess-1");
-    expect(env["AO_PROJECT_ID"]).toBeUndefined();
+    expect(env["ATHENE_SESSION_ID"]).toBe("sess-1");
+    expect(env["ATHENE_PROJECT_ID"]).toBeUndefined();
   });
 
-  it("sets AO_ISSUE_ID when provided", () => {
+  it("sets ATHENE_ISSUE_ID when provided", () => {
     const env = agent.getEnvironment(makeLaunchConfig({ issueId: "GH-42" }));
-    expect(env["AO_ISSUE_ID"]).toBe("GH-42");
+    expect(env["ATHENE_ISSUE_ID"]).toBe("GH-42");
   });
 
-  it("omits AO_ISSUE_ID when not provided", () => {
+  it("omits ATHENE_ISSUE_ID when not provided", () => {
     const env = agent.getEnvironment(makeLaunchConfig());
-    expect(env["AO_ISSUE_ID"]).toBeUndefined();
+    expect(env["ATHENE_ISSUE_ID"]).toBeUndefined();
+  });
+
+  it("also emits legacy AO_SESSION_ID alias (dual-set)", () => {
+    const env = agent.getEnvironment(makeLaunchConfig({ issueId: "GH-42" }));
+    expect(env["AO_SESSION_ID"]).toBe("sess-1");
+    expect(env["AO_SESSION_ID"]).toBe(env["ATHENE_SESSION_ID"]);
+    expect(env["AO_ISSUE_ID"]).toBe("GH-42");
+    expect(env["AO_ISSUE_ID"]).toBe(env["ATHENE_ISSUE_ID"]);
   });
 });
 

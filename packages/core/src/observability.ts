@@ -12,6 +12,7 @@ import {
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { OrchestratorConfig, SessionId } from "./types.js";
+import { ENV, getEnvString } from "./env.js";
 import { getObservabilityBaseDir } from "./paths.js";
 
 export type ObservabilityLevel = "debug" | "info" | "warn" | "error";
@@ -185,7 +186,7 @@ function parseBooleanEnv(raw: string | undefined): boolean | null {
 }
 
 function getLogLevel(config: OrchestratorConfig): ObservabilityLevel {
-  const raw = process.env["AO_LOG_LEVEL"]?.trim().toLowerCase();
+  const raw = getEnvString(ENV.LOG_LEVEL)?.trim().toLowerCase();
   return parseLogLevel(raw) ?? config.observability?.logLevel ?? "warn";
 }
 
@@ -195,7 +196,7 @@ function shouldLog(level: ObservabilityLevel, config: OrchestratorConfig): boole
 
 function shouldMirrorStructuredLogsToStderr(config: OrchestratorConfig): boolean {
   return (
-    parseBooleanEnv(process.env["AO_OBSERVABILITY_STDERR"]) ?? config.observability?.stderr ?? false
+    parseBooleanEnv(getEnvString(ENV.OBSERVABILITY_STDERR)) ?? config.observability?.stderr ?? false
   );
 }
 

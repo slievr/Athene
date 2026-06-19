@@ -1,4 +1,6 @@
 import {
+  ENV,
+  withLegacyEnvAliases,
   shellEscape,
   isWindows,
   normalizeAgentPermissionMode,
@@ -206,15 +208,15 @@ function createCursorAgent(): Agent {
 
     getEnvironment(config: AgentLaunchConfig): Record<string, string> {
       const env: Record<string, string> = {};
-      env["AO_SESSION_ID"] = config.sessionId;
-      // NOTE: AO_PROJECT_ID is the caller's responsibility (spawn.ts sets it)
+      env[ENV.SESSION_ID] = config.sessionId;
+      // NOTE: ATHENE_PROJECT_ID is the caller's responsibility (spawn.ts sets it)
       if (config.issueId) {
-        env["AO_ISSUE_ID"] = config.issueId;
+        env[ENV.ISSUE_ID] = config.issueId;
       }
 
       // PATH and GH_PATH are injected by session-manager for all agents.
 
-      return env;
+      return withLegacyEnvAliases(env);
     },
 
     detectActivity(terminalOutput: string): ActivityState {

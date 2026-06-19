@@ -82,9 +82,9 @@ describe("spawn", () => {
     expect(mockRuntime.create).toHaveBeenCalled();
   });
 
-  it("forwards AO_AGENT_GH_TRACE into spawned agent runtime env when configured", async () => {
-    const previousTrace = process.env["AO_AGENT_GH_TRACE"];
-    process.env["AO_AGENT_GH_TRACE"] = "/tmp/agent-gh-trace-test.jsonl";
+  it("forwards ATHENE_AGENT_GH_TRACE into spawned agent runtime env when configured", async () => {
+    const previousTrace = process.env["ATHENE_AGENT_GH_TRACE"];
+    process.env["ATHENE_AGENT_GH_TRACE"] = "/tmp/agent-gh-trace-test.jsonl";
 
     try {
       const sm = createSessionManager({ config, registry: mockRegistry });
@@ -93,13 +93,13 @@ describe("spawn", () => {
       expect(mockRuntime.create).toHaveBeenCalledWith(
         expect.objectContaining({
           environment: expect.objectContaining({
-            AO_AGENT_GH_TRACE: "/tmp/agent-gh-trace-test.jsonl",
+            ATHENE_AGENT_GH_TRACE: "/tmp/agent-gh-trace-test.jsonl",
           }),
         }),
       );
     } finally {
-      if (previousTrace === undefined) delete process.env["AO_AGENT_GH_TRACE"];
-      else process.env["AO_AGENT_GH_TRACE"] = previousTrace;
+      if (previousTrace === undefined) delete process.env["ATHENE_AGENT_GH_TRACE"];
+      else process.env["ATHENE_AGENT_GH_TRACE"] = previousTrace;
     }
   });
 
@@ -143,8 +143,8 @@ describe("spawn", () => {
         "my-app": {
           ...projectConfig,
           env: {
-            AO_SESSION: "should-not-win",
-            AO_PROJECT_ID: "should-not-win",
+            ATHENE_SESSION: "should-not-win",
+            ATHENE_PROJECT_ID: "should-not-win",
           },
         },
       },
@@ -154,9 +154,14 @@ describe("spawn", () => {
     await sm.spawn({ projectId: "my-app" });
 
     const call = (mockRuntime.create as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
-    expect(call?.environment?.AO_SESSION).not.toBe("should-not-win");
+    expect(call?.environment?.ATHENE_SESSION).not.toBe("should-not-win");
+    expect(call?.environment?.ATHENE_SESSION).toBe("app-1");
+    expect(call?.environment?.ATHENE_PROJECT_ID).toBe("my-app");
+    // Dual-set: legacy AO_* aliases are emitted alongside the canonical ATHENE_* names
+    // so the existing ao fleet / ~/.ao/bin wrappers keep working.
     expect(call?.environment?.AO_SESSION).toBe("app-1");
     expect(call?.environment?.AO_PROJECT_ID).toBe("my-app");
+    expect(call?.environment?.AO_CALLER_TYPE).toBe(call?.environment?.ATHENE_CALLER_TYPE);
   });
 
   it("PATH and GH_PATH override project.env values with the same key", async () => {
@@ -2117,9 +2122,9 @@ describe("spawn", () => {
       );
     });
 
-    it("forwards AO_AGENT_GH_TRACE into orchestrator runtime env when configured", async () => {
-      const previousTrace = process.env["AO_AGENT_GH_TRACE"];
-      process.env["AO_AGENT_GH_TRACE"] = "/tmp/orchestrator-gh-trace-test.jsonl";
+    it("forwards ATHENE_AGENT_GH_TRACE into orchestrator runtime env when configured", async () => {
+      const previousTrace = process.env["ATHENE_AGENT_GH_TRACE"];
+      process.env["ATHENE_AGENT_GH_TRACE"] = "/tmp/orchestrator-gh-trace-test.jsonl";
 
       try {
         const sm = createSessionManager({ config, registry: mockRegistry });
@@ -2128,14 +2133,14 @@ describe("spawn", () => {
         expect(mockRuntime.create).toHaveBeenCalledWith(
           expect.objectContaining({
             environment: expect.objectContaining({
-              AO_AGENT_GH_TRACE: "/tmp/orchestrator-gh-trace-test.jsonl",
-              AO_CALLER_TYPE: "orchestrator",
+              ATHENE_AGENT_GH_TRACE: "/tmp/orchestrator-gh-trace-test.jsonl",
+              ATHENE_CALLER_TYPE: "orchestrator",
             }),
           }),
         );
       } finally {
-        if (previousTrace === undefined) delete process.env["AO_AGENT_GH_TRACE"];
-        else process.env["AO_AGENT_GH_TRACE"] = previousTrace;
+        if (previousTrace === undefined) delete process.env["ATHENE_AGENT_GH_TRACE"];
+        else process.env["ATHENE_AGENT_GH_TRACE"] = previousTrace;
       }
     });
 

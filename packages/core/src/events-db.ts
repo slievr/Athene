@@ -9,6 +9,7 @@
 import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { ENV, isEnvFlagEnabled } from "./env.js";
 import { getAoBaseDir } from "./paths.js";
 
 // Use createRequire so we can try/catch on native module load without top-level await.
@@ -186,7 +187,7 @@ export function formatActivityEventsDbUnavailableWarning(err: unknown): string {
 
 export function emitActivityEventsDbUnavailableWarning(err: unknown): void {
   if (_dbUnavailableWarningEmitted) return;
-  if (process.env["AO_DEBUG"] !== "1" && !isAoEventsInvocation()) return;
+  if (!isEnvFlagEnabled(ENV.DEBUG) && !isAoEventsInvocation()) return;
   _dbUnavailableWarningEmitted = true;
   // eslint-disable-next-line no-console
   console.warn(formatActivityEventsDbUnavailableWarning(err));

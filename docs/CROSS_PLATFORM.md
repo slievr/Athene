@@ -61,7 +61,7 @@ import {
 |--------|---------|-------|
 | `isWindows(): boolean` | The canonical OS check. **Always use this** instead of `process.platform === "win32"`. | Constant-time. Trivially mockable in tests. |
 | `getDefaultRuntime(): "tmux" \| "process"` | Returns `"process"` on Windows, `"tmux"` elsewhere. Used by `athene start` / startup-preflight to default runtime selection. | Don't hardcode `"tmux"`. |
-| `getShell(): { cmd, args(command) }` | Resolves the shell for non-interactive command execution. POSIX → `/bin/sh -c`. Windows → priority order: `AO_SHELL` env override → `pwsh` → `powershell.exe` (absolute path, robust to degraded PATH) → `powershell` → `cmd.exe`. Cached. | Use this whenever you need to run *any* shellish string. Don't assume bash. |
+| `getShell(): { cmd, args(command) }` | Resolves the shell for non-interactive command execution. POSIX → `/bin/sh -c`. Windows → priority order: `ATHENE_SHELL` env override → `pwsh` → `powershell.exe` (absolute path, robust to degraded PATH) → `powershell` → `cmd.exe`. Cached. | Use this whenever you need to run *any* shellish string. Don't assume bash. |
 | `killProcessTree(pid, signal?)` | Kills a process and its descendants. Windows → `taskkill /T /F /PID <pid>`. POSIX → `process.kill(-pid, signal)` with direct-PID fallback. Guards `pid > 0`. | **Never write `process.kill(-pid, …)` directly.** Negative PIDs are POSIX-only. |
 | `findPidByPort(port): Promise<string \| null>` | Finds the LISTENING PID on a port. Windows → parses `netstat -ano`. POSIX → `lsof -ti :PORT -sTCP:LISTEN`. | Use this; don't shell-out yourself. |
 | `getEnvDefaults(): { HOME, SHELL, TMPDIR, PATH, USER }` | Returns platform-correct env defaults: Windows reads `USERPROFILE`/`TEMP`/`USERNAME`, POSIX reads `HOME`/`SHELL`/`TMPDIR`/`USER`. | Use instead of hardcoding `/tmp`, `~`, `$HOME`. |
@@ -214,10 +214,12 @@ import { forwardSignalsToChild } from "../lib/shell.js";
 
 ### Environment variables to know
 
+> `ATHENE_*` is the canonical prefix; the legacy `AO_*` prefix still works (reads fall back to `AO_*`, e.g. `AO_SHELL`/`AO_BASH_PATH` are honored when the `ATHENE_*` form is unset). Resolve names through `getEnvString`/`isEnvFlagEnabled` from `@made-by-moonlight/athene-core`, never via a raw `process.env` prefix check.
+
 | Variable | Effect |
 |----------|--------|
-| `AO_SHELL` | Override `getShell()` resolution. Set to an absolute path or shell name (`pwsh`, `cmd`, `bash`, …). Args are inferred from basename. The supported escape hatch for Git Bash users on Windows. |
-| `AO_BASH_PATH` | Used by `script-runner.ts` on Windows to locate bash before falling back to Git Bash auto-detection. WSL bash is intentionally excluded. |
+| `ATHENE_SHELL` (legacy: `AO_SHELL`) | Override `getShell()` resolution. Set to an absolute path or shell name (`pwsh`, `cmd`, `bash`, …). Args are inferred from basename. The supported escape hatch for Git Bash users on Windows. |
+| `ATHENE_BASH_PATH` (legacy: `AO_BASH_PATH`) | Used by `script-runner.ts` on Windows to locate bash before falling back to Git Bash auto-detection. WSL bash is intentionally excluded. |
 
 ---
 

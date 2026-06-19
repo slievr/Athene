@@ -111,9 +111,9 @@ describe.skipIf(!canRun)("daemon child reaping (integration)", () => {
     const env = {
       ...process.env,
       HOME: tmpHome,
-      AO_CALLER_TYPE: "agent",
-      AO_CONFIG_PATH: configPath,
-      AO_GLOBAL_CONFIG: configPath,
+      ATHENE_CALLER_TYPE: "agent",
+      ATHENE_CONFIG_PATH: configPath,
+      ATHENE_GLOBAL_CONFIG: configPath,
       PORT: String(port),
     };
     const start = spawn(tsxBin, [cliEntry, "start", "--no-orchestrator", "--reap-orphans"], {

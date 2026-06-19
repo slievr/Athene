@@ -27,7 +27,7 @@ Route primarily from this catalog. Each line is `projectId (repo, prefix): descr
 
 1. **Match from the catalog first.** Use the project `description` and repo to decide where a piece of work belongs.
 2. **If the match is ambiguous, scout before committing.** Spawn one or more read-only **scout** workers into the candidate repos with an investigation-only prompt (e.g. "Read-only: does X live here? Report findings, change nothing."). A scout is just an ordinary worker — `athene spawn <project> --prompt "..."`. Once a scout confirms where the work belongs, **kill the scouts** (`athene session kill <id>`) and dispatch the real worker into the confirmed project.
-3. **Dispatch the real worker** into the target project with a plain `athene spawn`. Ownership is stamped **automatically**: because you run with `AO_CALLER_TYPE=meta-orchestrator` (and `AO_META_NAME={{metaName}}`), every `athene spawn` / `athene batch-spawn` you run tags the worker `ownerKind=meta` + `metaOwner={{metaName}}` so it appears in your fleet (`athene meta-status {{metaName}}` and your dashboard). You do not need to pass any owner flags. (To override, the internal `--owner-kind` / `--meta-owner` flags exist.)
+3. **Dispatch the real worker** into the target project with a plain `athene spawn`. Ownership is stamped **automatically**: because you run with `ATHENE_CALLER_TYPE=meta-orchestrator` (and `ATHENE_META_NAME={{metaName}}`), every `athene spawn` / `athene batch-spawn` you run tags the worker `ownerKind=meta` + `metaOwner={{metaName}}` so it appears in your fleet (`athene meta-status {{metaName}}` and your dashboard). You do not need to pass any owner flags. (To override, the internal `--owner-kind` / `--meta-owner` flags exist.)
 
 ## Ownership & Visibility
 

@@ -35,7 +35,7 @@ Comprehensive guide to installing, configuring, and troubleshooting Athene.
   sudo dnf install tmux
   ```
 
-  **On Windows:** tmux is **not** required. AO uses native ConPTY via the `runtime-process` plugin (the default on Windows). PowerShell 7+ is recommended; if you have Git Bash and prefer bash semantics for shell-out commands, set `AO_SHELL=bash` in your environment. WSL is not required.
+  **On Windows:** tmux is **not** required. AO uses native ConPTY via the `runtime-process` plugin (the default on Windows). PowerShell 7+ is recommended; if you have Git Bash and prefer bash semantics for shell-out commands, set `ATHENE_SHELL=bash` in your environment. WSL is not required.
 
 - **GitHub CLI** (for GitHub integration) - Required for PR creation, issue management
 
@@ -60,11 +60,11 @@ Comprehensive guide to installing, configuring, and troubleshooting Athene.
   - Set environment variable: `export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."`
 
 - **Public dashboard URL** - If running AO behind a reverse proxy (e.g. inside a remote dev container, on a VPS fronted by Caddy/nginx/Traefik)
-  - Set `AO_PUBLIC_URL` to the externally-reachable URL of the dashboard
+  - Set `ATHENE_PUBLIC_URL` to the externally-reachable URL of the dashboard (the legacy `AO_PUBLIC_URL` is still honored; likewise `ATHENE_*` is preferred but every `AO_*` variable below still works)
   - All console output, `athene open` browser launches, and orchestrator-prompt session links use this URL instead of `http://localhost:<port>`
-  - Example: `export AO_PUBLIC_URL="https://ao.example.com"`
+  - Example: `export ATHENE_PUBLIC_URL="https://ao.example.com"`
   - When the dashboard is served on a standard port (HTTPS 443 / HTTP 80) the dashboard JS connects the mux WebSocket to `/ao-terminal-mux` on the same hostname. Your proxy needs to forward that path to the direct terminal server (`DIRECT_TERMINAL_PORT`, default 14801) — its upgrade handler accepts both `/mux` and `/ao-terminal-mux`. For custom paths set `TERMINAL_WS_PATH=/your/path`.
-  - **`AO_PATH_BASED_MUX=1`** (opt-in) — if your proxy can only forward one hostname:port pair (e.g. Cloudflare Tunnel pointed at a single `service:` URL with no path-based ingress), set this and `athene start` will run a small bundled HTTP/WS proxy on `PORT` that demultiplexes: HTTP forwards to Next.js (shifted to `PORT + 1000`, override with `NEXT_INTERNAL_PORT`), and `wss://hostname/ao-terminal-mux` is tunneled to `DIRECT_TERMINAL_PORT/mux`. Tradeoff: an extra Node process and one extra hop per HTTP request, in exchange for a one-line proxy config on the operator side.
+  - **`ATHENE_PATH_BASED_MUX=1`** (opt-in) — if your proxy can only forward one hostname:port pair (e.g. Cloudflare Tunnel pointed at a single `service:` URL with no path-based ingress), set this and `athene start` will run a small bundled HTTP/WS proxy on `PORT` that demultiplexes: HTTP forwards to Next.js (shifted to `PORT + 1000`, override with `NEXT_INTERNAL_PORT`), and `wss://hostname/ao-terminal-mux` is tunneled to `DIRECT_TERMINAL_PORT/mux`. Tradeoff: an extra Node process and one extra hop per HTTP request, in exchange for a one-line proxy config on the operator side.
 
 ## Installation
 
