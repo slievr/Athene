@@ -66,6 +66,25 @@ jobs:
       # public repo blocks a malformed version bump before it reaches npm.
       - run: node scripts/check-publishable-deps.mjs
 
+      # Exchange the GitHub OIDC token for a short-lived npm publish token.
+      # changesets/action v1.8.0 detects OIDC but does not perform the exchange
+      # itself — it just skips the NPM_TOKEN requirement. We do the exchange here
+      # so that pnpm publish (invoked by changeset publish below) finds a real
+      # token in NODE_AUTH_TOKEN, which setup-node's .npmrc already references.
+      - name: Exchange OIDC token for npm publish token
+        run: |
+          OIDC_TOKEN=$(curl -sS \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm" \
+            | jq -r '.value')
+          NPM_TOKEN=$(curl -sS \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"oidcToken\":\"$OIDC_TOKEN\"}" \
+            https://registry.npmjs.org/-/npm/v1/oidc/token \
+            | jq -r '.token')
+          echo "NODE_AUTH_TOKEN=$NPM_TOKEN" >> "$GITHUB_ENV"
+
       # changesets/action manages the "Version Packages" PR — when there
       # are pending changesets it opens/updates the PR; when there are
       # none (i.e. that PR was just merged) it runs the `publish:` command
