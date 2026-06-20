@@ -51,9 +51,11 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
       - uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d
+        with:
+          version: 9
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
           registry-url: "https://registry.npmjs.org"
       - run: echo "HUSKY=0" >> $GITHUB_ENV
@@ -66,34 +68,12 @@ jobs:
       # public repo blocks a malformed version bump before it reaches npm.
       - run: node scripts/check-publishable-deps.mjs
 
-      # Exchange the GitHub OIDC token for a short-lived npm publish token.
-      # changesets/action v1.8.0 detects OIDC but does not perform the exchange
-      # itself — it just skips the NPM_TOKEN requirement. We do the exchange here
-      # so that pnpm publish (invoked by changeset publish below) finds a real
-      # token in NODE_AUTH_TOKEN, which setup-node's .npmrc already references.
-      - name: Exchange OIDC token for npm publish token
-        run: |
-          OIDC_TOKEN=$(curl -sS \
-            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm" \
-            | jq -r '.value')
-          NPM_TOKEN=$(curl -sS \
-            -X POST \
-            -H "Content-Type: application/json" \
-            -d "{\"oidcToken\":\"$OIDC_TOKEN\"}" \
-            https://registry.npmjs.org/-/npm/v1/oidc/token \
-            | jq -r '.token')
-          echo "NODE_AUTH_TOKEN=$NPM_TOKEN" >> "$GITHUB_ENV"
-
       # changesets/action manages the "Version Packages" PR — when there
       # are pending changesets it opens/updates the PR; when there are
-      # none (i.e. that PR was just merged) it runs the `publish:` command
-      # (`pnpm release` = `pnpm -r build && changeset publish`) to publish
-      # the @made-by-moonlight/* packages to npm. The tag + GitHub release steps below
-      # then run for the same version-bump commit.
-      #
-      # No NPM_TOKEN is needed: npm CLI detects the GitHub OIDC environment
-      # (id-token: write above) and authenticates automatically via Trusted Publishing.
+      # none (i.e. that PR was just merged) it runs the `publish:` command.
+      # `pnpm release` builds then runs scripts/publish.mjs, which calls
+      # `npm publish` per package. npm 11+ on Node 24 handles the OIDC
+      # token exchange natively via id-token: write above.
       - uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b
         id: changesets
         with:
