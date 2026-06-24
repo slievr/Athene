@@ -24,7 +24,7 @@ import type { ObservabilityLevel } from "./observability.js";
 /** Unique session identifier, e.g. "my-app-1", "backend-12" */
 export type SessionId = string;
 
-export type SessionKind = "worker" | "orchestrator" | "meta-orchestrator";
+export type SessionKind = "worker" | "orchestrator";
 
 export type CanonicalSessionState =
   | "not_started"
@@ -332,40 +332,18 @@ export interface Session {
   metadata: Record<string, string>;
 }
 
+/**
+ * True when the session is an orchestrator (formerly called meta-orchestrator).
+ * Tolerant read: accepts both the new value "orchestrator" and the legacy
+ * "meta-orchestrator" that may still exist in stored metadata.
+ */
 export function isOrchestratorSession(
   session: { id: SessionId; metadata?: Record<string, string> },
-  sessionPrefix?: string,
-  allSessionPrefixes?: string[],
 ): boolean {
-  if (session.metadata?.["role"] === "orchestrator") {
-    return true;
-  }
-  if (!sessionPrefix) {
-    return false;
-  }
-  const escaped = sessionPrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  if (session.id === `${sessionPrefix}-orchestrator`) {
-    return true;
-  }
-  if (!new RegExp(`^${escaped}-orchestrator-\\d+$`).test(session.id)) {
-    return false;
-  }
-  // Guard against cross-project false positives: if the session ID is a plain
-  // numbered worker for any other known prefix (e.g. prefix "app-orchestrator"
-  // matches "app-orchestrator-1" as a worker), it is not an orchestrator.
-  if (allSessionPrefixes) {
-    for (const prefix of allSessionPrefixes) {
-      if (prefix === sessionPrefix) continue;
-      if (
-        new RegExp(
-          `^${prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}-\\d+$`,
-        ).test(session.id)
-      ) {
-        return false;
-      }
-    }
-  }
-  return true;
+  return (
+    session.metadata?.["role"] === "orchestrator" ||
+    session.metadata?.["role"] === "meta-orchestrator"
+  );
 }
 
 /** True when the session is a meta orchestrator (portfolio-scoped coordinator). */
@@ -375,27 +353,22 @@ export function isMetaOrchestratorSession(
   return session.metadata?.["role"] === "meta-orchestrator";
 }
 
-/**
- * True for any coordinator session — a per-project orchestrator OR a meta
- * orchestrator. Worker views/counts must use this (not `isOrchestratorSession`)
- * so meta orchestrators are excluded from the worker board identically.
- */
+/** True for any coordinator session (orchestrator). Workers return false. */
 export function isCoordinatorSession(
   session: { id: SessionId; metadata?: Record<string, string> },
-  sessionPrefix?: string,
-  allSessionPrefixes?: string[],
 ): boolean {
-  return (
-    isMetaOrchestratorSession(session) ||
-    isOrchestratorSession(session, sessionPrefix, allSessionPrefixes)
-  );
+  return isOrchestratorSession(session);
 }
 
-/** Which coordinator dispatched this session. Defaults to "project" when unset. */
-export function getSessionOwnerKind(
+/** Name of the orchestrator that owns this session. Defaults to "default". */
+export function getSessionOrchestratorOwner(
   session: { metadata?: Record<string, string> },
-): "meta" | "project" {
-  return session.metadata?.["ownerKind"] === "meta" ? "meta" : "project";
+): string {
+  return (
+    session.metadata?.["orchestratorOwner"] ??
+    session.metadata?.["metaOwner"] ??
+    "default"
+  );
 }
 
 /** Name of the dispatching meta orchestrator, or null for project-owned sessions. */
@@ -415,26 +388,21 @@ export interface SessionSpawnConfig {
   agent?: string;
   /** Override the OpenCode subagent for this session (e.g. "sisyphus", "oracle") */
   subagent?: string;
-  /** Coordinator that dispatched this session. Defaults to "project". */
+  /** Name of the orchestrator that owns this session. Defaults to "default". */
+  orchestratorOwner?: string;
+  // Backward compat: old callers may still pass these; session-manager merges them.
+  /** @deprecated Use orchestratorOwner */
   ownerKind?: "meta" | "project";
-  /** Name of the dispatching meta orchestrator (set only when ownerKind === "meta"). */
+  /** @deprecated Use orchestratorOwner */
   metaOwner?: string;
 }
 
-/** Config for creating an orchestrator session */
+/** Config for creating an orchestrator session (formerly MetaOrchestratorSpawnConfig). */
 export interface OrchestratorSpawnConfig {
-  projectId: string;
-  systemPrompt?: string;
-  /** Override the agent plugin for this orchestrator (e.g. "codex", "claude-code", "opencode") */
-  agent?: string;
-}
-
-/** Config for creating a meta orchestrator session (portfolio-scoped coordinator). */
-export interface MetaOrchestratorSpawnConfig {
-  /** Identity of the meta orchestrator (its configured name, e.g. "meta-1"). */
+  /** Identity of the orchestrator (its configured name, e.g. "default"). */
   name: string;
   systemPrompt?: string;
-  /** Override the agent plugin for this meta orchestrator. */
+  /** Override the agent plugin for this orchestrator. */
   agent?: string;
 }
 
@@ -1512,8 +1480,10 @@ export interface OrchestratorConfig {
   /** Default reaction configs */
   reactions: Record<string, ReactionConfig>;
 
-  /** Named meta orchestrators (portfolio-scoped coordinators). */
-  metaOrchestrators?: Record<string, MetaOrchestratorConfig>;
+  /** Named orchestrators (portfolio-scoped coordinators). New canonical field. */
+  orchestrators?: Record<string, OrchestratorEntryConfig>;
+  /** @deprecated Use orchestrators. Kept for backward compat — config.ts merges both into orchestrators. */
+  metaOrchestrators?: Record<string, OrchestratorEntryConfig>;
 
   /**
    * Internal: External plugin entries collected from inline tracker/scm/notifier configs.
@@ -1522,13 +1492,13 @@ export interface OrchestratorConfig {
   _externalPluginEntries?: ExternalPluginEntryRef[];
 }
 
-/** Scope of projects a meta orchestrator may route into. */
-export type MetaScope = "all" | { projects: string[] };
+export type OrchestratorScope = "all" | { projects: string[] };
+/** @deprecated Use OrchestratorScope */
+export type MetaScope = OrchestratorScope;
 
-/** Configuration for a single named meta orchestrator. */
-export interface MetaOrchestratorConfig {
-  /** Which projects this meta orchestrator can route into. */
-  scope: MetaScope;
+export interface OrchestratorEntryConfig {
+  /** Which projects this orchestrator can route into. */
+  scope: OrchestratorScope;
   /**
    * Include newly-registered projects in scope. Current behavior: `meta-status`
    * and the dashboard resolve scope live (new projects show immediately); the
@@ -1538,9 +1508,11 @@ export interface MetaOrchestratorConfig {
   discover: boolean;
   /** Optional agent plugin override; defaults to the global default agent. */
   agent?: string;
-  /** Optional extra instructions appended to the meta orchestrator prompt. */
+  /** Optional extra instructions appended to the orchestrator prompt. */
   rules?: string;
 }
+/** @deprecated Use OrchestratorEntryConfig */
+export type MetaOrchestratorConfig = OrchestratorEntryConfig;
 
 export interface DegradedProjectEntry {
   projectId: string;
@@ -1991,20 +1963,11 @@ export interface KillOptions {
 /** Session manager — CRUD for sessions */
 export interface SessionManager {
   spawn(config: SessionSpawnConfig): Promise<Session>;
-  spawnOrchestrator(config: OrchestratorSpawnConfig): Promise<Session>;
+  /**
+   * Ensure an orchestrator session exists for the given name. Reuses a live
+   * one if present, else spawns a fresh one.
+   */
   ensureOrchestrator(config: OrchestratorSpawnConfig): Promise<Session>;
-  /**
-   * Ensure a meta orchestrator session exists for the given name. Reuses a live
-   * one if present, else spawns a fresh one under the reserved `_meta` scope.
-   */
-  ensureMetaOrchestrator(config: MetaOrchestratorSpawnConfig): Promise<Session>;
-  /**
-   * Replace the canonical orchestrator with a fresh one. If an orchestrator
-   * already exists for the project, it is killed, its metadata deleted, and a
-   * new orchestrator spawned with no carryover state. Ignores
-   * `orchestratorSessionStrategy` — replacement is the whole point.
-   */
-  relaunchOrchestrator(config: OrchestratorSpawnConfig): Promise<Session>;
   restore(sessionId: SessionId): Promise<Session>;
   list(projectId?: string): Promise<Session[]>;
   get(sessionId: SessionId): Promise<Session | null>;
