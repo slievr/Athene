@@ -359,10 +359,12 @@ const LifecycleConfigSchema = z
 
 const MetaScopeSchema = z.union([
   z.literal("all"),
-  z.object({ projects: z.array(z.string()).min(1) }),
+  z.array(z.string()).min(1), // directory paths
 ]);
 
 const OrchestratorEntryConfigSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().optional(),
   scope: MetaScopeSchema,
   // Include newly-registered projects in this meta orchestrator's scope.
   // NOTE (current behavior): scope is resolved live by `meta-status` and the
@@ -443,31 +445,12 @@ const OrchestratorConfigSchema = z
     // `assertMetaScopeProjectsExist` in the global-config load path.
   });
 
-/**
- * Fail loudly when a meta orchestrator's explicit scope references a project ID
- * that is not in the registered set. Evaluated against the FULL global project
- * registry (not a partial effective projection), so valid multi-project scopes
- * load while genuine typos are rejected. Throws on the first unknown reference.
- */
 export function assertMetaScopeProjectsExist(
-  metaOrchestrators: Record<string, { scope?: unknown }> | undefined,
-  knownProjectIds: string[],
+  orchestrators: Record<string, { scope?: unknown }> | undefined,
+  _knownProjectIds: string[],
 ): void {
-  if (!metaOrchestrators) return;
-  const known = new Set(knownProjectIds);
-  for (const [metaName, meta] of Object.entries(metaOrchestrators)) {
-    const scope = meta?.scope;
-    if (!scope || scope === "all" || typeof scope !== "object") continue;
-    const scoped = (scope as { projects?: unknown }).projects;
-    if (!Array.isArray(scoped)) continue;
-    for (const projectId of scoped) {
-      if (typeof projectId === "string" && !known.has(projectId)) {
-        throw new Error(
-          `Meta orchestrator '${metaName}' references unknown project '${projectId}'. Known projects: ${knownProjectIds.join(", ") || "(none)"}.`,
-        );
-      }
-    }
-  }
+  // Scope now stores directory paths, not project IDs — no registry validation.
+  if (!orchestrators) return;
 }
 
 // =============================================================================

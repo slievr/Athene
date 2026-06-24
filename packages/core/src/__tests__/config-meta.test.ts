@@ -17,15 +17,15 @@ describe("metaOrchestrators config", () => {
     expect(cfg.metaOrchestrators?.platform.discover).toBe(false);
   });
 
-  it("parses an explicit project-list scope with discover + rules", () => {
+  it("parses an explicit directory-path scope with discover + rules", () => {
     const cfg = validateConfig({
       ...base,
       metaOrchestrators: {
-        "meta-1": { scope: { projects: ["web", "api"] }, discover: true, rules: "prefer api" },
+        "meta-1": { scope: ["/tmp/web", "/tmp/api"], discover: true, rules: "prefer api" },
       },
     });
     const m = cfg.metaOrchestrators?.["meta-1"];
-    expect(m?.scope).toEqual({ projects: ["web", "api"] });
+    expect(m?.scope).toEqual(["/tmp/web", "/tmp/api"]);
     expect(m?.discover).toBe(true);
     expect(m?.rules).toBe("prefer api");
   });
@@ -39,34 +39,27 @@ describe("metaOrchestrators config", () => {
     expect(() => validateConfig({ projects: { _meta: { path: "/tmp/x" } } })).toThrow(/_meta/);
   });
 
-  it("does NOT reject explicit scopes during validateConfig (may be a partial projection)", () => {
-    // validateConfig runs on the (possibly partial) effective projects map, so it
-    // must not reject scope project IDs absent from it — that check is done against
-    // the full registry by assertMetaScopeProjectsExist in the global-config path.
+  it("does NOT reject explicit scopes during validateConfig (directory paths)", () => {
     expect(() =>
       validateConfig({
         ...base,
-        metaOrchestrators: { "meta-1": { scope: { projects: ["web", "ghost"] } } },
+        metaOrchestrators: { "meta-1": { scope: ["/tmp/web", "/nonexistent/path"] } },
       }),
     ).not.toThrow();
   });
 
-  it("assertMetaScopeProjectsExist fails loud on a truly-unknown project (full registry)", () => {
+  it("assertMetaScopeProjectsExist is a no-op (scope uses directory paths, not project IDs)", () => {
+    // Should not throw regardless of scope content
     expect(() =>
       assertMetaScopeProjectsExist(
-        { "meta-1": { scope: { projects: ["web", "ghost"] } } },
-        ["web", "api"],
-      ),
-    ).toThrow(/unknown project 'ghost'/);
-  });
-
-  it("assertMetaScopeProjectsExist accepts a valid multi-project scope and scope:all", () => {
-    expect(() =>
-      assertMetaScopeProjectsExist(
-        { m1: { scope: { projects: ["web", "api"] } }, m2: { scope: "all" } },
-        ["web", "api"],
+        { myorch: { scope: ["/nonexistent/path"] } },
+        ["project-a"],
       ),
     ).not.toThrow();
+  });
+
+  it("assertMetaScopeProjectsExist accepts undefined", () => {
+    expect(() => assertMetaScopeProjectsExist(undefined, ["project-a"])).not.toThrow();
   });
 
   it("accepts scope:all without project validation", () => {

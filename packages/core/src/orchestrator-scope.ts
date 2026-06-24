@@ -1,12 +1,3 @@
-/**
- * Resolve which projects an orchestrator can route into, from its scope.
- *
- * - scope "all"  → every registered project (insertion order preserved)
- * - scope list   → the listed project IDs that exist in config.projects
- *
- * Shared by the prompt generator (catalog rendering) and the supervisor's
- * `discover` reconcile path. Pure — no I/O.
- */
 import type { OrchestratorEntryConfig, OrchestratorConfig, ProjectConfig } from "./types.js";
 
 export function resolveInScopeProjects(
@@ -17,8 +8,8 @@ export function resolveInScopeProjects(
   if (meta.scope === "all") {
     return entries;
   }
-  const wanted = new Set(meta.scope.projects);
-  return entries.filter(([id]) => wanted.has(id));
+  const wanted = new Set(meta.scope as string[]);
+  return entries.filter(([, project]) => wanted.has(project.path));
 }
 
 /** The ordered list of in-scope project IDs. */
