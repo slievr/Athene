@@ -528,22 +528,25 @@ export function SidebarOrchestrators({
                 {projects.length > 0 && (
                   spawnOrch === o.name ? (
                     <div className="project-sidebar__orch-create-form">
-                      <select
-                        value={spawnProjectId}
-                        onChange={(e) => {
-                          setSpawnProjectId(e.target.value);
-                          setSpawnError(null);
-                        }}
-                        className="project-sidebar__orch-create-input"
-                        disabled={spawning}
-                        aria-label="Project"
-                      >
-                        {projects.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
+                      {/* Only show the project selector when there are multiple projects */}
+                      {projects.length > 1 && (
+                        <select
+                          value={spawnProjectId}
+                          onChange={(e) => {
+                            setSpawnProjectId(e.target.value);
+                            setSpawnError(null);
+                          }}
+                          className="project-sidebar__orch-create-input"
+                          disabled={spawning}
+                          aria-label="Project"
+                        >
+                          {projects.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                       <input
                         type="text"
                         value={spawnPrompt}
@@ -574,9 +577,9 @@ export function SidebarOrchestrators({
                             setSpawnOrch(null);
                             setSpawnError(null);
                             setSpawnPrompt("");
+                            setSpawnProjectId("");
                           }}
                           className="project-sidebar__orch-create-cancel"
-                          disabled={spawning}
                         >
                           Cancel
                         </button>
