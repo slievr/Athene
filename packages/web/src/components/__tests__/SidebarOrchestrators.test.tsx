@@ -133,8 +133,21 @@ describe("SidebarOrchestrators", () => {
         onNavigate={() => {}}
       />,
     );
-    expect(container.querySelector('a[href="/orchestrators/orch-1"]')).toBeTruthy();
+    // When a session is running the collapsed glyph links directly to the session terminal.
+    expect(container.querySelector('a[href="/orchestrators/orch-1/sessions/orch-1"]')).toBeTruthy();
     expect(container.querySelector("[style]")).toBeNull();
+  });
+
+  it("collapsed glyph links to fleet dashboard when session is null", () => {
+    const { container } = render(
+      <SidebarOrchestrators
+        collapsed
+        orchestrators={[{ name: "orch-1", session: null }]}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+    expect(container.querySelector('a[href="/orchestrators/orch-1"]')).toBeTruthy();
   });
 
   it("navigates on click", () => {
