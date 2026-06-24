@@ -1,5 +1,13 @@
 # @made-by-moonlight/athene-plugin-scm-github
 
+## 0.11.1
+
+### Patch Changes
+
+- ed7c6c7: fix: republish athene with correct athene-cli dependency (0.11.0 had workspace:\* dep bug)
+- Updated dependencies [ed7c6c7]
+  - @made-by-moonlight/athene-core@0.11.1
+
 ## 0.11.0
 
 ### Minor Changes

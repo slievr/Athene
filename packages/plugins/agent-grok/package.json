@@ -1,6 +1,6 @@
 {
   "name": "@made-by-moonlight/athene-plugin-agent-grok",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Agent plugin: Grok",
   "license": "MIT",
   "type": "module",

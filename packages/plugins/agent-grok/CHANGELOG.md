@@ -1,5 +1,12 @@
 # @made-by-moonlight/athene-plugin-agent-grok
 
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [ed7c6c7]
+  - @made-by-moonlight/athene-core@0.11.1
+
 ## 0.2.1
 
 ### Patch Changes
