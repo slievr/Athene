@@ -35,7 +35,10 @@ for (const { path: dir, private: isPrivate } of packages) {
 
   console.log(`  publish  ${name}@${version}`);
   // pnpm pack rewrites workspace:* → resolved version; npm pack does not.
-  const tarball = execSync('pnpm pack', { cwd: dir, encoding: 'utf-8' }).trim();
+  // pnpm pack output includes a "Tarball Contents" header — extract just the .tgz line.
+  const packOutput = execSync('pnpm pack', { cwd: dir, encoding: 'utf-8' });
+  const tarball = packOutput.split('\n').map(l => l.trim()).find(l => l.endsWith('.tgz'));
+  if (!tarball) throw new Error(`pnpm pack produced no .tgz for ${name}:\n${packOutput}`);
   try {
     execSync(`npm publish ${tarball}`, { cwd: dir, stdio: 'inherit' });
   } finally {
