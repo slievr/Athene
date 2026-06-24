@@ -66,6 +66,7 @@ vi.mock("@made-by-moonlight/athene-core", () => ({
     getStates: vi.fn(),
     check: vi.fn(),
   }),
+  ensureOrchestratorUUIDs: vi.fn(),
   TERMINAL_STATUSES: new Set(["merged", "killed"]) as ReadonlySet<string>,
 }));
 
