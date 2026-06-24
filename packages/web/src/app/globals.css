@@ -9811,3 +9811,26 @@ body.is-resizing-x {
   cursor: col-resize;
   user-select: none;
 }
+
+/* ─── Orchestrator accent colors ─────────────────────────── */
+.orch-dot-0  { background-color: #7c3aed; }
+.orch-dot-1  { background-color: #0891b2; }
+.orch-dot-2  { background-color: #e11d48; }
+.orch-dot-3  { background-color: #d97706; }
+.orch-dot-4  { background-color: #059669; }
+.orch-dot-5  { background-color: #0284c7; }
+.orch-dot-6  { background-color: #a21caf; }
+.orch-dot-7  { background-color: #c2410c; }
+.orch-dot-8  { background-color: #0f766e; }
+.orch-dot-9  { background-color: #4338ca; }
+
+.orch-border-0  { border-left-color: #7c3aed; }
+.orch-border-1  { border-left-color: #0891b2; }
+.orch-border-2  { border-left-color: #e11d48; }
+.orch-border-3  { border-left-color: #d97706; }
+.orch-border-4  { border-left-color: #059669; }
+.orch-border-5  { border-left-color: #0284c7; }
+.orch-border-6  { border-left-color: #a21caf; }
+.orch-border-7  { border-left-color: #c2410c; }
+.orch-border-8  { border-left-color: #0f766e; }
+.orch-border-9  { border-left-color: #4338ca; }
