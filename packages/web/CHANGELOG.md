@@ -1,5 +1,25 @@
 # @made-by-moonlight/athene-web
 
+## 0.11.2
+
+### Patch Changes
+
+- 22aef23: test: verify release auto-merge works for release/\* branches
+- Updated dependencies [22aef23]
+  - @made-by-moonlight/athene-core@0.11.2
+  - @made-by-moonlight/athene-plugin-runtime-tmux@0.11.2
+  - @made-by-moonlight/athene-plugin-runtime-process@0.11.2
+  - @made-by-moonlight/athene-plugin-agent-claude-code@0.11.2
+  - @made-by-moonlight/athene-plugin-agent-codex@0.11.2
+  - @made-by-moonlight/athene-plugin-agent-opencode@0.11.2
+  - @made-by-moonlight/athene-plugin-agent-cursor@0.11.2
+  - @made-by-moonlight/athene-plugin-agent-kimicode@0.11.2
+  - @made-by-moonlight/athene-plugin-workspace-worktree@0.11.2
+  - @made-by-moonlight/athene-plugin-tracker-github@0.11.2
+  - @made-by-moonlight/athene-plugin-tracker-linear@0.11.2
+  - @made-by-moonlight/athene-plugin-scm-github@0.11.2
+  - @made-by-moonlight/athene-plugin-agent-grok@0.2.3
+
 ## 0.11.1
 
 ### Patch Changes

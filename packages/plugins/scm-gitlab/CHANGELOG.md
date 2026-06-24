@@ -1,5 +1,13 @@
 # @made-by-moonlight/athene-plugin-scm-gitlab
 
+## 0.11.2
+
+### Patch Changes
+
+- 22aef23: test: verify release auto-merge works for release/\* branches
+- Updated dependencies [22aef23]
+  - @made-by-moonlight/athene-core@0.11.2
+
 ## 0.11.1
 
 ### Patch Changes

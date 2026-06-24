@@ -1,5 +1,11 @@
 # @made-by-moonlight/athene-notifier-macos
 
+## 0.11.2
+
+### Patch Changes
+
+- 22aef23: test: verify release auto-merge works for release/\* branches
+
 ## 0.11.1
 
 ### Patch Changes
