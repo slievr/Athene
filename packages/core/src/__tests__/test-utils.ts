@@ -491,25 +491,10 @@ export function teardownTestContext(ctx: TestContext): void {
 export function createMockSessionManager(): OpenCodeSessionManager {
   return {
     spawn: vi.fn().mockResolvedValue(makeSession()),
-    spawnOrchestrator: vi
-      .fn()
-      .mockResolvedValue(
-        makeSession({ id: "app-orchestrator", metadata: { role: "orchestrator" } }),
-      ),
     ensureOrchestrator: vi
       .fn()
       .mockResolvedValue(
-        makeSession({ id: "app-orchestrator", metadata: { role: "orchestrator" } }),
-      ),
-    ensureMetaOrchestrator: vi
-      .fn()
-      .mockResolvedValue(
-        makeSession({ id: "meta-1", projectId: "_meta", metadata: { role: "meta-orchestrator" } }),
-      ),
-    relaunchOrchestrator: vi
-      .fn()
-      .mockResolvedValue(
-        makeSession({ id: "app-orchestrator", metadata: { role: "orchestrator" } }),
+        makeSession({ id: "orch-1", projectId: "_meta", metadata: { role: "orchestrator" } }),
       ),
     restore: vi.fn().mockResolvedValue(makeSession()),
     list: vi.fn().mockResolvedValue([]),

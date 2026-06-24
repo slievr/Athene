@@ -18,9 +18,7 @@ import ora from "ora";
 import type { Command } from "commander";
 import {
   loadConfig,
-  generateOrchestratorPrompt,
   generateSessionPrefix,
-  getOrchestratorSessionId,
   isRepoUrl,
   configToYaml,
   isCanonicalGlobalConfigPath,
@@ -931,45 +929,9 @@ async function runStartup(
 
   let selectedOrchestratorId: string | null = null;
 
-  if (opts?.orchestrator !== false) {
-    const sm = await getSessionManager(config);
-
-    try {
-      spinner.start("Ensuring orchestrator session");
-      const systemPrompt = generateOrchestratorPrompt({ config, projectId, project });
-      const before = await sm.get(getOrchestratorSessionId(project));
-      const session = await sm.ensureOrchestrator({ projectId, systemPrompt });
-      selectedOrchestratorId = session.id;
-      restored = Boolean(session.restoredAt);
-      if (before && session.id === before.id && !restored) {
-        spinner.succeed(`Using orchestrator session: ${session.id}`);
-      } else if (restored) {
-        spinner.succeed(`Restored orchestrator session: ${session.id}`);
-      } else {
-        spinner.succeed(`Orchestrator session ready: ${session.id}`);
-      }
-    } catch (err) {
-      spinner.fail("Orchestrator setup failed");
-      recordActivityEvent({
-        projectId,
-        source: "cli",
-        kind: "cli.start_failed",
-        level: "error",
-        summary: `orchestrator setup failed`,
-        data: {
-          reason: "orchestrator_setup",
-          errorMessage: err instanceof Error ? err.message : String(err),
-        },
-      });
-      if (dashboardProcess) {
-        dashboardProcess.kill();
-      }
-      throw new CliFailureEventRecordedError(
-        `Failed to setup orchestrator: ${err instanceof Error ? err.message : String(err)}`,
-        { cause: err },
-      );
-    }
-  }
+  // Per-project orchestrator auto-start has been removed as part of the
+  // orchestrator tier collapse. Named orchestrators are started via `athene meta-start`.
+  // TODO(ath-18): wire up named orchestrator start from config.orchestrators.
 
   if (shouldStartLifecycle) {
     try {
@@ -1366,7 +1328,7 @@ async function attachAndSpawnOrchestrator(opts: {
    *  "reattached" message line. */
   justCreated: boolean;
 }): Promise<void> {
-  const { running, config, projectId, project, justCreated } = opts;
+  const { running, config, projectId, justCreated } = opts;
   const daemon = attachToDaemon(running);
 
   console.log(
@@ -1377,15 +1339,12 @@ async function attachAndSpawnOrchestrator(opts: {
     ),
   );
 
-  const sm = await getSessionManager(config);
-  const systemPrompt = generateOrchestratorPrompt({ config, projectId, project });
-  const session = await sm.ensureOrchestrator({ projectId, systemPrompt });
-
+  // Per-project orchestrator auto-start has been removed as part of the
+  // orchestrator tier collapse. Named orchestrators are started via `athene meta-start`.
+  // TODO(ath-18): wire up named orchestrator start from config.orchestrators.
   if (justCreated) {
     console.log(chalk.green(`\n✓ Project "${projectId}" registered in the global config.`));
-    console.log(chalk.green(`✓ Orchestrator session ready: ${session.id}`));
   } else {
-    console.log(chalk.green(`✓ Orchestrator session ready: ${session.id}`));
     console.log(
       chalk.green(`✓ Project "${projectId}" reattached to running daemon (PID ${daemon.pid}).`),
     );

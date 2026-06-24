@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { loadConfig, validateWrappedConfig } from "../config.js";
-import { generateMetaOrchestratorPrompt } from "../meta-orchestrator-prompt.js";
+import { generateOrchestratorPrompt } from "../orchestrator-prompt.js";
 
 // Regression test for ath-rev-14 #2: metaOrchestrators must survive loading the
 // canonical global config (~/.agent-orchestrator/config.yaml) — the path
@@ -54,7 +54,7 @@ describe("metaOrchestrators via the global config path", () => {
     expect(config.metaOrchestrators?.["meta-1"].scope).toBe("all");
 
     // And `athene meta-start meta-1` resolves it instead of "Unknown meta orchestrator".
-    const prompt = generateMetaOrchestratorPrompt({ config, name: "meta-1" });
+    const prompt = generateOrchestratorPrompt({ config, name: "meta-1" });
     expect(prompt).toContain("meta-1");
     expect(prompt).toContain("prefer api for billing");
   });

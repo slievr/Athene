@@ -177,6 +177,9 @@ export function getMetaSessionPath(name: string): string {
   return join(getMetaSessionsDir(name), `${name}.json`);
 }
 
+/** Alias: getOrchestratorSessionsDir(name) === getMetaSessionsDir(name). Storage path unchanged. */
+export const getOrchestratorSessionsDir = getMetaSessionsDir;
+
 /**
  * Minimal scratch working directory for a meta orchestrator's runtime/agent.
  * It is NOT a git worktree — the meta orchestrator never operates on a single

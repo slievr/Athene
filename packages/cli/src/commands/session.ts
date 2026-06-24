@@ -89,9 +89,6 @@ export function registerSession(program: Command): void {
 
       // Iterate over all configured projects (not just ones with sessions)
       const projectIds = opts.project ? [opts.project] : Object.keys(config.projects);
-      const allSessionPrefixes = Object.entries(config.projects).map(
-        ([id, project]) => project.sessionPrefix ?? id,
-      );
       const jsonOutput: SessionListEntry[] = [];
 
       for (const projectId of projectIds) {
@@ -143,13 +140,7 @@ export function registerSession(program: Command): void {
           const prUrl = s.metadata["pr"] ?? null;
 
           if (opts.json) {
-            const role = isOrchestratorSession(
-              s,
-              project.sessionPrefix ?? projectId,
-              allSessionPrefixes,
-            )
-              ? "orchestrator"
-              : "worker";
+            const role = isOrchestratorSession(s) ? "orchestrator" : "worker";
 
             jsonOutput.push({
               id: s.id,

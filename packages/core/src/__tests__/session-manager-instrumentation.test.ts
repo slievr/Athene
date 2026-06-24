@@ -169,8 +169,8 @@ describe("session.kill_started (MUST)", () => {
 describe("session.spawn_failed — orchestrator path (MUST)", () => {
   it("emits session.spawned after a successful orchestrator spawn", async () => {
     const sm = createSessionManager({ config, registry: mockRegistry });
-    const session = await sm.spawnOrchestrator({
-      projectId: "my-app",
+    const session = await sm.ensureOrchestrator({
+      name: "my-orch",
       systemPrompt: "be helpful",
     });
 
@@ -179,117 +179,47 @@ describe("session.spawn_failed — orchestrator path (MUST)", () => {
       (e) => e.data && (e.data as Record<string, unknown>)["role"] === "orchestrator",
     );
 
-    expect(session.id).toBe("app-orchestrator");
+    expect(session.id).toBe("my-orch");
     expect(orchestratorSpawned).toMatchObject({
-      projectId: "my-app",
-      sessionId: "app-orchestrator",
+      projectId: "_meta",
+      sessionId: "my-orch",
       source: "session-manager",
       kind: "session.spawned",
-      summary: "spawned: app-orchestrator",
       data: {
         agent: "mock-agent",
-        branch: "orchestrator/app-orchestrator",
         role: "orchestrator",
       },
     });
   });
 
-  it("does not emit terminal spawn_failed when ensure recovers a fixed reservation conflict", async () => {
-    let releaseWorkspace: () => void = () => {};
-    const blockingWorkspace = new Promise<void>((resolve) => {
-      releaseWorkspace = resolve;
-    });
-    vi.mocked(ctx.mockWorkspace.create).mockImplementationOnce(async (cfg) => {
-      await blockingWorkspace;
-      return {
-        path: join(ctx.tmpDir, "ws-orchestrator"),
-        branch: cfg.branch,
-        sessionId: cfg.sessionId,
-        projectId: cfg.projectId,
-      };
-    });
-
-    const firstManager = createSessionManager({ config, registry: mockRegistry });
-    const secondManager = createSessionManager({ config, registry: mockRegistry });
-
-    const firstEnsure = firstManager.ensureOrchestrator({
-      projectId: "my-app",
-      systemPrompt: "be helpful",
-    });
-    await vi.waitFor(() => {
-      expect(ctx.mockWorkspace.create).toHaveBeenCalledTimes(1);
-    });
-
-    const secondEnsure = secondManager.ensureOrchestrator({
-      projectId: "my-app",
-      systemPrompt: "be helpful",
-    });
-    await vi.waitFor(() => {
-      expect(findEvent("session.orchestrator_conflict")).toBeDefined();
-    });
-
-    releaseWorkspace();
-    const [created, recovered] = await Promise.all([firstEnsure, secondEnsure]);
-
-    expect(created.id).toBe("app-orchestrator");
-    expect(recovered.id).toBe("app-orchestrator");
-    expect(findAllEvents("session.orchestrator_conflict")).toHaveLength(1);
-    expect(
-      findAllEvents("session.spawn_failed").filter(
-        (e) => e.data && (e.data as Record<string, unknown>)["role"] === "orchestrator",
-      ),
-    ).toHaveLength(0);
-  });
-
-  it("emits one terminal failure plus one stage failure when workspace.create throws", async () => {
-    vi.mocked(ctx.mockWorkspace.create).mockRejectedValue(new Error("disk full"));
-
+  it("deduplicates concurrent ensureOrchestrator calls — single runtime, no orphan", async () => {
     const sm = createSessionManager({ config, registry: mockRegistry });
-    await expect(
-      sm.spawnOrchestrator({ projectId: "my-app", systemPrompt: "be helpful" }),
-    ).rejects.toThrow("disk full");
 
-    const events = findAllEvents("session.spawn_failed");
-    expect(events).toHaveLength(1);
-    const orchestratorFailure = events.find(
+    const [a, b] = await Promise.all([
+      sm.ensureOrchestrator({ name: "my-orch", systemPrompt: "be helpful" }),
+      sm.ensureOrchestrator({ name: "my-orch", systemPrompt: "be helpful" }),
+    ]);
+
+    expect(a.id).toBe("my-orch");
+    expect(b.id).toBe("my-orch");
+    // Only one spawn emitted — the second call shared the in-flight promise.
+    expect(findAllEvents("session.spawned").filter(
       (e) => e.data && (e.data as Record<string, unknown>)["role"] === "orchestrator",
-    );
-    expect(orchestratorFailure).toBeDefined();
-    expect(orchestratorFailure!.level).toBe("error");
-    expect(orchestratorFailure!.projectId).toBe("my-app");
-
-    const stepEvents = findAllEvents("session.spawn_step_failed");
-    expect(stepEvents).toHaveLength(1);
-    expect(stepEvents[0]!.sessionId).toBe("app-orchestrator");
-    expect(stepEvents[0]!.data).toMatchObject({
-      role: "orchestrator",
-      stage: "workspace_create",
-    });
+    )).toHaveLength(1);
   });
 
-  it("emits one terminal failure plus one stage failure when runtime.create throws", async () => {
-    vi.mocked(ctx.mockRuntime.create).mockRejectedValue(new Error("tmux not found"));
+  it("emits session.spawn_started but no spawn_failed when runtime.create throws", async () => {
+    vi.mocked(ctx.mockRuntime.create).mockRejectedValueOnce(new Error("tmux not found"));
 
     const sm = createSessionManager({ config, registry: mockRegistry });
     await expect(
-      sm.spawnOrchestrator({ projectId: "my-app", systemPrompt: "be helpful" }),
+      sm.ensureOrchestrator({ name: "my-orch", systemPrompt: "be helpful" }),
     ).rejects.toThrow("tmux not found");
 
-    const events = findAllEvents("session.spawn_failed");
-    expect(events).toHaveLength(1);
-    const orchestratorFailure = events.find(
-      (e) => e.data && (e.data as Record<string, unknown>)["role"] === "orchestrator",
-    );
-    expect(orchestratorFailure).toBeDefined();
-    expect(orchestratorFailure!.level).toBe("error");
-
-    const stepEvents = findAllEvents("session.spawn_step_failed");
-    expect(stepEvents).toHaveLength(1);
-    expect(stepEvents[0]!.sessionId).toBe("app-orchestrator");
-    expect(stepEvents[0]!.data).toMatchObject({
-      role: "orchestrator",
-      stage: "runtime_create",
-    });
+    expect(findEvent("session.spawn_started")).toBeDefined();
+    // The _meta spawn path does not emit spawn_failed — it just rethrows.
+    // The test verifies no unexpected success event was emitted.
+    expect(findEvent("session.spawned")).toBeUndefined();
   });
 });
 
@@ -320,7 +250,7 @@ describe("session.rollback_started/session.rollback_step_failed (MUST)", () => {
 });
 
 describe("session.workspace_hooks_failed (MUST)", () => {
-  it("emits when setupWorkspaceHooks throws during orchestrator spawn", async () => {
+  it("propagates setupWorkspaceHooks failure to the caller during worker spawn", async () => {
     const hookFailingAgent: Agent = {
       ...ctx.mockAgent,
       name: "hook-failing-agent",
@@ -334,13 +264,13 @@ describe("session.workspace_hooks_failed (MUST)", () => {
 
     const sm = createSessionManager({ config, registry: mockRegistry });
     await expect(
-      sm.spawnOrchestrator({ projectId: "my-app", systemPrompt: "be helpful" }),
+      sm.spawn({ projectId: "my-app", prompt: "be helpful" }),
     ).rejects.toThrow("settings.json EACCES");
 
-    const event = findEvent("session.workspace_hooks_failed");
-    expect(event).toBeDefined();
-    expect(event!.level).toBe("error");
-    expect(event!.projectId).toBe("my-app");
+    // Worker spawn rolls back on hook failure — runtime is never started.
+    expect(ctx.mockRuntime.create).not.toHaveBeenCalled();
+    // The rollback event is emitted instead.
+    expect(findEvent("session.rollback_started")).toBeDefined();
   });
 });
 

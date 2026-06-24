@@ -819,16 +819,13 @@ export async function triggerCodeReviewForSession(
     );
   }
 
-  const sessionPrefix = project.sessionPrefix ?? session.projectId;
-  const allSessionPrefixes = Object.entries(config.projects).map(
-    ([projectId, projectConfig]) => projectConfig.sessionPrefix ?? projectId,
-  );
-  if (isOrchestratorSession(session, sessionPrefix, allSessionPrefixes)) {
+  if (isOrchestratorSession(session)) {
     throw new CodeReviewInvalidSessionError(
       `Cannot request code review for orchestrator session: ${session.id}`,
     );
   }
 
+  const sessionPrefix = project.sessionPrefix ?? session.projectId;
   const store = storeFactory(session.projectId);
   const prUrl = session.pr?.url ?? session.metadata["pr"];
   const prNumber = session.pr?.number ?? parsePrNumber(prUrl);
