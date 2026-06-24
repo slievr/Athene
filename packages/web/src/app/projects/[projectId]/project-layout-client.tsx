@@ -88,8 +88,10 @@ export function ProjectLayoutClient({
           {mobileSidebarOpen && (
             <div className="sidebar-mobile-backdrop" onClick={() => setMobileSidebarOpen(false)} />
           )}
-          <ViewTabBar />
-          {children}
+          <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <ViewTabBar />
+            {children}
+          </div>
         </div>
       </div>
     </SidebarContext.Provider>

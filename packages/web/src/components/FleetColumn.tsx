@@ -23,7 +23,7 @@ export function FleetColumn({ title, groups, attentionLevel }: Props) {
   const totalSessions = groups.reduce((sum, g) => sum + g.sessions.length, 0);
 
   return (
-    <div className="flex flex-col min-w-[240px] w-[240px] mr-3 last:mr-0">
+    <div className="flex flex-col flex-1 min-w-[240px] mr-3 last:mr-0">
       <div className="flex items-center gap-1.5 px-1 pb-2.5 mb-3 border-b border-[--color-border-default]">
         <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${INDICATOR_CLASSES[attentionLevel]}`} />
         <span className="text-[10px] font-semibold tracking-widest uppercase text-[--color-text-tertiary]">
