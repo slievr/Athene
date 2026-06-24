@@ -173,7 +173,7 @@ Three paths produce orchestrator-owned workers:
 |---------|---------------------|--------------------------|----------------|
 | Running orchestrator session | `"orchestrator"` | `<name>` | `orchestratorOwner: "<name>"` |
 | Human shell, no orchestrator | not set / `"human"` | not set | `orchestratorOwner: "default"` |
-| `ao spawn <project> --prompt ...` from orchestrator | `"orchestrator"` | `<name>` | `orchestratorOwner: "<name>"` |
+| `athene spawn <project> --prompt ...` from orchestrator | `"orchestrator"` | `<name>` | `orchestratorOwner: "<name>"` |
 
 The `"project"` ownerKind path is removed. When no orchestrator context is detected, attribute to `"default"`.
 
