@@ -9,14 +9,14 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("ViewTabBar", () => {
-  it("marks Dashboard tab active on /", () => {
+  it("marks Agents tab active on /", () => {
     mockPathname = "/";
     render(<ViewTabBar />);
 
-    const dashboardTab = screen.getByRole("link", { name: "Dashboard" });
+    const agentsTab = screen.getByRole("link", { name: "Agents" });
     const fleetTab = screen.getByRole("link", { name: "Fleet" });
 
-    expect(dashboardTab).toHaveAttribute("aria-current", "page");
+    expect(agentsTab).toHaveAttribute("aria-current", "page");
     expect(fleetTab).not.toHaveAttribute("aria-current");
   });
 
@@ -24,17 +24,17 @@ describe("ViewTabBar", () => {
     mockPathname = "/fleet";
     render(<ViewTabBar />);
 
-    const dashboardTab = screen.getByRole("link", { name: "Dashboard" });
+    const agentsTab = screen.getByRole("link", { name: "Agents" });
     const fleetTab = screen.getByRole("link", { name: "Fleet" });
 
     expect(fleetTab).toHaveAttribute("aria-current", "page");
-    expect(dashboardTab).not.toHaveAttribute("aria-current");
+    expect(agentsTab).not.toHaveAttribute("aria-current");
   });
 
-  it("Dashboard tab links to /", () => {
+  it("Agents tab links to /", () => {
     mockPathname = "/";
     render(<ViewTabBar />);
-    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Agents" })).toHaveAttribute("href", "/");
   });
 
   it("Fleet tab links to /fleet", () => {

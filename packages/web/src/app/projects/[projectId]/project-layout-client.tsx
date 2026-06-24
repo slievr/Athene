@@ -7,6 +7,7 @@ import { useMuxOptional } from "@/providers/MuxProvider";
 import { ProjectSidebar, type ProjectSidebarOrchestrator } from "@/components/ProjectSidebar";
 import type { SidebarOrchestrator } from "@/components/SidebarOrchestrators";
 import { SidebarContext } from "@/components/workspace/SidebarContext";
+import { ViewTabBar } from "@/components/ViewTabBar";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "@/hooks/useMediaQuery";
 import type { DashboardSession } from "@/lib/types";
 import type { ProjectInfo } from "@/lib/project-name";
@@ -87,6 +88,7 @@ export function ProjectLayoutClient({
           {mobileSidebarOpen && (
             <div className="sidebar-mobile-backdrop" onClick={() => setMobileSidebarOpen(false)} />
           )}
+          <ViewTabBar />
           {children}
         </div>
       </div>

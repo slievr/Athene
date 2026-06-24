@@ -18,7 +18,7 @@ export function ViewTabBar() {
         )}
         aria-current={!isFleet ? "page" : undefined}
       >
-        Dashboard
+        Agents
       </Link>
       <Link
         href="/fleet"
