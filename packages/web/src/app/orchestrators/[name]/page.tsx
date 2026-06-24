@@ -25,7 +25,7 @@ export default async function OrchestratorPage(props: {
             Orchestrator session:
           </span>
           <a
-            href={orchestratorSessionPath(name)}
+            href={orchestratorSessionPath(name, ownSession.id)}
             className="flex items-center gap-1.5 text-[12px] font-mono text-[var(--color-text-primary)] hover:underline"
           >
             <svg
