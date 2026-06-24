@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { SidebarOrchestrators } from "@/components/SidebarOrchestrators";
+import { SidebarOrchestrators, type SidebarOrchestrator } from "@/components/SidebarOrchestrators";
 import type { DashboardSession } from "@/lib/types";
 
 const mockRefresh = vi.fn();
@@ -8,88 +8,113 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mockRefresh }),
 }));
 
-const metaSession = {
-  id: "meta-1",
+const orchSession = {
+  id: "orch-1",
   projectId: "_meta",
   status: "working",
   activity: "active",
 } as unknown as DashboardSession;
 
-const orchSession = {
-  id: "web-orchestrator",
-  projectId: "web",
-  status: "working",
-  activity: "active",
-} as unknown as DashboardSession;
-
 describe("SidebarOrchestrators", () => {
-  it("renders Parliament label and meta/project sub-groups when both types present", () => {
-    const { container } = render(
-      <SidebarOrchestrators
-        collapsed={false}
-        metaOrchestrators={[{ name: "meta-1", session: metaSession }]}
-        orchestrators={[{ id: "web-orchestrator", projectId: "web", session: orchSession }]}
-        registeredProjectIds={["web", "api"]}
-        activeSessionId={undefined}
-        onNavigate={() => {}}
-      />,
-    );
-
-    expect(screen.getByText("Parliament")).toBeInTheDocument();
-    expect(screen.getByText("Meta")).toBeInTheDocument();
-    expect(screen.getByText("Project")).toBeInTheDocument();
-    expect(screen.getByText("meta-1")).toBeInTheDocument();
-    expect(container.querySelector('a[href="/meta/meta-1"]')).toBeTruthy();
-    expect(screen.getByText("◆")).toBeInTheDocument();
-    // web is registration index 0 → slot 1
-    expect(container.querySelector('[class*="var(--project-color-1)"]')).toBeTruthy();
-    // No inline styles.
-    expect(container.querySelector("[style]")).toBeNull();
-  });
-
-  it("renders Parliament label without sub-group headers when only one type present", () => {
+  it("renders 'Orchestrators' label (not Parliament)", () => {
     render(
       <SidebarOrchestrators
         collapsed={false}
-        metaOrchestrators={[{ name: "meta-1", session: metaSession }]}
-        orchestrators={[]}
-        registeredProjectIds={[]}
+        orchestrators={[{ name: "orch-1", session: null }]}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
     );
-
-    expect(screen.getByText("Parliament")).toBeInTheDocument();
-    expect(screen.queryByText("Meta")).toBeNull();
-    expect(screen.queryByText("Project")).toBeNull();
+    expect(screen.getByText("Orchestrators")).toBeInTheDocument();
+    expect(screen.queryByText("Parliament")).not.toBeInTheDocument();
   });
 
-  it("renders the per-project orchestrator activity dot from its CARRIED session", () => {
-    // No meta orchestrators — only a project orchestrator. Its activity dot must
-    // render from the carried session (not via the orchestrator-stripped list).
+  it("renders flat list without Meta/Project sub-headers", () => {
+    render(
+      <SidebarOrchestrators
+        collapsed={false}
+        orchestrators={[
+          { name: "alpha", session: null },
+          { name: "beta", session: null },
+        ]}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+    expect(screen.queryByText("Meta")).not.toBeInTheDocument();
+    expect(screen.queryByText("Project")).not.toBeInTheDocument();
+    expect(screen.getByText("alpha")).toBeInTheDocument();
+    expect(screen.getByText("beta")).toBeInTheDocument();
+  });
+
+  it("renders 'Orchestrators' label with create button when there are no orchestrators", () => {
+    render(
+      <SidebarOrchestrators
+        collapsed={false}
+        orchestrators={[]}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+    expect(screen.getByText("Orchestrators")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /new orchestrator/i })).toBeInTheDocument();
+  });
+
+  it("renders the ◆ glyph for each orchestrator row", () => {
+    render(
+      <SidebarOrchestrators
+        collapsed={false}
+        orchestrators={[{ name: "fleet", session: orchSession }]}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+    expect(screen.getAllByText("◆").length).toBeGreaterThan(0);
+  });
+
+  it("links to /orchestrators/<name> for each row", () => {
     const { container } = render(
       <SidebarOrchestrators
         collapsed={false}
-        metaOrchestrators={[]}
-        orchestrators={[{ id: "web-orchestrator", projectId: "web", session: orchSession }]}
-        registeredProjectIds={["web"]}
+        orchestrators={[{ name: "fleet", session: orchSession }]}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+    expect(container.querySelector('a[href="/orchestrators/fleet"]')).toBeTruthy();
+  });
+
+  it("renders no inline styles", () => {
+    const { container } = render(
+      <SidebarOrchestrators
+        collapsed={false}
+        orchestrators={[{ name: "orch-1", session: orchSession }]}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+    expect(container.querySelector("[style]")).toBeNull();
+  });
+
+  it("renders the activity dot from the carried session", () => {
+    const { container } = render(
+      <SidebarOrchestrators
+        collapsed={false}
+        orchestrators={[{ name: "orch-1", session: orchSession }]}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
     );
     const row = container.querySelector(".project-sidebar__orch-row");
     expect(row).toBeTruthy();
-    // The activity dot (reusing the existing data-level system) is present.
     expect(row!.querySelector(".sidebar-session-dot[data-level]")).toBeTruthy();
   });
 
-  it("renders no activity dot for a project orchestrator without a carried session", () => {
+  it("renders no activity dot for an orchestrator without a carried session", () => {
     const { container } = render(
       <SidebarOrchestrators
         collapsed={false}
-        metaOrchestrators={[]}
-        orchestrators={[{ id: "web-orchestrator", projectId: "web", session: null }]}
-        registeredProjectIds={["web"]}
+        orchestrators={[{ name: "orch-1", session: null }]}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
@@ -99,33 +124,16 @@ describe("SidebarOrchestrators", () => {
     expect(row!.querySelector(".sidebar-session-dot")).toBeNull();
   });
 
-  it("renders Parliament label with create button when there are no orchestrators", () => {
-    render(
-      <SidebarOrchestrators
-        collapsed={false}
-        metaOrchestrators={[]}
-        orchestrators={[]}
-        registeredProjectIds={[]}
-        activeSessionId={undefined}
-        onNavigate={() => {}}
-      />,
-    );
-    expect(screen.getByText("Parliament")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /new meta orchestrator/i })).toBeInTheDocument();
-  });
-
-  it("renders the collapsed glyph/dot cluster without inline styles", () => {
+  it("renders the collapsed glyph cluster without inline styles", () => {
     const { container } = render(
       <SidebarOrchestrators
         collapsed
-        metaOrchestrators={[{ name: "meta-1", session: metaSession }]}
-        orchestrators={[{ id: "web-orchestrator", projectId: "web", session: orchSession }]}
-        registeredProjectIds={["web"]}
+        orchestrators={[{ name: "orch-1", session: orchSession }]}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
     );
-    expect(container.querySelector('a[href="/meta/meta-1"]')).toBeTruthy();
+    expect(container.querySelector('a[href="/orchestrators/orch-1"]')).toBeTruthy();
     expect(container.querySelector("[style]")).toBeNull();
   });
 
@@ -134,23 +142,21 @@ describe("SidebarOrchestrators", () => {
     render(
       <SidebarOrchestrators
         collapsed={false}
-        metaOrchestrators={[{ name: "meta-1", session: metaSession }]}
-        orchestrators={[]}
-        registeredProjectIds={[]}
+        orchestrators={[{ name: "fleet", session: orchSession }]}
         activeSessionId={undefined}
         onNavigate={onNavigate}
       />,
     );
-    screen.getByText("meta-1").closest("a")!.click();
-    expect(onNavigate).toHaveBeenCalledWith("/meta/meta-1", metaSession);
+    screen.getByText("fleet").closest("a")!.click();
+    expect(onNavigate).toHaveBeenCalledWith("/orchestrators/fleet", orchSession);
   });
 
-  describe("start button on meta orchestrator rows", () => {
+  describe("start button on orchestrator rows", () => {
     beforeEach(() => {
       vi.clearAllMocks();
       vi.stubGlobal(
         "fetch",
-        vi.fn(async () => ({ ok: true, json: async () => ({ sessionId: "meta-xyz" }) })),
+        vi.fn(async () => ({ ok: true, json: async () => ({ sessionId: "orch-xyz" }) })),
       );
     });
 
@@ -158,9 +164,7 @@ describe("SidebarOrchestrators", () => {
       render(
         <SidebarOrchestrators
           collapsed={false}
-          metaOrchestrators={[{ name: "fleet", session: null }]}
-          orchestrators={[]}
-          registeredProjectIds={[]}
+          orchestrators={[{ name: "fleet", session: null }]}
           activeSessionId={undefined}
           onNavigate={() => {}}
         />,
@@ -172,9 +176,7 @@ describe("SidebarOrchestrators", () => {
       render(
         <SidebarOrchestrators
           collapsed={false}
-          metaOrchestrators={[{ name: "fleet", session: metaSession }]}
-          orchestrators={[]}
-          registeredProjectIds={[]}
+          orchestrators={[{ name: "fleet", session: orchSession }]}
           activeSessionId={undefined}
           onNavigate={() => {}}
         />,
@@ -186,9 +188,7 @@ describe("SidebarOrchestrators", () => {
       render(
         <SidebarOrchestrators
           collapsed={false}
-          metaOrchestrators={[{ name: "fleet", session: null }]}
-          orchestrators={[]}
-          registeredProjectIds={[]}
+          orchestrators={[{ name: "fleet", session: null }]}
           activeSessionId={undefined}
           onNavigate={() => {}}
         />,
@@ -198,7 +198,7 @@ describe("SidebarOrchestrators", () => {
 
       await waitFor(() => {
         expect(vi.mocked(fetch)).toHaveBeenCalledWith(
-          "/api/meta/fleet/start",
+          "/api/orchestrators/fleet/start",
           { method: "POST" },
         );
         expect(mockRefresh).toHaveBeenCalled();
@@ -209,9 +209,7 @@ describe("SidebarOrchestrators", () => {
       render(
         <SidebarOrchestrators
           collapsed
-          metaOrchestrators={[{ name: "fleet", session: null }]}
-          orchestrators={[]}
-          registeredProjectIds={[]}
+          orchestrators={[{ name: "fleet", session: null }]}
           activeSessionId={undefined}
           onNavigate={() => {}}
         />,
@@ -220,3 +218,7 @@ describe("SidebarOrchestrators", () => {
     });
   });
 });
+
+// Verify the type alias still works (compile-time check)
+const _typeCheck: SidebarOrchestrator = { name: "test", session: null };
+void _typeCheck;

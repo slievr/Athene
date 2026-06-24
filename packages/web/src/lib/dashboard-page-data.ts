@@ -16,14 +16,8 @@ import {
 import { getPrimaryProjectId, getProjectName, getAllProjects, type ProjectInfo } from "@/lib/project-name";
 import { filterProjectSessions, filterWorkerSessions } from "@/lib/project-utils";
 import { settlesWithin } from "@/lib/async-utils";
-import {
-  listSidebarMetaOrchestrators,
-  buildSidebarProjectOrchestrators,
-} from "@/lib/meta-orchestrators";
-import type {
-  SidebarMetaOrchestrator,
-  SidebarProjectOrchestrator,
-} from "@/components/SidebarOrchestrators";
+import { listSidebarOrchestrators } from "@/lib/orchestrators";
+import type { SidebarOrchestrator } from "@/lib/orchestrators";
 
 const FAST_METADATA_ENRICH_TIMEOUT_MS = 3_000;
 
@@ -52,8 +46,7 @@ export function formatDashboardLoadError(err: unknown): string {
 interface DashboardPageData {
   sessions: DashboardSession[];
   orchestrators: DashboardOrchestratorLink[];
-  metaOrchestrators: SidebarMetaOrchestrator[];
-  sidebarOrchestrators: SidebarProjectOrchestrator[];
+  namedOrchestrators: SidebarOrchestrator[];
   projectName: string;
   projects: ProjectInfo[];
   selectedProjectId?: string;
@@ -91,8 +84,7 @@ export const getDashboardPageData = cache(async function getDashboardPageData(pr
   const pageData: DashboardPageData = {
     sessions: [],
     orchestrators: [],
-    metaOrchestrators: [],
-    sidebarOrchestrators: [],
+    namedOrchestrators: [],
     projectName: getDashboardProjectName(projectFilter),
     projects: getAllProjects(),
     selectedProjectId: projectFilter === "all" ? undefined : projectFilter,
@@ -108,7 +100,7 @@ export const getDashboardPageData = cache(async function getDashboardPageData(pr
     config = services.config;
     registry = services.registry;
     pageData.attentionZones = config.dashboard?.attentionZones ?? DEFAULT_ATTENTION_ZONE_MODE;
-    pageData.metaOrchestrators = await listSidebarMetaOrchestrators(config, registry);
+    pageData.namedOrchestrators = await listSidebarOrchestrators(config, registry);
     try {
       allSessions = await services.sessionManager.listCached();
     } catch (listErr) {
@@ -122,15 +114,6 @@ export const getDashboardPageData = cache(async function getDashboardPageData(pr
 
   const visibleSessions = filterProjectSessions(allSessions, projectFilter, config.projects);
   pageData.orchestrators = listDashboardOrchestrators(visibleSessions, config.projects);
-  // Sidebar orchestrators are UNSCOPED (the sidebar always shows all projects),
-  // so derive them from allSessions — not visibleSessions, which is scoped to the
-  // active project on a /projects/[projectId] page. Each carries its enriched
-  // session for the activity dot (orchestrators are stripped from the worker
-  // stream, so the client can't look them up there). Matches meta-page-data.
-  pageData.sidebarOrchestrators = buildSidebarProjectOrchestrators(
-    allSessions,
-    listDashboardOrchestrators(allSessions, config.projects),
-  );
 
   const coreSessions = filterWorkerSessions(allSessions, projectFilter, config.projects);
   pageData.sessions = coreSessions.map(sessionToDashboard);

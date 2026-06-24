@@ -18,7 +18,11 @@ export function projectSessionHashPath(projectId: string, sessionId: string, has
   return `${projectSessionPath(projectId, sessionId)}${hash}`;
 }
 
-/** Dashboard route for a meta orchestrator's owned fleet. */
+export function orchestratorDashboardPath(name: string): string {
+  return `/orchestrators/${encodeURIComponent(name)}`;
+}
+
+/** @deprecated Use orchestratorDashboardPath */
 export function metaDashboardPath(name: string): string {
-  return `/meta/${encodeURIComponent(name)}`;
+  return orchestratorDashboardPath(name);
 }

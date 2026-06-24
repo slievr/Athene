@@ -14,7 +14,7 @@ import { projectDashboardPath, projectSessionPath } from "@/lib/routes";
 import { ThemeToggle } from "./ThemeToggle";
 import { AddProjectModal } from "./AddProjectModal";
 import { ProjectSettingsModal } from "./ProjectSettingsModal";
-import { SidebarOrchestrators, type SidebarMetaOrchestrator } from "./SidebarOrchestrators";
+import { SidebarOrchestrators, type SidebarOrchestrator } from "./SidebarOrchestrators";
 import { getProjectColor, projectColorBgClass } from "@/lib/project-color";
 
 /** Minimal shape needed to render an orchestrator link in the sidebar. */
@@ -35,8 +35,8 @@ interface ProjectSidebarProps {
    * `sessions`: the sessions endpoint strips orchestrators out.
    */
   orchestrators?: ProjectSidebarOrchestrator[];
-  /** Configured meta orchestrators (with their _meta session if running). */
-  metaOrchestrators?: SidebarMetaOrchestrator[];
+  /** Configured named orchestrators (with their _meta session if running). */
+  namedOrchestrators?: SidebarOrchestrator[];
   activeProjectId: string | undefined;
   activeSessionId: string | undefined;
   loading?: boolean;
@@ -322,7 +322,7 @@ function ProjectSidebarInner({
   projects,
   sessions,
   orchestrators,
-  metaOrchestrators = [],
+  namedOrchestrators = [],
   activeProjectId,
   activeSessionId,
   loading = false,
@@ -730,9 +730,7 @@ function ProjectSidebarInner({
         ) : null}
         <SidebarOrchestrators
           collapsed
-          metaOrchestrators={metaOrchestrators}
-          orchestrators={orchestrators ?? []}
-          registeredProjectIds={colorProjectIds}
+          orchestrators={namedOrchestrators}
           activeSessionId={activeSessionId}
           onNavigate={navigate}
         />
@@ -803,9 +801,7 @@ function ProjectSidebarInner({
       <SidebarBrand onToggleCollapsed={onToggleCollapsed} />
       <SidebarOrchestrators
         collapsed={false}
-        metaOrchestrators={metaOrchestrators}
-        orchestrators={orchestrators ?? []}
-        registeredProjectIds={colorProjectIds}
+        orchestrators={namedOrchestrators}
         activeSessionId={activeSessionId}
         onNavigate={navigate}
       />

@@ -27,10 +27,7 @@ import { CopyDebugBundleButton } from "./CopyDebugBundleButton";
 import { DashboardNotificationButton } from "./DashboardNotificationButton";
 import { SidebarContext, useSidebarContext } from "./workspace/SidebarContext";
 import { ProjectSidebar } from "./ProjectSidebar";
-import type {
-  SidebarMetaOrchestrator,
-  SidebarProjectOrchestrator,
-} from "./SidebarOrchestrators";
+import type { SidebarOrchestrator } from "./SidebarOrchestrators";
 import type { ProjectAccent } from "./SessionCard";
 import { ProjectChip } from "./SessionCard.parts";
 import { getProjectColor } from "@/lib/project-color";
@@ -43,10 +40,8 @@ interface DashboardProps {
   projectName?: string;
   projects?: ProjectInfo[];
   orchestrators?: DashboardOrchestratorLink[];
-  /** Configured meta orchestrators (◆ rows in the sidebar ORCHESTRATORS section). */
-  metaOrchestrators?: SidebarMetaOrchestrator[];
-  /** Per-project orchestrators (with enriched sessions) for the sidebar section. */
-  sidebarOrchestrators?: SidebarProjectOrchestrator[];
+  /** Configured named orchestrators (◆ rows in the sidebar ORCHESTRATORS section). */
+  namedOrchestrators?: SidebarOrchestrator[];
   /**
    * When set, scope the kanban board to the fleet owned by this meta
    * orchestrator (sessions with metaOwner === this value). The sidebar still
@@ -171,8 +166,7 @@ function DashboardInner({
   projectName,
   projects = [],
   orchestrators,
-  metaOrchestrators,
-  sidebarOrchestrators,
+  namedOrchestrators,
   metaOwner,
   attentionZones = "simple",
   dashboardLoadError,
@@ -860,8 +854,7 @@ function DashboardInner({
             <ProjectSidebar
               projects={projects}
               sessions={sessions}
-              orchestrators={sidebarOrchestrators}
-              metaOrchestrators={metaOrchestrators}
+              namedOrchestrators={namedOrchestrators}
               activeProjectId={projectId}
               activeSessionId={activeSessionId}
               loading={!liveSessionsResolved}

@@ -5359,7 +5359,7 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   padding-left: 24px;
 }
 
-/* Parliament section (meta orchestrators + per-project orchestrators) */
+/* Orchestrators sidebar section */
 .project-sidebar__orchestrators {
   display: flex;
   flex-direction: column;
@@ -5481,7 +5481,7 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   }
 }
 
-/* Sub-group labels inside Parliament: "Meta" / "Project" */
+/* Sub-group labels inside the Orchestrators section (kept for potential future use) */
 .project-sidebar__orch-group-label {
   padding: 5px 14px 2px;
   font-size: 9.5px;
@@ -5491,7 +5491,7 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   user-select: none;
 }
 
-/* Inline create form for new meta orchestrators */
+/* Inline create form for new orchestrators */
 .project-sidebar__orch-create-form {
   display: flex;
   flex-direction: column;
