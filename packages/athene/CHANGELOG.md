@@ -1,5 +1,60 @@
 # @made-by-moonlight/athene
 
+## 0.11.0
+
+### Minor Changes
+
+- - feat(release): add workflow_dispatch trigger for manual release runs
+  - feat(release): add workflow_dispatch trigger for manual release runs
+  - fix(release): force-push release branch and skip PR creation if already exists
+  - fix(release): force-push release branch and skip PR creation if already exists
+  - fix(publish): extract .tgz filename from pnpm pack multi-line output
+  - fix(publish): extract .tgz filename from pnpm pack output instead of using full output
+  - fix(release): use auto-merge PR for version bump to satisfy branch protection
+  - fix(release): use auto-merge PR for version bump to satisfy branch protection
+  - fix(release): use echo instead of printf to avoid bash treating --- as flags
+  - feat(release): auto-generate changeset from conventional commits on every merge
+  - fix(release): check npm registry instead of git history to detect unpublished versions
+  - docs: add fleet kanban implementation plan
+  - docs: add fleet kanban design spec
+  - test(web): fix flaky DirectoryBrowser keyboard-navigation test
+  - fix(web): fix spawn form cancel and hide project select for single project
+  - fix(release): restore pnpm pack and auto-publish without version PR
+  - fix(web): orchestrator dropdown shows own session + sub-orchestrators only
+  - chore: version packages
+  - fix(agent-claude-code): correct ao spawn → athene spawn in subagent blocker
+  - feat(web): expandable orchestrator session list and inline spawn in sidebar
+  - feat(web): add orchestrator session spawning and fix fleet filter
+  - fix(publish): use pnpm pack to resolve workspace:\* before npm publish
+  - test(web): update SidebarOrchestrators test for session-path collapsed glyph
+  - fix(web): orchestrator session routing and sidebar visibility
+  - ci: remove dependency-review job (requires GitHub Advanced Security)
+  - fix(web,core): orchestrator creation and terminal navigation
+  - fix: update CLI tests for removed per-project orchestrator spawn and remove unused imports
+  - fix: resolve CI lint errors and update stale orchestrators API tests
+  - fix: migrate isOrchestratorSession callers, merge config dual-read, fix orchestrator URL path
+  - fix(cli): update stale spawn-owner test assertions for orchestratorOwner rename
+  - test: add backward-compat and regression tests for orchestrator tier collapse
+  - refactor(web): flatten Parliament→Orchestrators sidebar; rename meta-\* files; add /orchestrators route
+  - test(cli): add meta-start deprecation alias test
+  - refactor(cli): rename meta → orchestrator command group; add meta-start hidden alias; remove per-project auto-spawn
+  - fix(core): remove unused imports in migration file
+  - feat(core): add migration to retire per-project orchestrators on upgrade
+  - refactor(core,cli): remove per-project orchestrator spawn fns; rename ensureMetaOrchestrator→ensureOrchestrator; update worker ownership
+  - fix(core): dual-read metaOrchestrators fallback in orchestrator-prompt
+  - refactor(core): rename meta-orchestrator-prompt, meta-scope, meta-orchestrator-config-writer; delete per-project prompt files
+  - refactor(core): add ORCHESTRATOR_NAME env key; dual-read metaOrchestrators/orchestrators config
+  - refactor(core): collapse SessionKind; rename meta-orchestrator types to orchestrator
+  - docs: add implementation plan for collapsing orchestrator tiers
+  - docs: fix spawn command in orchestrator tiers spec (athene spawn, not ao)
+  - docs: add spec for collapsing orchestrator tiers
+  - fix(runtime-tmux): recover from stale orphaned session on ao start
+  - ci: add pnpm version to all action-setup calls after removing packageManager field
+  - chore: proper pnpm workspace without corepack
+  - ci(release): explicitly exchange OIDC token before publish
+  - ci(release): restore OIDC trusted publishing
+  - ci(release): switch to NPM_TOKEN — pnpm publish does not support OIDC
+
 ## 0.10.1
 
 ### Patch Changes
