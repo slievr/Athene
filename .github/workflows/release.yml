@@ -162,7 +162,7 @@ jobs:
           # Create PR and enable auto-merge. The version-bump-ci.yml workflow
           # triggers on push to release/** and instantly passes all required
           # check names, so auto-merge fires within ~30s of the branch push.
-          if ! gh pr view "$branch" --json number 2>/dev/null | grep -q number; then
+          if ! gh pr list --head "$branch" --state open --json number 2>/dev/null | grep -q number; then
             gh pr create \
               --title "chore: version packages" \
               --body "Automated version bump to ${new_version}." \
