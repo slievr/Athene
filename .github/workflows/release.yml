@@ -22,6 +22,7 @@ name: Release
 # See: https://docs.npmjs.com/trusted-publishers
 
 on:
+  workflow_dispatch: # allows manual triggering from the Actions UI or gh CLI
   workflow_run:
     # Depends on the workflow named "CI" in .github/workflows/ci.yml — if
     # you rename that file or change its `name:` field, update this string
