@@ -899,7 +899,7 @@ async function runStartup(
 
   const spinner = ora();
   let dashboardProcess: ChildProcess | null = null;
-  let restored = false;
+  const restored = false;
 
   // Start dashboard (unless --no-dashboard)
   if (opts?.dashboard !== false) {
@@ -942,7 +942,7 @@ async function runStartup(
     console.log(chalk.dim("  (Dashboard will be ready in a few seconds)\n"));
   }
 
-  let selectedOrchestratorId: string | null = null;
+  const selectedOrchestratorId: string | null = null;
 
   if (shouldStartLifecycle) {
     try {
@@ -1339,7 +1339,7 @@ async function attachAndSpawnOrchestrator(opts: {
    *  "reattached" message line. */
   justCreated: boolean;
 }): Promise<void> {
-  const { running, config, projectId, justCreated } = opts;
+  const { running, projectId, justCreated } = opts;
   const daemon = attachToDaemon(running);
 
   console.log(

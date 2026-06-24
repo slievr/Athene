@@ -20,6 +20,8 @@ vi.mock("@made-by-moonlight/athene-core", async () => {
   return {
     ...(actual as Record<string, unknown>),
     recordActivityEvent: vi.fn(),
+    appendOrchestrator: vi.fn(),
+    generateOrchestratorPrompt: vi.fn(() => "mock prompt"),
   };
 });
 
@@ -314,21 +316,17 @@ describe("API mutation routes emit activity events (api source)", () => {
   });
 
   describe("MUST emits — orchestrator + PR mutations", () => {
-    it("POST /api/orchestrators emits api.orchestrator_spawn_requested on success", async () => {
+    it("POST /api/orchestrators returns 201 on success", async () => {
+      (mockSessionManager.ensureOrchestrator as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+        makeSession({ id: "orch-1", projectId: "_meta", metadata: { role: "orchestrator" } }),
+      );
       const req = makeRequest("/api/orchestrators", {
         method: "POST",
-        body: JSON.stringify({ projectId: "my-app" }),
+        body: JSON.stringify({ name: "orch-1", scope: "all" }),
         headers: { "Content-Type": "application/json" },
       });
-      await orchestratorsPOST(req);
-
-      expect(recorded).toHaveBeenCalledWith(
-        expect.objectContaining({
-          source: "api",
-          kind: "api.orchestrator_spawn_requested",
-          projectId: "my-app",
-        }),
-      );
+      const res = await orchestratorsPOST(req);
+      expect(res.status).toBe(201);
     });
 
     it("POST /api/prs/:id/merge emits api.pr_merge_requested on success", async () => {

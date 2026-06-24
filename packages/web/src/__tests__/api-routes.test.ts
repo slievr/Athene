@@ -210,6 +210,7 @@ vi.mock("@/lib/services", () => ({
   })),
   getVerifyIssues: vi.fn(async () => []),
   getSCM: vi.fn(() => mockSCM),
+  invalidatePortfolioServicesCache: vi.fn(),
 }));
 
 // Mock filesystem-touching core helpers so PATCH /api/sessions/:id doesn't
@@ -224,6 +225,8 @@ vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
     updateMetadata: vi.fn(),
     getProjectSessionsDir: vi.fn(() => "/tmp/ao-test/sessions"),
     readAgentReportAuditTrailAsync: vi.fn(async () => []),
+    appendOrchestrator: vi.fn(),
+    generateOrchestratorPrompt: vi.fn(() => "mock orchestrator system prompt"),
   };
 });
 
@@ -1032,34 +1035,41 @@ describe("API Routes", () => {
   });
 
   describe("POST /api/orchestrators", () => {
-    it("creates a per-project orchestrator with the generated prompt", async () => {
-      (mockSessionManager.spawnOrchestrator as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-        makeSession({
-          id: "my-app-orchestrator",
-          projectId: "my-app",
-          metadata: { role: "orchestrator" },
-        }),
+    it("creates and starts a named orchestrator", async () => {
+      (mockSessionManager.ensureOrchestrator as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+        makeSession({ id: "orch-1", projectId: "_meta", metadata: { role: "orchestrator" } }),
       );
 
       const req = makeRequest("/api/orchestrators", {
         method: "POST",
-        body: JSON.stringify({ projectId: "my-app" }),
+        body: JSON.stringify({ name: "orch-1", scope: "all" }),
         headers: { "Content-Type": "application/json" },
       });
       const res = await orchestratorsPOST(req);
 
       expect(res.status).toBe(201);
-      expect(mockSessionManager.spawnOrchestrator).toHaveBeenCalledWith({
-        projectId: "my-app",
-        systemPrompt: expect.stringContaining("# My App Orchestrator"),
-      });
-
+      expect(mockSessionManager.ensureOrchestrator).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "orch-1" }),
+      );
       const data = await res.json();
-      expect(data.orchestrator).toEqual({
-        id: "my-app-orchestrator",
-        projectId: "my-app",
-        projectName: "My App",
+      expect(data.sessionId).toBe("orch-1");
+    });
+
+    it("returns 500 when ensureOrchestrator fails", async () => {
+      (mockSessionManager.ensureOrchestrator as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+        new Error("runtime unavailable"),
+      );
+
+      const req = makeRequest("/api/orchestrators", {
+        method: "POST",
+        body: JSON.stringify({ name: "orch-1", scope: "all" }),
+        headers: { "Content-Type": "application/json" },
       });
+      const res = await orchestratorsPOST(req);
+
+      expect(res.status).toBe(500);
+      const data = await res.json();
+      expect(data.error).toBe("runtime unavailable");
     });
 
     it("returns 400 when name is missing", async () => {
@@ -1103,111 +1113,6 @@ describe("API Routes", () => {
       expect(data.error).toMatch(/scope/);
     });
 
-    it("returns 500 when orchestrator spawn fails", async () => {
-      (mockSessionManager.spawnOrchestrator as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
-        new Error("boom"),
-      );
-
-      const req = makeRequest("/api/orchestrators", {
-        method: "POST",
-        body: JSON.stringify({ projectId: "my-app" }),
-        headers: { "Content-Type": "application/json" },
-      });
-
-      const res = await orchestratorsPOST(req);
-      expect(res.status).toBe(500);
-      const data = await res.json();
-      expect(data.error).toBe("boom");
-    });
-
-    it("returns a guided recovery message for registered orchestrator worktree collisions", async () => {
-      (mockSessionManager.spawnOrchestrator as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
-        new Error(
-          'Worktree path "/Users/test/.worktrees/my-app/my-app-orchestrator" already exists and is still registered with git',
-        ),
-      );
-
-      const req = makeRequest("/api/orchestrators", {
-        method: "POST",
-        body: JSON.stringify({ projectId: "my-app" }),
-        headers: { "Content-Type": "application/json" },
-      });
-
-      const res = await orchestratorsPOST(req);
-      expect(res.status).toBe(409);
-      const data = await res.json();
-      expect(data).toEqual({
-        error: expect.stringContaining(
-          'AO found an older orchestrator workspace for "my-app" but could not safely reuse it automatically.',
-        ),
-        code: "orchestrator_workspace_conflict",
-        recovery: "reuse-or-recreate-workspace",
-      });
-    });
-
-    it("returns the same recovery message when a matching branch is outside AO-managed worktree directories", async () => {
-      (mockSessionManager.spawnOrchestrator as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
-        new Error(
-          'Found existing worktree for orchestrator branch "orchestrator/my-app-orchestrator" at "/tmp/manual-worktree", but it is outside AO-managed worktree directories. Reuse it manually or remove it and try again.',
-        ),
-      );
-
-      const req = makeRequest("/api/orchestrators", {
-        method: "POST",
-        body: JSON.stringify({ projectId: "my-app" }),
-        headers: { "Content-Type": "application/json" },
-      });
-
-      const res = await orchestratorsPOST(req);
-      expect(res.status).toBe(409);
-      const data = await res.json();
-      expect(data.recovery).toBe("reuse-or-recreate-workspace");
-      expect(data.error).toContain('AO found an older orchestrator workspace for "my-app"');
-    });
-
-    it("calls relaunchOrchestrator instead of spawnOrchestrator when clean is true", async () => {
-      (mockSessionManager.relaunchOrchestrator as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-        makeSession({
-          id: "my-app-orchestrator",
-          projectId: "my-app",
-          metadata: { role: "orchestrator" },
-        }),
-      );
-
-      const req = makeRequest("/api/orchestrators", {
-        method: "POST",
-        body: JSON.stringify({ projectId: "my-app", clean: true }),
-        headers: { "Content-Type": "application/json" },
-      });
-      const res = await orchestratorsPOST(req);
-
-      expect(res.status).toBe(201);
-      expect(mockSessionManager.relaunchOrchestrator).toHaveBeenCalledWith({
-        projectId: "my-app",
-        systemPrompt: expect.stringContaining("# My App Orchestrator"),
-      });
-      expect(mockSessionManager.spawnOrchestrator).not.toHaveBeenCalled();
-    });
-
-    it("uses spawnOrchestrator when clean is false or omitted", async () => {
-      (mockSessionManager.spawnOrchestrator as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-        makeSession({
-          id: "my-app-orchestrator",
-          projectId: "my-app",
-          metadata: { role: "orchestrator" },
-        }),
-      );
-
-      const req = makeRequest("/api/orchestrators", {
-        method: "POST",
-        body: JSON.stringify({ projectId: "my-app", clean: false }),
-        headers: { "Content-Type": "application/json" },
-      });
-      await orchestratorsPOST(req);
-
-      expect(mockSessionManager.spawnOrchestrator).toHaveBeenCalled();
-      expect(mockSessionManager.relaunchOrchestrator).not.toHaveBeenCalled();
-    });
   });
 
   // ── POST /api/sessions/:id/send ────────────────────────────────────
