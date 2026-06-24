@@ -110,16 +110,7 @@ function makeSessionManager(
     spawn: async () => {
       throw new Error("not implemented");
     },
-    spawnOrchestrator: async () => {
-      throw new Error("not implemented");
-    },
     ensureOrchestrator: async () => {
-      throw new Error("not implemented");
-    },
-    ensureMetaOrchestrator: async () => {
-      throw new Error("not implemented");
-    },
-    relaunchOrchestrator: async () => {
       throw new Error("not implemented");
     },
     restore: async () => {

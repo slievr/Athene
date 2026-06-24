@@ -200,39 +200,53 @@ async function runSpawnPreflight(
   }
 }
 
-/** Owner metadata stamped onto meta-dispatched worker sessions. */
+/** Owner metadata stamped onto orchestrator-dispatched worker sessions. */
 export interface SpawnOwner {
+  orchestratorOwner?: string;
+  // Backward compat: kept for hidden alias parsing
   ownerKind?: "meta" | "project";
   metaOwner?: string;
 }
 
 /**
- * Resolve the effective owner flags, auto-stamping meta ownership from the
- * environment when no explicit flag is given. A meta orchestrator's runtime sets
- * `ATHENE_CALLER_TYPE=meta-orchestrator` + `ATHENE_META_NAME=<name>`, which a worker it
- * dispatches via `athene spawn` inherits — so meta-dispatched workers are tagged
- * automatically and the agent cannot forget. Explicit `--owner-kind`/`--meta-owner`
- * flags always win (override). Pure — no I/O.
+ * Infer the effective owner from CLI flags or environment. An orchestrator sets
+ * `ATHENE_CALLER_TYPE=orchestrator` + `ATHENE_ORCHESTRATOR_NAME=<name>` in the
+ * runtime environment, which workers it dispatches via `athene spawn` inherit —
+ * so orchestrator-dispatched workers are tagged automatically. Explicit flags
+ * always win. Pure — no I/O.
  */
-export function effectiveOwnerOptions(
-  opts: { ownerKind?: string; metaOwner?: string },
-  env: NodeJS.ProcessEnv,
-): { ownerKind?: string; metaOwner?: string } {
-  if (opts.ownerKind || opts.metaOwner) return opts; // explicit flags take precedence
-  const callerType = env[ENV.CALLER_TYPE] ?? env[legacyEnvName(ENV.CALLER_TYPE)];
-  const metaName = env[ENV.META_NAME] ?? env[legacyEnvName(ENV.META_NAME)];
-  if (callerType === "meta-orchestrator" && metaName) {
-    return { ownerKind: "meta", metaOwner: metaName };
+export function inferSpawnOwner(
+  env: Record<string, string | undefined>,
+  opts: { orchestratorOwner?: string; ownerKind?: string; metaOwner?: string },
+): SpawnOwner {
+  if (opts.orchestratorOwner) return { orchestratorOwner: opts.orchestratorOwner };
+  // backward compat: old --meta-owner / --owner-kind flags
+  if (opts.ownerKind === "meta" && opts.metaOwner) {
+    return { orchestratorOwner: opts.metaOwner };
   }
-  return opts;
+  const callerType = env[ENV.CALLER_TYPE] ?? env[legacyEnvName(ENV.CALLER_TYPE)];
+  if (callerType === "orchestrator" || callerType === "meta-orchestrator") {
+    const name =
+      env[ENV.ORCHESTRATOR_NAME] ?? env[legacyEnvName(ENV.ORCHESTRATOR_NAME)] ??
+      env[ENV.META_NAME] ?? env[legacyEnvName(ENV.META_NAME)];
+    return { orchestratorOwner: name ?? "default" };
+  }
+  return { orchestratorOwner: "default" };
 }
 
 /**
- * Validate the internal `--owner-kind` / `--meta-owner` flags used by a meta
- * orchestrator to attribute the workers it dispatches. Pure — throws on misuse.
+ * Validate the internal `--owner-kind` / `--meta-owner` / `--orchestrator-owner`
+ * flags used by an orchestrator to attribute the workers it dispatches.
+ * Pure — throws on misuse.
  */
-export function parseSpawnOwner(opts: { ownerKind?: string; metaOwner?: string }): SpawnOwner {
-  const { ownerKind, metaOwner } = opts;
+export function parseSpawnOwner(opts: {
+  orchestratorOwner?: string;
+  ownerKind?: string;
+  metaOwner?: string;
+}): SpawnOwner {
+  const { orchestratorOwner, ownerKind, metaOwner } = opts;
+  if (orchestratorOwner) return { orchestratorOwner };
+  // backward compat: validate old flags and convert
   if (ownerKind !== undefined && ownerKind !== "meta" && ownerKind !== "project") {
     throw new Error(`--owner-kind must be "meta" or "project" (got "${ownerKind}")`);
   }
@@ -242,10 +256,28 @@ export function parseSpawnOwner(opts: { ownerKind?: string; metaOwner?: string }
   if (metaOwner && ownerKind !== "meta") {
     throw new Error("--meta-owner requires --owner-kind meta");
   }
-  return {
-    ownerKind: ownerKind as "meta" | "project" | undefined,
-    metaOwner: ownerKind === "meta" ? metaOwner : undefined,
-  };
+  if (ownerKind === "meta" && metaOwner) {
+    return { orchestratorOwner: metaOwner };
+  }
+  return {};
+}
+
+/**
+ * @deprecated Use inferSpawnOwner instead.
+ * Kept for backward compatibility with callers that use the old effectiveOwnerOptions API.
+ */
+export function effectiveOwnerOptions(
+  opts: { ownerKind?: string; metaOwner?: string },
+  env: NodeJS.ProcessEnv,
+): { ownerKind?: string; metaOwner?: string } {
+  if (opts.ownerKind || opts.metaOwner) return opts;
+  const callerType = env[ENV.CALLER_TYPE] ?? env[legacyEnvName(ENV.CALLER_TYPE)];
+  const metaName = env[ENV.META_NAME] ?? env[legacyEnvName(ENV.META_NAME)];
+  const orchestratorName = env[ENV.ORCHESTRATOR_NAME] ?? env[legacyEnvName(ENV.ORCHESTRATOR_NAME)];
+  if ((callerType === "orchestrator" || callerType === "meta-orchestrator") && (orchestratorName ?? metaName)) {
+    return { ownerKind: "meta", metaOwner: orchestratorName ?? metaName };
+  }
+  return opts;
 }
 
 async function spawnSession(
@@ -289,8 +321,7 @@ async function spawnSession(
       issueId,
       agent,
       prompt: sanitizedPrompt,
-      ...(owner?.ownerKind ? { ownerKind: owner.ownerKind } : {}),
-      ...(owner?.metaOwner ? { metaOwner: owner.metaOwner } : {}),
+      orchestratorOwner: owner?.orchestratorOwner ?? "default",
     });
 
     // Advisory for freeform (no issue key) work: surface live peers in the
@@ -385,8 +416,9 @@ export function registerSpawn(program: Command): void {
       "--prompt <text>",
       "Initial prompt/instructions for the agent (use instead of an issue)",
     )
-    .option("--owner-kind <kind>", "Internal: dispatching coordinator (meta|project)")
-    .option("--meta-owner <name>", "Internal: name of the dispatching meta orchestrator")
+    .option("--orchestrator-owner <name>", "Internal: name of the dispatching orchestrator")
+    .option("--owner-kind <kind>", "Internal (deprecated): dispatching coordinator (meta|project)")
+    .option("--meta-owner <name>", "Internal (deprecated): name of the dispatching meta orchestrator")
     .action(
       async (
         issue: string | undefined,
@@ -396,6 +428,7 @@ export function registerSpawn(program: Command): void {
           claimPr?: string;
           assignOnGithub?: boolean;
           prompt?: string;
+          orchestratorOwner?: string;
           ownerKind?: string;
           metaOwner?: string;
         },
@@ -429,7 +462,7 @@ export function registerSpawn(program: Command): void {
 
         let owner: SpawnOwner;
         try {
-          owner = parseSpawnOwner(effectiveOwnerOptions(opts, process.env));
+          owner = parseSpawnOwner(inferSpawnOwner(process.env, opts));
         } catch (err) {
           console.error(chalk.red(err instanceof Error ? err.message : String(err)));
           process.exit(1);
@@ -492,9 +525,9 @@ export function registerBatchSpawn(program: Command): void {
     .action(async (issues: string[], opts: { open?: boolean }) => {
       const config = loadConfig();
 
-      // Auto-stamp meta ownership from the environment (same as `athene spawn`),
-      // so a meta orchestrator's batch-spawned workers are attributed to it.
-      const owner = parseSpawnOwner(effectiveOwnerOptions({}, process.env));
+      // Auto-stamp orchestrator ownership from the environment (same as `athene spawn`),
+      // so an orchestrator's batch-spawned workers are attributed to it.
+      const owner = parseSpawnOwner(inferSpawnOwner(process.env, {}));
 
       // Resolve each issue to its target project. Issues without a prefix fall
       // back to auto-detection; prefixed issues route to the matched project.
@@ -594,8 +627,7 @@ export function registerBatchSpawn(program: Command): void {
             const session = await sm.spawn({
               projectId: groupProjectId,
               issueId: resolved,
-              ...(owner.ownerKind ? { ownerKind: owner.ownerKind } : {}),
-              ...(owner.metaOwner ? { metaOwner: owner.metaOwner } : {}),
+              orchestratorOwner: owner.orchestratorOwner ?? "default",
             });
             created.push({ session: session.id, issue: original });
             spawnedIssues.add(resolved.toLowerCase());

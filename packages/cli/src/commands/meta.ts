@@ -4,7 +4,7 @@ import type { Command } from "commander";
 import {
   loadConfig,
   getGlobalConfigPath,
-  generateMetaOrchestratorPrompt,
+  generateOrchestratorPrompt,
   getSessionMetaOwner,
   isTerminalSession,
   resolveInScopeProjectIds,
@@ -105,9 +105,9 @@ export function registerMeta(program: Command): void {
       }
 
       try {
-        const systemPrompt = generateMetaOrchestratorPrompt({ config, name });
+        const systemPrompt = generateOrchestratorPrompt({ config, name });
         const sm = await getSessionManager(config);
-        const session = await sm.ensureMetaOrchestrator({
+        const session = await sm.ensureOrchestrator({
           name,
           systemPrompt,
           agent: meta.agent,

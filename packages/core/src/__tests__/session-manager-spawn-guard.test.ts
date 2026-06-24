@@ -88,25 +88,23 @@ describe("spawn collision guard", () => {
     );
   });
 
-  it("stamps ownerKind=meta and metaOwner on a meta-dispatched worker", async () => {
+  it("stamps orchestratorOwner on a meta-dispatched worker (backward compat: metaOwner input)", async () => {
     vi.useFakeTimers();
     const sm = createSessionManager({ config: ctx.config, registry: ctx.mockRegistry });
 
     const spawnPromise = sm.spawn({
       projectId: "my-app",
       prompt: "do a thing",
-      ownerKind: "meta",
       metaOwner: "meta-1",
     });
     await vi.runAllTimersAsync();
     const session = await spawnPromise;
 
-    expect(session.metadata["ownerKind"]).toBe("meta");
-    expect(session.metadata["metaOwner"]).toBe("meta-1");
+    // metaOwner is accepted for backward compat and written as orchestratorOwner
+    expect(session.metadata["orchestratorOwner"]).toBe("meta-1");
 
     const persisted = readMetadataRaw(sessionsDir, session.id);
-    expect(persisted?.["ownerKind"]).toBe("meta");
-    expect(persisted?.["metaOwner"]).toBe("meta-1");
+    expect(persisted?.["orchestratorOwner"]).toBe("meta-1");
   });
 
   it("serializes concurrent same-issue spawns — exactly one wins, the other is refused", async () => {

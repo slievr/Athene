@@ -30,7 +30,6 @@ import {
   type SessionId,
   type SessionSpawnConfig,
   type OrchestratorSpawnConfig,
-  type MetaOrchestratorSpawnConfig,
   type CleanupResult,
   type ClaimPROptions,
   type ClaimPRResult,
@@ -90,10 +89,6 @@ import {
 import { writeWorkspaceOpenCodeAgentsMd } from "./opencode-agents-md.js";
 import { writeOpenCodeConfig } from "./opencode-config.js";
 import { CleanupStack } from "./cleanup-stack.js";
-import {
-  getOrchestratorSessionId,
-  normalizeOrchestratorSessionStrategy,
-} from "./orchestrator-session-strategy.js";
 import { sessionFromMetadata } from "./utils/session-from-metadata.js";
 import { dedupePrUrls } from "./utils/pr.js";
 import { safeJsonParse, validateStatus } from "./utils/validation.js";
@@ -293,8 +288,6 @@ const SEND_CONFIRMATION_POLL_MS = 500;
 const SEND_CONFIRMATION_OUTPUT_LINES = 20;
 const SEND_BOOTSTRAP_READY_TIMEOUT_MS = 20_000;
 const SEND_BOOTSTRAP_STABLE_POLLS = 2;
-const ENSURE_ORCHESTRATOR_CONFLICT_WAIT_MS = 20_000;
-const ENSURE_ORCHESTRATOR_CONFLICT_POLL_MS = 250;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -442,10 +435,6 @@ async function isAgentProcessNotDefinitelyMissing(
     // terminal output instead of forcing a restore.
     return true;
   }
-}
-
-function isFixedOrchestratorReservationError(err: unknown, sessionId: string): boolean {
-  return err instanceof Error && err.message.includes(`Orchestrator session "${sessionId}" already exists`);
 }
 
 async function getTmuxForegroundCommand(sessionName: string): Promise<string | null> {
@@ -669,8 +658,6 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     expiresAt: number;
   } | null = null;
   const ensureOrchestratorPromises = new Map<string, Promise<Session>>();
-  const relaunchOrchestratorPromises = new Map<string, Promise<Session>>();
-  const ensureMetaOrchestratorPromises = new Map<string, Promise<Session>>();
 
   function invalidateCache(): void {
     sessionCache = null;
@@ -1143,23 +1130,6 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     throw new Error(
       `Failed to reserve session ID after 10000 attempts (prefix: ${project.sessionPrefix})`,
     );
-  }
-
-  function reserveFixedOrchestratorIdentity(
-    project: ProjectConfig,
-    sessionsDir: string,
-  ): { sessionId: string; tmuxName: string | undefined } {
-    const sessionId = getOrchestratorSessionId(project);
-    if (!reserveSessionId(sessionsDir, sessionId)) {
-      throw new Error(
-        `Orchestrator session "${sessionId}" already exists. Use ensureOrchestrator() to reuse or restore it.`,
-      );
-    }
-
-    return {
-      sessionId,
-      tmuxName: config.configPath ? sessionId : undefined,
-    };
   }
 
   /** Resolve which plugins to use for a project. */
@@ -1828,15 +1798,16 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
           ...(reusedOpenCodeSessionId ? { opencodeSessionId: reusedOpenCodeSessionId } : {}),
           ...(spawnConfig.prompt ? { userPrompt: spawnConfig.prompt } : {}),
           ...(displayName ? { displayName } : {}),
-          // Owner stamping: meta-dispatched workers carry ownerKind/metaOwner so
-          // they are visible to BOTH the meta orchestrator and the per-project
-          // orchestrator. Absent => project-owned (the default).
-          ...(spawnConfig.ownerKind === "meta"
-            ? {
-                ownerKind: "meta",
-                ...(spawnConfig.metaOwner ? { metaOwner: spawnConfig.metaOwner } : {}),
-              }
-            : {}),
+          // Owner stamping: orchestratorOwner identifies which orchestrator
+          // dispatched this worker. Falls back to "default" for human-spawned
+          // workers. Backward compat: metaOwner from old callers is accepted.
+          orchestratorOwner: (
+            spawnConfig.orchestratorOwner ||
+            spawnConfig.metaOwner ||
+            getEnvString(ENV.ORCHESTRATOR_NAME) ||
+            getEnvString(ENV.META_NAME) ||
+            "default"
+          ),
         },
       };
 
@@ -1941,586 +1912,6 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     }
   }
 
-  function recordOrchestratorSpawnFailed(
-    orchestratorConfig: OrchestratorSpawnConfig,
-    err: unknown,
-    sessionId?: string,
-  ): void {
-    recordActivityEvent({
-      projectId: orchestratorConfig.projectId,
-      ...(sessionId ? { sessionId } : {}),
-      source: "session-manager",
-      kind: "session.spawn_failed",
-      level: "error",
-      summary: "orchestrator spawn failed",
-      data: {
-        role: "orchestrator",
-        reason: err instanceof Error ? err.message : String(err),
-      },
-    });
-  }
-
-  async function spawnOrchestrator(
-    orchestratorConfig: OrchestratorSpawnConfig,
-    options?: { suppressFixedReservationFailure?: boolean },
-  ): Promise<Session> {
-    recordActivityEvent({
-      projectId: orchestratorConfig.projectId,
-      source: "session-manager",
-      kind: "session.spawn_started",
-      summary: "orchestrator spawn started",
-      data: { agent: orchestratorConfig.agent ?? undefined, role: "orchestrator" },
-    });
-    try {
-      return await _spawnOrchestratorInner(orchestratorConfig);
-    } catch (err) {
-      const project = config.projects[orchestratorConfig.projectId];
-      const sessionId = project ? getOrchestratorSessionId(project) : undefined;
-      const shouldSuppressRecoverableConflict =
-        options?.suppressFixedReservationFailure === true &&
-        sessionId !== undefined &&
-        isFixedOrchestratorReservationError(err, sessionId);
-      if (!shouldSuppressRecoverableConflict) {
-        recordOrchestratorSpawnFailed(orchestratorConfig, err, sessionId);
-      }
-      throw err;
-    }
-  }
-
-  async function _spawnOrchestratorInner(orchestratorConfig: OrchestratorSpawnConfig): Promise<Session> {
-    const project = config.projects[orchestratorConfig.projectId];
-    if (!project) {
-      throw new Error(`Unknown project: ${orchestratorConfig.projectId}`);
-    }
-
-    const selection = resolveAgentSelection({
-      role: "orchestrator",
-      project,
-      defaults: config.defaults,
-      spawnAgentOverride: orchestratorConfig.agent,
-    });
-    const plugins = resolvePlugins(project, selection.agentName);
-    if (!plugins.runtime) {
-      throw new Error(`Runtime plugin '${project.runtime ?? config.defaults.runtime}' not found`);
-    }
-    if (!plugins.agent) {
-      throw new Error(`Agent plugin '${selection.agentName}' not found`);
-    }
-
-    // Get the sessions directory for this project
-    const sessionsDir = getProjectSessionsDir(orchestratorConfig.projectId);
-
-    const orchestratorSessionStrategy = normalizeOrchestratorSessionStrategy(
-      project.orchestratorSessionStrategy,
-    );
-
-    const identity = reserveFixedOrchestratorIdentity(project, sessionsDir);
-    const sessionId = identity.sessionId;
-    const tmuxName = identity.tmuxName;
-
-    // The main orchestrator is deterministic, but still uses an isolated worktree.
-    const branch = `orchestrator/${sessionId}`;
-
-    if (!plugins.workspace) {
-      try {
-        deleteMetadata(sessionsDir, sessionId);
-      } catch {
-        /* best effort */
-      }
-      throw new Error(
-        `spawnOrchestrator requires a workspace plugin but none is configured for project '${orchestratorConfig.projectId}'`,
-      );
-    }
-
-    const workspaceConfig = {
-      projectId: orchestratorConfig.projectId,
-      project,
-      sessionId,
-      branch,
-      worktreeDir: getProjectWorktreesDir(orchestratorConfig.projectId),
-    } satisfies WorkspaceCreateConfig;
-
-    let workspacePath: string;
-    let adoptedManagedWorkspace = false;
-    try {
-      const adoptedInfo = await plugins.workspace.findManagedWorkspace?.(workspaceConfig);
-      const wsInfo = adoptedInfo ?? (await plugins.workspace.create(workspaceConfig));
-      workspacePath = wsInfo.path;
-      adoptedManagedWorkspace = adoptedInfo !== undefined && adoptedInfo !== null;
-    } catch (err) {
-      recordActivityEvent({
-        projectId: orchestratorConfig.projectId,
-        sessionId,
-        source: "session-manager",
-        kind: "session.spawn_step_failed",
-        level: "error",
-        summary: "orchestrator workspace.create failed",
-        data: {
-          role: "orchestrator",
-          stage: "workspace_create",
-          reason: err instanceof Error ? err.message : String(err),
-        },
-      });
-      try {
-        deleteMetadata(sessionsDir, sessionId);
-      } catch {
-        /* best effort */
-      }
-      throw err;
-    }
-
-    // Helper: undo worktree + metadata if anything between workspace creation
-    // and a fully-written metadata record fails.
-    const cleanupWorktreeAndMetadata = async (promptFile?: string): Promise<void> => {
-      if (!adoptedManagedWorkspace) {
-        try {
-          // plugins.workspace is guaranteed non-null here: we threw above if it was null
-          await plugins.workspace!.destroy(workspacePath);
-        } catch {
-          /* best effort */
-        }
-      }
-      try {
-        deleteMetadata(sessionsDir, sessionId);
-      } catch {
-        /* best effort */
-      }
-      if (promptFile) {
-        try {
-          unlinkSync(promptFile);
-        } catch {
-          /* best effort */
-        }
-      }
-    };
-
-    // Setup agent hooks for automatic metadata updates.
-    // Claude Code uses native PostToolUse hooks for metadata writes — skip
-    // PATH wrappers to avoid two concurrent writers (wrapper + hook) hitting
-    // the same metadata file with no locking.
-    try {
-      if (plugins.agent.setupWorkspaceHooks) {
-        await plugins.agent.setupWorkspaceHooks(workspacePath, { dataDir: sessionsDir });
-      }
-      if (plugins.agent.name !== "claude-code") {
-        await setupPathWrapperWorkspace(workspacePath);
-      }
-    } catch (err) {
-      // PR tracking and CI fetch hooks are wired here — emit a dedicated AE
-      // before rolling back so RCA can answer "did the orchestrator launch
-      // succeed but lose its hook integration?".
-      recordActivityEvent({
-        projectId: orchestratorConfig.projectId,
-        sessionId,
-        source: "session-manager",
-        kind: "session.workspace_hooks_failed",
-        level: "error",
-        summary: "orchestrator workspace hooks installation failed",
-        data: {
-          agent: plugins.agent.name,
-          reason: err instanceof Error ? err.message : String(err),
-        },
-      });
-      await cleanupWorktreeAndMetadata();
-      throw err;
-    }
-
-    // Write system prompt to a file to avoid shell/tmux truncation.
-    // Long prompts (2000+ chars) get mangled when inlined in shell commands
-    // via tmux send-keys or paste-buffer. File-based approach is reliable.
-    let systemPromptFile: string | undefined;
-    if (orchestratorConfig.systemPrompt) {
-      try {
-        const projectDir = getProjectDir(orchestratorConfig.projectId);
-        mkdirSync(projectDir, { recursive: true });
-        systemPromptFile = join(projectDir, `orchestrator-prompt-${sessionId}.md`);
-        writeFileSync(systemPromptFile, orchestratorConfig.systemPrompt, "utf-8");
-      } catch (err) {
-        recordActivityEvent({
-          projectId: orchestratorConfig.projectId,
-          sessionId,
-          source: "session-manager",
-          kind: "session.spawn_step_failed",
-          level: "error",
-          summary: "orchestrator systemPrompt write failed",
-          data: {
-            role: "orchestrator",
-            stage: "system_prompt_write",
-            reason: err instanceof Error ? err.message : String(err),
-          },
-        });
-        await cleanupWorktreeAndMetadata(systemPromptFile);
-        throw err;
-      }
-    }
-
-    if (plugins.agent.name === "opencode" && systemPromptFile) {
-      try {
-        writeWorkspaceOpenCodeAgentsMd(workspacePath, systemPromptFile);
-      } catch (err) {
-        recordActivityEvent({
-          projectId: orchestratorConfig.projectId,
-          sessionId,
-          source: "session-manager",
-          kind: "session.spawn_step_failed",
-          level: "error",
-          summary: "orchestrator AGENTS.md write failed",
-          data: {
-            role: "orchestrator",
-            stage: "agents_md_write",
-            reason: err instanceof Error ? err.message : String(err),
-          },
-        });
-        await cleanupWorktreeAndMetadata(systemPromptFile);
-        throw err;
-      }
-    }
-
-    let reusableOpenCodeSessionId: string | undefined;
-    try {
-      reusableOpenCodeSessionId =
-        plugins.agent.name === "opencode" && orchestratorSessionStrategy === "reuse"
-          ? await resolveOpenCodeSessionReuse({
-              sessionsDir,
-              criteria: { sessionId },
-              strategy: "reuse",
-            })
-          : undefined;
-      if (plugins.agent.name === "opencode" && orchestratorSessionStrategy === "delete") {
-        await resolveOpenCodeSessionReuse({
-          sessionsDir,
-          criteria: { sessionId },
-          strategy: "delete",
-          includeTitleDiscoveryForSessionId: true,
-        });
-      }
-    } catch (err) {
-      recordActivityEvent({
-        projectId: orchestratorConfig.projectId,
-        sessionId,
-        source: "session-manager",
-        kind: "session.spawn_step_failed",
-        level: "error",
-        summary: "orchestrator opencode session resolution failed",
-        data: {
-          role: "orchestrator",
-          stage: "opencode_session_reuse",
-          reason: err instanceof Error ? err.message : String(err),
-        },
-      });
-      await cleanupWorktreeAndMetadata(systemPromptFile);
-      throw err;
-    }
-
-    // Get agent launch config — uses systemPromptFile, no issue/tracker interaction.
-    // Orchestrator ALWAYS gets permissionless mode — it must run ao CLI commands autonomously.
-    const agentLaunchConfig = {
-      sessionId,
-      projectConfig: {
-        ...project,
-        agentConfig: {
-          ...selection.agentConfig,
-          permissions: "permissionless" as const,
-          ...(reusableOpenCodeSessionId ? { opencodeSessionId: reusableOpenCodeSessionId } : {}),
-        },
-      },
-      workspacePath,
-      permissions: "permissionless" as const,
-      model: selection.model,
-      systemPromptFile,
-      subagent: selection.subagent,
-    };
-
-    const launchCommand = plugins.agent.getLaunchCommand(agentLaunchConfig);
-    const environment = plugins.agent.getEnvironment(agentLaunchConfig);
-
-    if (plugins.agent.preLaunchSetup) {
-      await plugins.agent.preLaunchSetup(workspacePath);
-    }
-
-    // Create runtime — clean up worktree and metadata on failure
-    let handle: RuntimeHandle;
-    try {
-      handle = await plugins.runtime.create({
-        sessionId: tmuxName ?? sessionId,
-        workspacePath,
-        launchCommand,
-        environment: withLegacyEnvAliases({
-          ...environment,
-          ...(project.env ?? {}),
-          PATH: buildAgentPath(environment["PATH"] ?? process.env["PATH"]),
-          GH_PATH: PREFERRED_GH_PATH,
-          ...(getEnvString(ENV.AGENT_GH_TRACE) && {
-            [ENV.AGENT_GH_TRACE]: getEnvString(ENV.AGENT_GH_TRACE),
-          }),
-          [ENV.SESSION]: sessionId,
-          [ENV.DATA_DIR]: sessionsDir,
-          [ENV.SESSION_NAME]: sessionId,
-          ...(tmuxName && { [ENV.TMUX_NAME]: tmuxName }),
-          [ENV.CALLER_TYPE]: "orchestrator",
-          [ENV.PROJECT_ID]: orchestratorConfig.projectId,
-          [ENV.CONFIG_PATH]: config.configPath,
-          ...(config.port !== undefined &&
-            config.port !== null && { [ENV.PORT]: String(config.port) }),
-        }),
-      });
-    } catch (err) {
-      // Outer envelope catches and emits session.spawn_failed; this step emit
-      // tags the runtime.create failure path specifically so RCA can answer
-      // "did the orchestrator runtime fail to start at all?".
-      recordActivityEvent({
-        projectId: orchestratorConfig.projectId,
-        sessionId,
-        source: "session-manager",
-        kind: "session.spawn_step_failed",
-        level: "error",
-        summary: "orchestrator runtime.create failed",
-        data: {
-          role: "orchestrator",
-          stage: "runtime_create",
-          reason: err instanceof Error ? err.message : String(err),
-        },
-      });
-      await cleanupWorktreeAndMetadata(systemPromptFile);
-      throw err;
-    }
-
-    // Derive a stable display name from the orchestrator's system prompt so
-    // the dashboard shows something more useful than "Ao Orchestrator 8".
-    const displayName = deriveDisplayName({
-      prompt: orchestratorConfig.systemPrompt,
-    });
-
-    // Write metadata and run post-launch setup
-    const createdAt = new Date();
-    const lifecycle = createInitialCanonicalLifecycle("orchestrator", createdAt);
-    lifecycle.session.state = "working";
-    lifecycle.session.reason = "task_in_progress";
-    lifecycle.session.startedAt = createdAt.toISOString();
-    lifecycle.session.lastTransitionAt = createdAt.toISOString();
-    lifecycle.runtime.handle = handle;
-    lifecycle.runtime.tmuxName = tmuxName ?? null;
-
-    const session: Session = {
-      id: sessionId,
-      projectId: orchestratorConfig.projectId,
-      status: deriveLegacyStatus(lifecycle),
-      activity: "active",
-      activitySignal: createActivitySignal("valid", {
-        activity: "active",
-        timestamp: createdAt,
-        source: "runtime",
-      }),
-      lifecycle,
-      branch,
-      issueId: null,
-      pr: null,
-      prs: [],
-      workspacePath,
-      runtimeHandle: handle,
-      agentInfo: null,
-      createdAt,
-      lastActivityAt: createdAt,
-      metadata: {
-        ...(reusableOpenCodeSessionId ? { opencodeSessionId: reusableOpenCodeSessionId } : {}),
-        ...(displayName ? { displayName } : {}),
-      },
-    };
-
-    try {
-      writeMetadata(sessionsDir, sessionId, {
-        worktree: workspacePath,
-        branch,
-        status: deriveLegacyStatus(lifecycle),
-        ...buildLifecycleMetadataPatch(lifecycle),
-        // Object overrides for the typed writeMetadata path —
-        // see the spawnSession site for the rationale.
-        lifecycle,
-        role: "orchestrator",
-        tmuxName,
-        project: orchestratorConfig.projectId,
-        agent: selection.agentName,
-        createdAt: createdAt.toISOString(),
-        runtimeHandle: handle,
-        opencodeSessionId: reusableOpenCodeSessionId,
-        displayName,
-      });
-
-      if (plugins.agent.postLaunchSetup) {
-        await plugins.agent.postLaunchSetup(session);
-      }
-
-      if (plugins.agent.promptDelivery === "post-launch" && orchestratorConfig.systemPrompt) {
-        // The orchestrator prompt is already passed via systemPromptFile in the launch command.
-        // Send only a minimal trigger so interactive post-launch agents start without
-        // receiving their system instructions again as a user message.
-        await plugins.runtime.sendMessage(handle, "Begin.");
-      }
-
-      if (
-        plugins.agent.name === "opencode" &&
-        orchestratorSessionStrategy === "reuse" &&
-        !session.metadata["opencodeSessionId"]
-      ) {
-        const discovered = await discoverOpenCodeSessionIdByTitle(
-          sessionId,
-          OPENCODE_INTERACTIVE_DISCOVERY_TIMEOUT_MS,
-        );
-        if (discovered) {
-          session.metadata["opencodeSessionId"] = discovered;
-        }
-      }
-
-      if (Object.keys(session.metadata || {}).length > 0) {
-        updateMetadata(sessionsDir, sessionId, session.metadata);
-      }
-      invalidateCache();
-    } catch (err) {
-      recordActivityEvent({
-        projectId: orchestratorConfig.projectId,
-        sessionId,
-        source: "session-manager",
-        kind: "session.spawn_step_failed",
-        level: "error",
-        summary: "orchestrator post-launch metadata write failed",
-        data: {
-          role: "orchestrator",
-          stage: "post_launch_metadata",
-          reason: err instanceof Error ? err.message : String(err),
-        },
-      });
-      // Clean up runtime on post-launch failure
-      try {
-        await plugins.runtime.destroy(handle);
-      } catch {
-        /* best effort */
-      }
-      await cleanupWorktreeAndMetadata(systemPromptFile);
-      throw err;
-    }
-
-    recordActivityEvent({
-      projectId: orchestratorConfig.projectId,
-      sessionId,
-      source: "session-manager",
-      kind: "session.spawned",
-      summary: `spawned: ${sessionId}`,
-      data: {
-        agent: plugins.agent.name,
-        branch: session.branch ?? undefined,
-        role: "orchestrator",
-      },
-    });
-
-    return session;
-  }
-
-  async function waitForConcurrentOrchestrator(sessionId: string): Promise<Session | null> {
-    const deadline = Date.now() + ENSURE_ORCHESTRATOR_CONFLICT_WAIT_MS;
-    while (Date.now() < deadline) {
-      const existing = await get(sessionId);
-      if (existing?.metadata["role"] === "orchestrator") {
-        return existing;
-      }
-      await sleep(ENSURE_ORCHESTRATOR_CONFLICT_POLL_MS);
-    }
-    return null;
-  }
-
-  async function ensureOrchestratorInternal(orchestratorConfig: OrchestratorSpawnConfig): Promise<Session> {
-    const project = config.projects[orchestratorConfig.projectId];
-    if (!project) {
-      throw new Error(`Unknown project: ${orchestratorConfig.projectId}`);
-    }
-
-    const sessionId = getOrchestratorSessionId(project);
-
-    // If a relaunch is mid-flight for this sessionId, wait it out — otherwise
-    // we could return a session that relaunch is about to kill, or race the
-    // relaunch's spawnOrchestrator on the same reservation.
-    const pendingRelaunch = relaunchOrchestratorPromises.get(sessionId);
-    if (pendingRelaunch) {
-      await pendingRelaunch.catch((err) => {
-        console.warn(
-          `[ensureOrchestrator] in-flight relaunch for ${sessionId} failed before ensure proceeded:`,
-          err,
-        );
-      });
-    }
-
-    const existing = await get(sessionId);
-    if (existing) {
-      const orchestratorSessionStrategy = normalizeOrchestratorSessionStrategy(
-        project.orchestratorSessionStrategy,
-      );
-      if (
-        orchestratorSessionStrategy === "delete" ||
-        orchestratorSessionStrategy === "ignore"
-      ) {
-        await kill(sessionId, { purgeOpenCode: orchestratorSessionStrategy === "delete" });
-        deleteMetadata(getProjectSessionsDir(orchestratorConfig.projectId), sessionId);
-        return spawnOrchestrator(orchestratorConfig);
-      }
-      if (existing.lifecycle.session.state === "done") {
-        throw new SessionNotRestorableError(
-          sessionId,
-          `canonical orchestrator session is terminal with status "${existing.status}". Remove or clean up this session before starting a new orchestrator.`,
-        );
-      }
-      if (isRestorable(existing)) {
-        return restore(sessionId);
-      }
-      if (!isTerminalSession(existing)) {
-        return existing;
-      }
-      throw new SessionNotRestorableError(
-        sessionId,
-        `canonical orchestrator session is terminal with status "${existing.status}". Remove or clean up this session before starting a new orchestrator.`,
-      );
-    }
-
-    try {
-      return await spawnOrchestrator(orchestratorConfig, {
-        suppressFixedReservationFailure: true,
-      });
-    } catch (err) {
-      if (!isFixedOrchestratorReservationError(err, sessionId)) {
-        throw err;
-      }
-
-      recordActivityEvent({
-        projectId: orchestratorConfig.projectId,
-        sessionId,
-        source: "session-manager",
-        kind: "session.orchestrator_conflict",
-        level: "warn",
-        summary: "concurrent orchestrator reservation conflict",
-        data: { reason: err instanceof Error ? err.message : String(err) },
-      });
-
-      const concurrent = await waitForConcurrentOrchestrator(sessionId);
-      if (concurrent) return concurrent;
-      recordOrchestratorSpawnFailed(orchestratorConfig, err, sessionId);
-      throw err;
-    }
-  }
-
-  async function ensureOrchestrator(orchestratorConfig: OrchestratorSpawnConfig): Promise<Session> {
-    const project = config.projects[orchestratorConfig.projectId];
-    if (!project) {
-      throw new Error(`Unknown project: ${orchestratorConfig.projectId}`);
-    }
-
-    const sessionId = getOrchestratorSessionId(project);
-    const existingPromise = ensureOrchestratorPromises.get(sessionId);
-    if (existingPromise) return existingPromise;
-
-    const promise = ensureOrchestratorInternal(orchestratorConfig).finally(() => {
-      ensureOrchestratorPromises.delete(sessionId);
-    });
-    ensureOrchestratorPromises.set(sessionId, promise);
-    return promise;
-  }
 
   /**
    * Ensure a meta orchestrator session exists for `name`. Reuses a live one if
@@ -2537,7 +1928,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     // is also persisted as "_meta", but pass it explicitly to be unambiguous).
     return sessionFromMetadata(name, existing, {
       projectId: "_meta",
-      sessionKind: "meta-orchestrator",
+      sessionKind: "orchestrator",
     });
   }
 
@@ -2564,8 +1955,8 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     return { metaProject, selection, plugins };
   }
 
-  async function ensureMetaOrchestratorInternal(
-    metaConfig: MetaOrchestratorSpawnConfig,
+  async function ensureOrchestratorInternal(
+    metaConfig: OrchestratorSpawnConfig,
   ): Promise<Session> {
     const name = metaConfig.name;
     const existing = readExistingMetaSession(name);
@@ -2589,22 +1980,22 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     return _spawnMetaOrchestratorInner(metaConfig);
   }
 
-  async function ensureMetaOrchestrator(metaConfig: MetaOrchestratorSpawnConfig): Promise<Session> {
-    // In-flight dedup keyed by meta name — mirrors ensureOrchestrator, so two
-    // concurrent calls in the same process share one spawn rather than racing.
+  async function ensureOrchestrator(metaConfig: OrchestratorSpawnConfig): Promise<Session> {
+    // In-flight dedup keyed by orchestrator name — concurrent calls in the
+    // same process share one spawn rather than racing.
     const name = metaConfig.name;
-    const existingPromise = ensureMetaOrchestratorPromises.get(name);
+    const existingPromise = ensureOrchestratorPromises.get(name);
     if (existingPromise) return existingPromise;
 
-    const promise = ensureMetaOrchestratorInternal(metaConfig).finally(() => {
-      ensureMetaOrchestratorPromises.delete(name);
+    const promise = ensureOrchestratorInternal(metaConfig).finally(() => {
+      ensureOrchestratorPromises.delete(name);
     });
-    ensureMetaOrchestratorPromises.set(name, promise);
+    ensureOrchestratorPromises.set(name, promise);
     return promise;
   }
 
   async function _spawnMetaOrchestratorInner(
-    metaConfig: MetaOrchestratorSpawnConfig,
+    metaConfig: OrchestratorSpawnConfig,
   ): Promise<Session> {
     const name = metaConfig.name;
     const sessionId = name;
@@ -2616,7 +2007,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
       source: "session-manager",
       kind: "session.spawn_started",
       summary: "meta orchestrator spawn started",
-      data: { agent: metaConfig.agent ?? undefined, role: "meta-orchestrator" },
+      data: { agent: metaConfig.agent ?? undefined, role: "orchestrator" },
     });
 
     const { metaProject, selection, plugins } = metaProjectContext(name, metaConfig.agent);
@@ -2637,7 +2028,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     // winner's runtime). On conflict, reuse a live session or reclaim a stale one.
     if (!reserveSessionId(sessionsDir, sessionId)) {
       const existing = readExistingMetaSession(name);
-      // Probe the runtime before reusing — mirrors ensureMetaOrchestratorInternal.
+      // Probe the runtime before reusing — mirrors ensureOrchestratorInternal.
       // _meta sessions are not lifecycle-supervised, so a non-terminal persisted
       // state can still front a dead runtime; under a truly-concurrent meta-start
       // race the normal probe/delete in the caller may not have run yet. Reuse only
@@ -2691,7 +2082,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
 
     let systemPromptFile: string | undefined;
     if (metaConfig.systemPrompt) {
-      systemPromptFile = join(workspacePath, `meta-orchestrator-prompt-${sessionId}.md`);
+      systemPromptFile = join(workspacePath, `orchestrator-prompt-${sessionId}.md`);
       writeFileSync(systemPromptFile, metaConfig.systemPrompt, "utf-8");
       // OpenCode does not consume systemPromptFile — it reads its prompt from a
       // workspace AGENTS.md. Mirror the per-project orchestrator path so a meta
@@ -2738,9 +2129,10 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
           [ENV.SESSION]: sessionId,
           [ENV.DATA_DIR]: sessionsDir,
           [ENV.SESSION_NAME]: sessionId,
-          [ENV.CALLER_TYPE]: "meta-orchestrator",
+          [ENV.CALLER_TYPE]: "orchestrator",
           [ENV.PROJECT_ID]: "_meta",
-          [ENV.META_NAME]: name,
+          [ENV.ORCHESTRATOR_NAME]: name,
+          [ENV.META_NAME]: name, // backward compat: sessions that read AO_META_NAME still work
           [ENV.CONFIG_PATH]: config.configPath,
           ...(config.port !== undefined &&
             config.port !== null && { [ENV.PORT]: String(config.port) }),
@@ -2752,7 +2144,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
     }
 
     const createdAt = new Date();
-    const lifecycle = createInitialCanonicalLifecycle("meta-orchestrator", createdAt);
+    const lifecycle = createInitialCanonicalLifecycle("orchestrator", createdAt);
     lifecycle.session.state = "working";
     lifecycle.session.reason = "task_in_progress";
     lifecycle.session.startedAt = createdAt.toISOString();
@@ -2782,7 +2174,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
       createdAt,
       lastActivityAt: createdAt,
       metadata: {
-        role: "meta-orchestrator",
+        role: "orchestrator",
         metaName: name,
         ...(displayName ? { displayName } : {}),
       },
@@ -2799,7 +2191,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
         // Object overrides for the typed writeMetadata path — see the worker
         // spawn site for the rationale.
         lifecycle,
-        role: "meta-orchestrator",
+        role: "orchestrator",
         project: "_meta",
         agent: selection.agentName,
         createdAt: createdAt.toISOString(),
@@ -2828,67 +2220,11 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
       source: "session-manager",
       kind: "session.spawned",
       summary: `spawned: ${sessionId}`,
-      data: { agent: plugins.agent.name, role: "meta-orchestrator" },
+      data: { agent: plugins.agent.name, role: "orchestrator" },
     });
 
     return session;
   }
-
-  async function relaunchOrchestratorInternal(
-    orchestratorConfig: OrchestratorSpawnConfig,
-  ): Promise<Session> {
-    const project = config.projects[orchestratorConfig.projectId];
-    if (!project) {
-      throw new Error(`Unknown project: ${orchestratorConfig.projectId}`);
-    }
-    const sessionId = getOrchestratorSessionId(project);
-    const sessionsDir = getProjectSessionsDir(orchestratorConfig.projectId);
-
-    // If ensureOrchestrator is mid-flight for this sessionId, wait it out.
-    // Otherwise get() would return null (metadata not yet written) and we'd
-    // skip the kill, then race the in-flight spawnOrchestrator on the same
-    // reservation — surfacing "session already exists" instead of replacing.
-    const pendingEnsure = ensureOrchestratorPromises.get(sessionId);
-    if (pendingEnsure) {
-      await pendingEnsure.catch((err) => {
-        console.warn(
-          `[relaunchOrchestrator] in-flight ensure for ${sessionId} failed before relaunch proceeded:`,
-          err,
-        );
-      });
-    }
-
-    const existing = await get(sessionId);
-    if (existing) {
-      const existingAgent = resolveSelectionForSession(
-        project,
-        sessionId,
-        readMetadataRaw(sessionsDir, sessionId) ?? {},
-      ).agentName;
-      await kill(sessionId, { purgeOpenCode: existingAgent === "opencode" });
-      deleteMetadata(sessionsDir, sessionId);
-    }
-    return spawnOrchestrator(orchestratorConfig);
-  }
-
-  async function relaunchOrchestrator(
-    orchestratorConfig: OrchestratorSpawnConfig,
-  ): Promise<Session> {
-    const project = config.projects[orchestratorConfig.projectId];
-    if (!project) {
-      throw new Error(`Unknown project: ${orchestratorConfig.projectId}`);
-    }
-    const sessionId = getOrchestratorSessionId(project);
-    const existingPromise = relaunchOrchestratorPromises.get(sessionId);
-    if (existingPromise) return existingPromise;
-
-    const promise = relaunchOrchestratorInternal(orchestratorConfig).finally(() => {
-      relaunchOrchestratorPromises.delete(sessionId);
-    });
-    relaunchOrchestratorPromises.set(sessionId, promise);
-    return promise;
-  }
-
   async function list(projectId?: string): Promise<Session[]> {
     const allSessions = Object.entries(config.projects).flatMap(([entryProjectId, project]) => {
       if (projectId && entryProjectId !== projectId) return [];
@@ -4153,7 +3489,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
       },
     };
     // Orchestrator launches need the original systemPromptFile so the agent
-    // boots as the orchestrator (not a bare TUI). spawnOrchestrator wrote it to
+    // boots as the orchestrator (not a bare TUI). Spawn wrote it to
     // {baseDir}/orchestrator-prompt-{sessionId}.md and references it via
     // agentLaunchConfig.systemPromptFile. On restore we must re-attach it,
     // otherwise getLaunchCommand() (the fallback when getRestoreCommand returns
@@ -4309,10 +3645,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
 
   return {
     spawn,
-    spawnOrchestrator,
     ensureOrchestrator,
-    ensureMetaOrchestrator,
-    relaunchOrchestrator,
     restore,
     list,
     listCached,
