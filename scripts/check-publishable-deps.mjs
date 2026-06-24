@@ -10,7 +10,8 @@
  *
  * Concretely: this catches the case where `@made-by-moonlight/athene-cli` has
  * `"@made-by-moonlight/athene-web": "workspace:*"` while `@made-by-moonlight/athene-web` is
- * `"private": true` — the dashboard would never reach consumers.
+ * `"private": true` — `pnpm pack` would rewrite the dep to a version that
+ * doesn't exist on npm, and consumers would fail to install.
  *
  * Run from CI before `changeset publish`.
  */
