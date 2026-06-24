@@ -1,199 +1,109 @@
 /**
- * Orchestrator Prompt Generator - generates orchestrator prompt content.
+ * Orchestrator Prompt Generator — renders the portfolio-scoped coordinator
+ * prompt. Injected via `athene start <name>`.
  *
- * This is injected via `athene start` to provide orchestrator-specific context
- * when the orchestrator agent runs.
+ * Renders the in-scope project catalog, scope/discover settings, the
+ * dashboard URL, and an optional project-specific rules block.
  */
 
 import orchestratorTemplate from "./prompts/orchestrator.md";
-import type { OrchestratorConfig, ProjectConfig } from "./types.js";
+import type { OrchestratorConfig, OrchestratorEntryConfig } from "./types.js";
+import { resolveInScopeProjects } from "./orchestrator-scope.js";
 
 export interface OrchestratorPromptConfig {
   config: OrchestratorConfig;
-  projectId: string;
-  project: ProjectConfig;
+  name: string;
 }
 
 interface OrchestratorPromptRenderData {
-  projectId: string;
-  projectName: string;
-  projectRepo: string;
-  projectDefaultBranch: string;
-  projectSessionPrefix: string;
-  projectPath: string;
-  dashboardPort: string;
-  automatedReactionsSection: string;
-  projectSpecificRulesSection: string;
-  repoConfiguredSection: string;
-  repoNotConfiguredSection: string;
+  metaName: string;
+  dashboardUrl: string;
+  scopeDescription: string;
+  discoverDescription: string;
+  projectCatalog: string;
+  rules: string;
 }
 
-type OrchestratorPromptRenderKey = keyof OrchestratorPromptRenderData;
-
-function buildAutomatedReactionsSection(project: ProjectConfig): string {
-  const markdownBold = String.fromCharCode(42).repeat(2);
-  const bold = (text: string): string => `${markdownBold}${text}${markdownBold}`;
-
-  const reactionLines: string[] = [];
-
-  for (const [event, reaction] of Object.entries(project.reactions ?? {})) {
-    if (reaction.auto && reaction.action === "send-to-agent") {
-      reactionLines.push(
-        `- ${bold(event)}: Auto-sends instruction to agent (retries: ${reaction.retries ?? "none"}, escalates after: ${reaction.escalateAfter ?? "never"})`,
-      );
-      continue;
-    }
-
-    if (reaction.auto && reaction.action === "notify") {
-      reactionLines.push(
-        `- ${bold(event)}: Notifies human (priority: ${reaction.priority ?? "info"})`,
-      );
-    }
+function buildProjectCatalog(config: OrchestratorConfig, name: string): string {
+  const orchestrator = config.orchestrators?.[name];
+  if (!orchestrator) {
+    throw new Error(`Unknown orchestrator: ${name}`);
   }
-
-  if (reactionLines.length === 0) {
-    return "";
+  const inScope = resolveInScopeProjects(config, orchestrator);
+  if (inScope.length === 0) {
+    return "_(no projects in scope yet)_";
   }
-
-  return reactionLines.join("\n");
-}
-
-function buildProjectSpecificRulesSection(project: ProjectConfig): string {
-  const rules = project.orchestratorRules?.trim();
-  if (!rules) {
-    return "";
-  }
-
-  return rules;
-}
-
-function removeOptionalSectionBlocks(
-  template: string,
-  data: OrchestratorPromptRenderData,
-): string {
-  const templates = [
-    ["REPO_CONFIGURED_SECTION_START", "REPO_CONFIGURED_SECTION_END", data.repoConfiguredSection],
-    ["REPO_NOT_CONFIGURED_SECTION_START", "REPO_NOT_CONFIGURED_SECTION_END", data.repoNotConfiguredSection],
-    ["AUTOMATED_REACTIONS_SECTION_START", "AUTOMATED_REACTIONS_SECTION_END", data.automatedReactionsSection],
-    ["PROJECT_SPECIFIC_RULES_SECTION_START", "PROJECT_SPECIFIC_RULES_SECTION_END", data.projectSpecificRulesSection],
-  ] as const;
-
-  let interpolated = template;
-  for (const [startKey, endKey, section] of templates) {
-    const startMarker = `{{${startKey}}}`;
-    const endMarker = `{{${endKey}}}`;
-
-    while (true) {
-      const start = interpolated.indexOf(startMarker);
-      const end = interpolated.indexOf(endMarker);
-
-      if (start === -1 && end === -1) {
-        break;
-      }
-
-      if (start === -1 || end === -1 || end < start) {
-        throw new Error(
-          `Malformed optional section block: expected ${startMarker} before ${endMarker}`,
-        );
-      }
-
-      const fullStart = start;
-      const fullEnd = end + endMarker.length;
-      const blockContent = interpolated.slice(start + startMarker.length, end);
-      // Optional sections are flat by design. Reject nesting of the same block
-      // type so future template edits fail loudly instead of matching ambiguously.
-      if (blockContent.includes(startMarker)) {
-        throw new Error(
-          `Nested optional section blocks are not supported: ${startMarker} before ${endMarker}`,
-        );
-      }
-
-      const replacement = section ? blockContent : "";
-      const before = interpolated.slice(0, fullStart);
-      const after = interpolated.slice(fullEnd);
-
-      interpolated = replacement
-        ? before + replacement + after
-        : collapseOptionalGap(before, after);
-    }
-  }
-
-  return interpolated;
-}
-
-function collapseOptionalGap(before: string, after: string): string {
-  const trailingNewlines = before.match(/\n*$/)?.[0] ?? "";
-  const leadingNewlines = after.match(/^\n*/)?.[0] ?? "";
-  const totalNewlines = trailingNewlines.length + leadingNewlines.length;
-  const boundary = totalNewlines >= 2 ? "\n\n" : trailingNewlines + leadingNewlines;
-
-  return (
-    before.slice(0, before.length - trailingNewlines.length) +
-    boundary +
-    after.slice(leadingNewlines.length)
-  );
-}
-
-function hasRenderDataKey(
-  data: OrchestratorPromptRenderData,
-  key: string,
-): key is OrchestratorPromptRenderKey {
-  return Object.prototype.hasOwnProperty.call(data, key);
+  return inScope
+    .map(([id, project]) => {
+      const repo = project.repo ?? "no repo";
+      const prefix = project.sessionPrefix ?? id;
+      const description = project.description ?? "no description";
+      return `- ${id} (${repo}, prefix ${prefix}): ${description}`;
+    })
+    .join("\n");
 }
 
 function createRenderData(opts: OrchestratorPromptConfig): OrchestratorPromptRenderData {
-  const { config, projectId, project } = opts;
-  const hasRepo = Boolean(project.repo);
+  const orchestrator: OrchestratorEntryConfig | undefined = opts.config.orchestrators?.[opts.name];
+  if (!orchestrator) {
+    throw new Error(`Unknown orchestrator: ${opts.name}`);
+  }
+  const port = opts.config.port ?? 3000;
+  const scopeDescription =
+    orchestrator.scope === "all"
+      ? "all registered projects"
+      : `projects: ${orchestrator.scope.projects.join(", ")}`;
 
   return {
-    projectId,
-    projectName: project.name,
-    projectRepo: project.repo ?? "not configured",
-    projectDefaultBranch: project.defaultBranch,
-    projectSessionPrefix: project.sessionPrefix,
-    projectPath: project.path,
-    dashboardPort: String(config.port ?? 3000),
-    automatedReactionsSection: buildAutomatedReactionsSection(project),
-    projectSpecificRulesSection: buildProjectSpecificRulesSection(project),
-    repoConfiguredSection: hasRepo ? "true" : "",
-    repoNotConfiguredSection: hasRepo ? "" : "true",
+    metaName: opts.name,
+    dashboardUrl: `http://localhost:${port}/meta/${opts.name}`,
+    scopeDescription,
+    discoverDescription: orchestrator.discover
+      ? "enabled — newly-registered projects appear in `athene meta-status` and the dashboard immediately (both read live config); this prompt's catalog above is a snapshot from meta-start, so restart the orchestrator to surface new projects here"
+      : "disabled",
+    projectCatalog: buildProjectCatalog(opts.config, opts.name),
+    rules: orchestrator.rules?.trim() ?? "",
   };
 }
 
-function renderTemplate(template: string, data: OrchestratorPromptRenderData): string {
-  const unresolvedPlaceholder = template
-    .replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, "")
-    .match(/\{\{[^}]+\}\}/);
-  if (unresolvedPlaceholder) {
-    throw new Error(`Unresolved template placeholder: ${unresolvedPlaceholder[0]}`);
+/**
+ * Resolve a single optional section block: {{KEY_START}}...{{KEY_END}}.
+ * When `keep` is false the whole block (including markers) is removed; when true
+ * the markers are stripped and the inner content kept.
+ */
+function resolveOptionalSection(template: string, key: string, keep: boolean): string {
+  const startMarker = `{{${key}_START}}`;
+  const endMarker = `{{${key}_END}}`;
+  const start = template.indexOf(startMarker);
+  const end = template.indexOf(endMarker);
+  if (start === -1 && end === -1) {
+    return template;
   }
+  if (start === -1 || end === -1 || end < start) {
+    throw new Error(`Malformed optional section block: expected ${startMarker} before ${endMarker}`);
+  }
+  const before = template.slice(0, start);
+  const inner = template.slice(start + startMarker.length, end);
+  const after = template.slice(end + endMarker.length);
+  return keep ? `${before}${inner}${after}` : `${before}${after}`;
+}
 
+function renderTemplate(template: string, data: OrchestratorPromptRenderData): string {
   return template.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (_match, rawKey: string) => {
-    if (!hasRenderDataKey(data, rawKey)) {
+    if (!Object.prototype.hasOwnProperty.call(data, rawKey)) {
       throw new Error(`Unresolved template placeholder: ${rawKey}`);
     }
-
-    return data[rawKey];
+    return data[rawKey as keyof OrchestratorPromptRenderData];
   });
 }
 
-function finalizeRenderedPrompt(prompt: string): string {
-  return prompt.trim();
-}
-
-/**
- * Generate orchestrator prompt content.
- * Provides orchestrator agent with context about available commands,
- * session management workflows, and project configuration.
- */
+/** Generate the orchestrator prompt content for the named orchestrator. */
 export function generateOrchestratorPrompt(opts: OrchestratorPromptConfig): string {
   const data = createRenderData(opts);
-  const templateWithOptionalSections = removeOptionalSectionBlocks(
+  const withSections = resolveOptionalSection(
     orchestratorTemplate.trim(),
-    data,
+    "RULES_SECTION",
+    data.rules.length > 0,
   );
-
-  return finalizeRenderedPrompt(
-    renderTemplate(templateWithOptionalSections, data),
-  );
+  return renderTemplate(withSections, data).trim();
 }

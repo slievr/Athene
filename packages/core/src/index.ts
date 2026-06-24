@@ -202,23 +202,19 @@ export type { LifecycleManagerDeps } from "./lifecycle-manager.js";
 export { buildPrompt, BASE_AGENT_PROMPT, BASE_AGENT_PROMPT_NO_REPO } from "./prompt-builder.js";
 export type { PromptBuildConfig } from "./prompt-builder.js";
 
-// Orchestrator prompt — generates orchestrator context for `athene start`
+// Orchestrator prompt + scope resolution + spawn collision guard
 export { generateOrchestratorPrompt } from "./orchestrator-prompt.js";
 export type { OrchestratorPromptConfig } from "./orchestrator-prompt.js";
-
-// Meta orchestrator prompt + scope resolution + spawn collision guard
-export { generateMetaOrchestratorPrompt } from "./meta-orchestrator-prompt.js";
-export type { MetaOrchestratorPromptConfig } from "./meta-orchestrator-prompt.js";
 export {
   resolveInScopeProjects,
   resolveInScopeProjectIds,
   reconcileMetaScopeIds,
-} from "./meta-scope.js";
+} from "./orchestrator-scope.js";
 export { checkSpawnCollision, formatHardRefusal } from "./spawn-collision.js";
 export type { SpawnCollisionResult, SpawnCollisionIntent } from "./spawn-collision.js";
 
-// Meta orchestrator config writer
-export { appendMetaOrchestrator, type MetaOrchestratorWriteInput } from "./meta-orchestrator-config-writer.js";
+// Orchestrator config writer
+export { appendOrchestrator, type OrchestratorWriteInput } from "./orchestrator-config-writer.js";
 
 // Shared utilities
 export {
@@ -250,10 +246,6 @@ export {
 export type { OpenCodeSessionListEntry } from "./opencode-shared.js";
 export { getWorkspaceAgentsMdPath, writeWorkspaceOpenCodeAgentsMd } from "./opencode-agents-md.js";
 export { writeOpenCodeConfig } from "./opencode-config.js";
-export {
-  getOrchestratorSessionId,
-  normalizeOrchestratorSessionStrategy,
-} from "./orchestrator-session-strategy.js";
 export { resolveSpawnTarget } from "./spawn-target.js";
 export type { SpawnTarget } from "./spawn-target.js";
 
@@ -287,7 +279,6 @@ export {
 
 // Git-based activity helpers — recent-commit liveness signal for agent plugins
 export { hasRecentCommits } from "./git-activity.js";
-export type { NormalizedOrchestratorSessionStrategy } from "./orchestrator-session-strategy.js";
 
 export {
   createCorrelationId,

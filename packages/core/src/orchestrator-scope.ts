@@ -1,5 +1,5 @@
 /**
- * Resolve which projects a meta orchestrator can route into, from its scope.
+ * Resolve which projects an orchestrator can route into, from its scope.
  *
  * - scope "all"  → every registered project (insertion order preserved)
  * - scope list   → the listed project IDs that exist in config.projects
@@ -7,11 +7,11 @@
  * Shared by the prompt generator (catalog rendering) and the supervisor's
  * `discover` reconcile path. Pure — no I/O.
  */
-import type { MetaOrchestratorConfig, OrchestratorConfig, ProjectConfig } from "./types.js";
+import type { OrchestratorEntryConfig, OrchestratorConfig, ProjectConfig } from "./types.js";
 
 export function resolveInScopeProjects(
   config: OrchestratorConfig,
-  meta: MetaOrchestratorConfig,
+  meta: OrchestratorEntryConfig,
 ): Array<[string, ProjectConfig]> {
   const entries = Object.entries(config.projects);
   if (meta.scope === "all") {
@@ -24,13 +24,13 @@ export function resolveInScopeProjects(
 /** The ordered list of in-scope project IDs. */
 export function resolveInScopeProjectIds(
   config: OrchestratorConfig,
-  meta: MetaOrchestratorConfig,
+  meta: OrchestratorEntryConfig,
 ): string[] {
   return resolveInScopeProjects(config, meta).map(([id]) => id);
 }
 
 /**
- * Reconcile a meta orchestrator's in-scope project set against the current
+ * Reconcile an orchestrator's in-scope project set against the current
  * global config, so newly-registered projects become routable without a restart.
  *
  * - scope "all": always the full current project set (discover is redundant).
@@ -40,12 +40,12 @@ export function resolveInScopeProjectIds(
  *   `baselineProjectIds`.
  *
  * NOTE: not yet wired into the supervisor/polling loop — `discover` currently
- * takes effect on meta-orchestrator restart (the prompt catalog is generated once
- * at meta-start). This helper is the building block for a future live
+ * takes effect on orchestrator restart (the prompt catalog is generated once
+ * at start). This helper is the building block for a future live
  * prompt-refresh path; `meta-status`/dashboard already resolve scope live.
  *
  * IMPORTANT — `baselineProjectIds` MUST be the FULL set of project IDs that were
- * registered when the meta orchestrator started (e.g. `Object.keys(startupConfig.
+ * registered when the orchestrator started (e.g. `Object.keys(startupConfig.
  * projects)`), NOT the in-scope subset. Seeding it with the in-scope subset would
  * make every already-registered out-of-list project look "newly registered" on
  * the first reconcile and silently defeat the explicit allow-list. With the full
@@ -54,7 +54,7 @@ export function resolveInScopeProjectIds(
  */
 export function reconcileMetaScopeIds(
   config: OrchestratorConfig,
-  meta: MetaOrchestratorConfig,
+  meta: OrchestratorEntryConfig,
   baselineProjectIds: string[],
 ): string[] {
   const base = resolveInScopeProjectIds(config, meta);

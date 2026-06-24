@@ -3,8 +3,8 @@ import {
   resolveInScopeProjects,
   resolveInScopeProjectIds,
   reconcileMetaScopeIds,
-} from "../meta-scope.js";
-import type { MetaOrchestratorConfig, OrchestratorConfig, ProjectConfig } from "../types.js";
+} from "../orchestrator-scope.js";
+import type { OrchestratorEntryConfig, OrchestratorConfig, ProjectConfig } from "../types.js";
 
 const proj = (name: string): ProjectConfig =>
   ({ name, path: `/x/${name}`, defaultBranch: "main", sessionPrefix: name }) as ProjectConfig;
@@ -12,8 +12,8 @@ const proj = (name: string): ProjectConfig =>
 const makeConfig = (ids: string[]): OrchestratorConfig =>
   ({ projects: Object.fromEntries(ids.map((id) => [id, proj(id)])) }) as OrchestratorConfig;
 
-const all: MetaOrchestratorConfig = { scope: "all", discover: false };
-const list = (projects: string[], discover = false): MetaOrchestratorConfig => ({
+const all: OrchestratorEntryConfig = { scope: "all", discover: false };
+const list = (projects: string[], discover = false): OrchestratorEntryConfig => ({
   scope: { projects },
   discover,
 });

@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { appendMetaOrchestrator } from "../meta-orchestrator-config-writer.js";
+import { appendOrchestrator } from "../orchestrator-config-writer.js";
 
-describe("appendMetaOrchestrator", () => {
+describe("appendOrchestrator", () => {
   let tmpDir: string;
   let configPath: string;
 
@@ -17,25 +17,27 @@ describe("appendMetaOrchestrator", () => {
     rmSync(tmpDir, { recursive: true });
   });
 
-  it("adds a new entry to a config with no existing metaOrchestrators", () => {
+  it("adds a new entry to a config with no existing orchestrators", () => {
     writeFileSync(configPath, "projects: {}\n", "utf-8");
 
-    appendMetaOrchestrator(configPath, { name: "main", scope: "all" });
+    appendOrchestrator(configPath, { name: "main", scope: "all" });
 
     const result = readFileSync(configPath, "utf-8");
     expect(result).toContain("main:");
     expect(result).toContain("scope: all");
     expect(result).toContain("discover: true");
+    expect(result).toContain("orchestrators:");
+    expect(result).not.toContain("metaOrchestrators:");
   });
 
-  it("adds a new entry alongside an existing metaOrchestrators block", () => {
+  it("adds a new entry alongside an existing orchestrators block", () => {
     writeFileSync(
       configPath,
-      "projects: {}\nmetaOrchestrators:\n  existing:\n    scope: all\n    discover: true\n",
+      "projects: {}\norchestrators:\n  existing:\n    scope: all\n    discover: true\n",
       "utf-8",
     );
 
-    appendMetaOrchestrator(configPath, { name: "new-one", scope: "all" });
+    appendOrchestrator(configPath, { name: "new-one", scope: "all" });
 
     const result = readFileSync(configPath, "utf-8");
     expect(result).toContain("existing:");
@@ -45,7 +47,7 @@ describe("appendMetaOrchestrator", () => {
   it("writes explicit project scope", () => {
     writeFileSync(configPath, "projects: {}\n", "utf-8");
 
-    appendMetaOrchestrator(configPath, {
+    appendOrchestrator(configPath, {
       name: "scoped",
       scope: { projects: ["proj-a", "proj-b"] },
     });
@@ -58,7 +60,7 @@ describe("appendMetaOrchestrator", () => {
   it("writes agent field when provided", () => {
     writeFileSync(configPath, "projects: {}\n", "utf-8");
 
-    appendMetaOrchestrator(configPath, { name: "m", scope: "all", agent: "codex" });
+    appendOrchestrator(configPath, { name: "m", scope: "all", agent: "codex" });
 
     const result = readFileSync(configPath, "utf-8");
     expect(result).toContain("agent: codex");
@@ -67,7 +69,7 @@ describe("appendMetaOrchestrator", () => {
   it("omits agent field when not provided", () => {
     writeFileSync(configPath, "projects: {}\n", "utf-8");
 
-    appendMetaOrchestrator(configPath, { name: "m", scope: "all" });
+    appendOrchestrator(configPath, { name: "m", scope: "all" });
 
     const result = readFileSync(configPath, "utf-8");
     expect(result).not.toContain("agent:");
@@ -76,9 +78,25 @@ describe("appendMetaOrchestrator", () => {
   it("always sets discover: true", () => {
     writeFileSync(configPath, "projects: {}\n", "utf-8");
 
-    appendMetaOrchestrator(configPath, { name: "m", scope: "all" });
+    appendOrchestrator(configPath, { name: "m", scope: "all" });
 
     const result = readFileSync(configPath, "utf-8");
     expect(result).toContain("discover: true");
+  });
+
+  it("leaves a pre-existing metaOrchestrators key untouched", () => {
+    writeFileSync(
+      configPath,
+      "projects: {}\nmetaOrchestrators:\n  legacy:\n    scope: all\n    discover: true\n",
+      "utf-8",
+    );
+
+    appendOrchestrator(configPath, { name: "new-one", scope: "all" });
+
+    const result = readFileSync(configPath, "utf-8");
+    expect(result).toContain("metaOrchestrators:");
+    expect(result).toContain("legacy:");
+    expect(result).toContain("orchestrators:");
+    expect(result).toContain("new-one:");
   });
 });
