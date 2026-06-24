@@ -29,6 +29,10 @@ export interface OrchestratorPageData {
   slug: string;
   /** Display label from config `name` field. Falls back to slug if absent. */
   label: string;
+  /** Scope: "all" or an array of directory paths. */
+  scope: "all" | string[];
+  /** Whether auto-discovery is enabled. */
+  discover: boolean;
   sessions: DashboardSession[];
   /**
    * Full registered project set (registration order). Passed to Dashboard as
@@ -62,6 +66,8 @@ export const getOrchestratorPageData = cache(async function getOrchestratorPageD
     id: orchId,
     slug: "",
     label: "",
+    scope: "all",
+    discover: false,
     sessions: [],
     projects,
     orchestrators: [],
@@ -82,9 +88,11 @@ export const getOrchestratorPageData = cache(async function getOrchestratorPageD
     }
     [orchSlug] = orchEntry;
     // Populate display label same pattern as SidebarOrchestrator
-    const orchConfig = orchMap[orchSlug] as { name?: string } | undefined;
+    const orchConfig = orchMap[orchSlug] as { name?: string; scope?: "all" | string[]; discover?: boolean } | undefined;
     pageData.slug = orchSlug;
     pageData.label = orchConfig?.name ?? orchSlug;
+    pageData.scope = orchConfig?.scope ?? "all";
+    pageData.discover = orchConfig?.discover ?? false;
     pageData.attentionZones = config.dashboard?.attentionZones ?? DEFAULT_ATTENTION_ZONE_MODE;
     pageData.orchestrators = await listSidebarOrchestrators(config, registry);
     try {

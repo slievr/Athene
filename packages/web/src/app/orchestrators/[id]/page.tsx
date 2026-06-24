@@ -3,6 +3,7 @@ import { Dashboard } from "@/components/Dashboard";
 import { getOrchestratorPageData } from "@/lib/orchestrator-page-data";
 import { orchestratorSessionPath } from "@/lib/routes";
 import { OrchestratorSpawnForm } from "@/components/OrchestratorSpawnForm";
+import { OrchestratorSettingsBar } from "@/components/OrchestratorSettingsBar";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,14 @@ export default async function OrchestratorPage(props: {
           </a>
         </div>
       )}
+      <OrchestratorSettingsBar
+        orchId={id}
+        currentLabel={data.label}
+        currentScope={data.scope}
+        currentDiscover={data.discover}
+        projects={data.projects}
+        sessionCount={data.sessions.length}
+      />
       {data.projects.length > 0 && (
         <OrchestratorSpawnForm orchestratorName={data.slug} projects={data.projects} />
       )}
