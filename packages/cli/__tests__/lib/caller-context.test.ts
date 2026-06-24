@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getCallerType, isHumanCaller } from "../../src/lib/caller-context.js";
 
 describe("getCallerType / isHumanCaller", () => {
@@ -48,5 +48,10 @@ describe("getCallerType / isHumanCaller", () => {
     process.env["ATHENE_CALLER_TYPE"] = "agent";
     process.env["AO_CALLER_TYPE"] = "human";
     expect(getCallerType()).toBe("agent");
+  });
+
+  it("ATHENE_CALLER_TYPE=meta-orchestrator is treated as orchestrator", () => {
+    vi.stubEnv("ATHENE_CALLER_TYPE", "meta-orchestrator");
+    expect(getCallerType()).toBe("orchestrator");
   });
 });

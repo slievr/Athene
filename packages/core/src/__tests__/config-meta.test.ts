@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validateConfig, assertMetaScopeProjectsExist } from "../config.js";
+import { isOrchestratorSession } from "../types.js";
 
 
 const base = {
@@ -112,5 +113,16 @@ describe("dual-read: orchestrators / metaOrchestrators", () => {
     });
     expect(cfg.orchestrators?.orch).toBeDefined();
     expect(cfg.orchestrators?.old).toBeUndefined();
+  });
+});
+
+describe("backward-compat: old metadata still loads", () => {
+  it("role='meta-orchestrator' → isOrchestratorSession returns true", () => {
+    expect(isOrchestratorSession({ id: "x", metadata: { role: "meta-orchestrator" } })).toBe(true);
+  });
+
+  it("metaOrchestrators config key still parses and is exposed as orchestrators", () => {
+    const cfg = validateConfig({ ...base, metaOrchestrators: { old: { scope: "all" } } });
+    expect(cfg.orchestrators?.old).toBeDefined();
   });
 });

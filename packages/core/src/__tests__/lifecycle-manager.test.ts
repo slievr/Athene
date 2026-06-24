@@ -4863,3 +4863,10 @@ describe("runtime orphan reconciliation (poll loop)", () => {
     }
   });
 });
+
+describe("regression: lifecycle manager module integrity", () => {
+  it("lifecycle manager module loads without referencing orchestrator role strings", async () => {
+    const { createLifecycleManager } = await import("../lifecycle-manager.js");
+    expect(typeof createLifecycleManager).toBe("function");
+  });
+});

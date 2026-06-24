@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseSpawnOwner, effectiveOwnerOptions } from "../../src/commands/spawn.js";
+import { parseSpawnOwner, effectiveOwnerOptions, inferSpawnOwner } from "../../src/commands/spawn.js";
 
 describe("parseSpawnOwner", () => {
   it("returns empty owner when no flags are given", () => {
@@ -75,5 +75,13 @@ describe("effectiveOwnerOptions (env auto-stamp)", () => {
       },
     );
     expect(out).toEqual({ ownerKind: "meta", metaOwner: "from-athene" });
+  });
+});
+
+describe("inferSpawnOwner (env auto-stamp)", () => {
+  it("ATHENE_META_NAME falls back when ATHENE_ORCHESTRATOR_NAME is absent", () => {
+    const env = { ATHENE_CALLER_TYPE: "meta-orchestrator", ATHENE_META_NAME: "legacy-orch" };
+    const owner = inferSpawnOwner(env as Record<string, string | undefined>, {});
+    expect(owner.orchestratorOwner).toBe("legacy-orch");
   });
 });
