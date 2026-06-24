@@ -2,21 +2,24 @@ name: Release
 
 # Release pipeline: version bumps + npm publish via changesets.
 #
-# On every push to main (after CI passes), if changeset files are present this
-# job runs `changeset version`, commits the version bump directly to main, then
-# immediately publishes to npm. No intermediate "Version Packages" PR is opened.
+# Two-phase flow (branch protection prevents direct pushes to main):
 #
-# If no changeset files are present, the job is a no-op (nothing to publish).
+# Phase 1 — triggered by any feature commit landing on main:
+#   - Auto-generates a changeset from conventional commit messages if none exist
+#     (skipped if the current package version is not yet on npm — that means a
+#      version bump already happened and we're waiting for it to be published)
+#   - Runs `changeset version` to bump versions
+#   - Opens a "chore: version packages" PR and enables auto-merge; CI runs on
+#     the PR and it merges automatically when all checks pass
+#
+# Phase 2 — triggered by the version-bump PR merging to main:
+#   - npm check finds the new version is not yet published → publishes
+#   - Creates the vX.Y.Z git tag and GitHub release
 #
 # Publishing uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret required.
 # id-token: write lets GitHub Actions mint an OIDC token; the npm CLI exchanges
-# it automatically for a short-lived publish credential. Provenance attestations
-# are generated automatically as part of Trusted Publishing.
+# it automatically for a short-lived publish credential.
 # See: https://docs.npmjs.com/trusted-publishers
-#
-# Before the first publish, configure a Trusted Publisher for each
-# @made-by-moonlight/* package on npmjs.com pointing at this workflow file
-# (release.yml) in the slievr/Athene repo. GITHUB_TOKEN is automatic.
 
 on:
   workflow_run:
@@ -34,26 +37,22 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: write
   id-token: write # npm provenance via OIDC
 
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    # Skip the version-bump commit itself — it has no changesets and we already
-    # published in the run that created it. Without this guard the job would run
-    # twice per release (once per feature commit, once per the version-bump push).
     if: >-
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main' &&
-      !startsWith(github.event.workflow_run.head_commit.message, 'chore: version packages')
+      github.event.workflow_run.head_branch == 'main'
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
-          # contents: write permission above allows pushing the version-bump commit
           token: ${{ secrets.GITHUB_TOKEN }}
       - uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d
         with:
@@ -68,8 +67,7 @@ jobs:
       # Pre-publish guard: catches the case where a publishable package has a
       # workspace:* runtime dep on a `private: true` package — pnpm would
       # rewrite the dep on publish to a version that doesn't exist on npm,
-      # breaking `npm install -g @made-by-moonlight/athene`. Still runs here so the
-      # public repo blocks a malformed version bump before it reaches npm.
+      # breaking `npm install -g @made-by-moonlight/athene`.
       - run: node scripts/check-publishable-deps.mjs
 
       - name: Configure git
@@ -77,15 +75,22 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      # Auto-generate a changeset when none are present. Derives the bump type
-      # from conventional commit prefixes since the last git tag: any `feat:`
-      # commit → minor, everything else → patch. This means every PR that
-      # merges to main produces a release without developers needing to run
-      # `pnpm changeset` manually.
+      # Auto-generate a changeset when none are present, derived from conventional
+      # commit prefixes since the last git tag: feat → minor, everything else → patch.
+      #
+      # Skipped when the current package version is not yet on npm — that means a
+      # version-bump PR already merged and we're in Phase 2 (publish, not bump again).
       - name: Auto-generate changeset
         run: |
+          current=$(node -p "require('./packages/athene/package.json').version")
+          if npm view "@made-by-moonlight/athene@${current}" version 2>/dev/null | grep -qF "$current"; then
+            echo "Version ${current} already on npm — skipping changeset generation (Phase 2)."
+            exit 0
+          fi
+
           pending=$(find .changeset -name '*.md' ! -name 'README.md' 2>/dev/null | wc -l)
           if [ "$pending" -gt 0 ]; then
+            echo "Existing changeset files found, skipping auto-generate."
             exit 0
           fi
 
@@ -94,6 +99,7 @@ jobs:
           commits=$(git log "$range" --pretty=format:"%s" 2>/dev/null | head -50)
 
           if [ -z "$commits" ]; then
+            echo "No commits since last tag, nothing to release."
             exit 0
           fi
 
@@ -114,24 +120,38 @@ jobs:
 
           echo "Generated ${bump} changeset ($(echo "$commits" | wc -l | tr -d ' ') commits)."
 
-      # If changeset files exist, bump versions, commit, and push to main.
-      # The version-bump commit is excluded from future release runs via the
-      # job-level `if:` guard above, preventing a second publish attempt.
+      # If changeset files exist, bump versions and open an auto-merge PR.
+      # Branch protection prevents direct pushes to main, so the version bump
+      # goes through a PR where CI runs; it merges automatically when checks pass,
+      # triggering Phase 2 (publish) on the next workflow_run event.
       - name: Version packages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pending=$(find .changeset -name '*.md' ! -name 'README.md' 2>/dev/null | wc -l)
-          if [ "$pending" -gt 0 ]; then
-            pnpm changeset version
-            git add -A
-            git commit -m "chore: version packages"
-            git push origin HEAD:main
+          if [ "$pending" -eq 0 ]; then
+            exit 0
           fi
 
-      # Determine whether the current version needs publishing. We check npm
-      # directly rather than comparing git history — the HEAD^/HEAD diff only
-      # fires on the commit that bumped the version, so a version that was
-      # bumped but never published (e.g. a failed prior run) would never retry.
-      # Checking npm is the authoritative source of truth.
+          pnpm changeset version
+          new_version=$(node -p "require('./packages/athene/package.json').version")
+          branch="release/${new_version}"
+
+          git checkout -b "$branch"
+          git add -A
+          git commit -m "chore: version packages"
+          git push origin "$branch"
+
+          gh pr create \
+            --title "chore: version packages" \
+            --body "Automated version bump to ${new_version}. Merges automatically once CI passes." \
+            --head "$branch" \
+            --base main
+          gh pr merge "$branch" --auto --merge
+
+      # Check npm directly to determine whether to publish. This handles both
+      # Phase 2 (version-bump PR just merged, version not yet on npm) and
+      # failure recovery (any prior run that bumped but didn't publish).
       - name: Determine release state
         id: state
         env:
@@ -159,24 +179,19 @@ jobs:
           fi
 
       # `pnpm release` = pnpm -r build && node scripts/publish.mjs.
-      # scripts/publish.mjs uses `pnpm pack` (not `npm pack`) to generate
-      # the tarball so that workspace:* deps are rewritten to resolved
-      # semver versions before the package reaches npm. It also skips
-      # packages whose current version is already published (idempotent).
+      # scripts/publish.mjs uses `pnpm pack` so workspace:* deps are rewritten
+      # to resolved semver before the tarball reaches npm. Skips already-published
+      # versions (idempotent).
       - name: Publish packages
         if: steps.state.outputs.is_release_commit == 'true'
         run: pnpm release
 
-      # Push the umbrella `vX.Y.Z` tag only if this is a fresh version-bump
-      # commit AND the tag isn't already on the remote (idempotent on re-run).
       - name: Tag versioned packages
         if: steps.state.outputs.is_release_commit == 'true' && steps.state.outputs.tag_on_remote == 'false'
         run: |
           git tag "v${{ steps.state.outputs.version }}"
           git push origin "v${{ steps.state.outputs.version }}"
 
-      # Public-facing GitHub release. Stable channel — not a prerelease.
-      # Skipped if a release for this version already exists (idempotent).
       - name: Create GitHub release
         if: steps.state.outputs.is_release_commit == 'true' && steps.state.outputs.release_exists == 'false'
         env:
