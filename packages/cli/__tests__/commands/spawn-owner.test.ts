@@ -3,21 +3,17 @@ import { parseSpawnOwner, effectiveOwnerOptions, inferSpawnOwner } from "../../s
 
 describe("parseSpawnOwner", () => {
   it("returns empty owner when no flags are given", () => {
-    expect(parseSpawnOwner({})).toEqual({ ownerKind: undefined, metaOwner: undefined });
+    expect(parseSpawnOwner({})).toEqual({});
   });
 
   it("accepts meta ownership with a meta owner", () => {
     expect(parseSpawnOwner({ ownerKind: "meta", metaOwner: "meta-1" })).toEqual({
-      ownerKind: "meta",
-      metaOwner: "meta-1",
+      orchestratorOwner: "meta-1",
     });
   });
 
   it("accepts explicit project ownership", () => {
-    expect(parseSpawnOwner({ ownerKind: "project" })).toEqual({
-      ownerKind: "project",
-      metaOwner: undefined,
-    });
+    expect(parseSpawnOwner({ ownerKind: "project" })).toEqual({});
   });
 
   it("rejects an invalid owner kind", () => {
@@ -41,7 +37,7 @@ describe("effectiveOwnerOptions (env auto-stamp)", () => {
     );
     expect(out).toEqual({ ownerKind: "meta", metaOwner: "meta-1" });
     // ...and validates/stamps cleanly through parseSpawnOwner.
-    expect(parseSpawnOwner(out)).toEqual({ ownerKind: "meta", metaOwner: "meta-1" });
+    expect(parseSpawnOwner(out)).toEqual({ orchestratorOwner: "meta-1" });
   });
 
   it("does not stamp for a per-project orchestrator env", () => {
