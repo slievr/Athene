@@ -1,5 +1,13 @@
 # @made-by-moonlight/athene-plugin-terminal-iterm2
 
+## 0.11.3
+
+### Patch Changes
+
+- 9b038ff: test: verify release/\* PR merges without CI in workflow
+- Updated dependencies [9b038ff]
+  - @made-by-moonlight/athene-core@0.11.3
+
 ## 0.11.2
 
 ### Patch Changes
