@@ -721,6 +721,8 @@ function ProjectSidebarInner({
         <SidebarOrchestrators
           collapsed
           orchestrators={namedOrchestrators}
+          allSessions={sessions ?? []}
+          projects={projects}
           activeSessionId={activeSessionId}
           onNavigate={navigate}
         />
@@ -792,6 +794,8 @@ function ProjectSidebarInner({
       <SidebarOrchestrators
         collapsed={false}
         orchestrators={namedOrchestrators}
+        allSessions={sessions ?? []}
+        projects={projects}
         activeSessionId={activeSessionId}
         onNavigate={navigate}
       />

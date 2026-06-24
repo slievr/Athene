@@ -5584,6 +5584,23 @@ body:not(.is-resizing-x) .sidebar-wrapper {
   opacity: 0.8;
 }
 
+.project-sidebar__orch-spawn-row {
+  display: block;
+  width: 100%;
+  padding: 4px 12px 4px 28px;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.project-sidebar__orch-spawn-row:hover {
+  color: var(--color-text-secondary);
+}
+
 /* Collapsed-rail orchestrator cluster */
 .project-sidebar__orch-collapsed {
   width: 100%;

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { SidebarOrchestrators, type SidebarOrchestrator } from "@/components/SidebarOrchestrators";
 import type { DashboardSession } from "@/lib/types";
+import type { ProjectInfo } from "@/lib/project-name";
 
 const mockRefresh = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -13,7 +14,13 @@ const orchSession = {
   projectId: "_meta",
   status: "working",
   activity: "active",
+  metadata: {},
 } as unknown as DashboardSession;
+
+const noProjects: ProjectInfo[] = [];
+const someProjects: ProjectInfo[] = [
+  { id: "proj-a", name: "Project A" } as ProjectInfo,
+];
 
 describe("SidebarOrchestrators", () => {
   it("renders 'Orchestrators' label (not Parliament)", () => {
@@ -21,6 +28,8 @@ describe("SidebarOrchestrators", () => {
       <SidebarOrchestrators
         collapsed={false}
         orchestrators={[{ name: "orch-1", session: null }]}
+        allSessions={[]}
+        projects={noProjects}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
@@ -37,6 +46,8 @@ describe("SidebarOrchestrators", () => {
           { name: "alpha", session: null },
           { name: "beta", session: null },
         ]}
+        allSessions={[]}
+        projects={noProjects}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
@@ -52,6 +63,8 @@ describe("SidebarOrchestrators", () => {
       <SidebarOrchestrators
         collapsed={false}
         orchestrators={[]}
+        allSessions={[]}
+        projects={noProjects}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
@@ -65,6 +78,8 @@ describe("SidebarOrchestrators", () => {
       <SidebarOrchestrators
         collapsed={false}
         orchestrators={[{ name: "fleet", session: orchSession }]}
+        allSessions={[]}
+        projects={noProjects}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
@@ -77,6 +92,8 @@ describe("SidebarOrchestrators", () => {
       <SidebarOrchestrators
         collapsed={false}
         orchestrators={[{ name: "fleet", session: orchSession }]}
+        allSessions={[]}
+        projects={noProjects}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
@@ -89,6 +106,8 @@ describe("SidebarOrchestrators", () => {
       <SidebarOrchestrators
         collapsed={false}
         orchestrators={[{ name: "orch-1", session: orchSession }]}
+        allSessions={[]}
+        projects={noProjects}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
@@ -101,13 +120,13 @@ describe("SidebarOrchestrators", () => {
       <SidebarOrchestrators
         collapsed={false}
         orchestrators={[{ name: "orch-1", session: orchSession }]}
+        allSessions={[]}
+        projects={noProjects}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
     );
-    const row = container.querySelector(".project-sidebar__orch-row");
-    expect(row).toBeTruthy();
-    expect(row!.querySelector(".sidebar-session-dot[data-level]")).toBeTruthy();
+    expect(container.querySelector(".sidebar-session-dot[data-level]")).toBeTruthy();
   });
 
   it("renders no activity dot for an orchestrator without a carried session", () => {
@@ -115,13 +134,13 @@ describe("SidebarOrchestrators", () => {
       <SidebarOrchestrators
         collapsed={false}
         orchestrators={[{ name: "orch-1", session: null }]}
+        allSessions={[]}
+        projects={noProjects}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
     );
-    const row = container.querySelector(".project-sidebar__orch-row");
-    expect(row).toBeTruthy();
-    expect(row!.querySelector(".sidebar-session-dot")).toBeNull();
+    expect(container.querySelector(".sidebar-session-dot")).toBeNull();
   });
 
   it("renders the collapsed glyph cluster without inline styles", () => {
@@ -129,6 +148,8 @@ describe("SidebarOrchestrators", () => {
       <SidebarOrchestrators
         collapsed
         orchestrators={[{ name: "orch-1", session: orchSession }]}
+        allSessions={[]}
+        projects={noProjects}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
@@ -143,6 +164,8 @@ describe("SidebarOrchestrators", () => {
       <SidebarOrchestrators
         collapsed
         orchestrators={[{ name: "orch-1", session: null }]}
+        allSessions={[]}
+        projects={noProjects}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
@@ -150,18 +173,85 @@ describe("SidebarOrchestrators", () => {
     expect(container.querySelector('a[href="/orchestrators/orch-1"]')).toBeTruthy();
   });
 
-  it("navigates on click", () => {
+  it("navigates to fleet dashboard when fleet link is clicked", () => {
     const onNavigate = vi.fn();
-    render(
+    const { container } = render(
       <SidebarOrchestrators
         collapsed={false}
         orchestrators={[{ name: "fleet", session: orchSession }]}
+        allSessions={[]}
+        projects={noProjects}
         activeSessionId={undefined}
         onNavigate={onNavigate}
       />,
     );
-    screen.getByText("fleet").closest("a")!.click();
+    const fleetLink = container.querySelector('a[href="/orchestrators/fleet"]') as HTMLAnchorElement;
+    expect(fleetLink).toBeTruthy();
+    fleetLink.click();
     expect(onNavigate).toHaveBeenCalledWith("/orchestrators/fleet", orchSession);
+  });
+
+  it("expands to show session list when chevron is clicked", () => {
+    const workerSession = {
+      id: "worker-1",
+      projectId: "proj-a",
+      status: "working",
+      activity: "active",
+      displayName: "My Worker",
+      metadata: { orchestratorOwner: "fleet" },
+    } as unknown as DashboardSession;
+
+    render(
+      <SidebarOrchestrators
+        collapsed={false}
+        orchestrators={[{ name: "fleet", session: orchSession }]}
+        allSessions={[workerSession]}
+        projects={noProjects}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+
+    // Initially not expanded
+    expect(screen.queryByText("My Worker")).not.toBeInTheDocument();
+
+    // Click the toggle button (contains ◆ and "fleet")
+    fireEvent.click(screen.getByRole("button", { name: /toggle fleet sessions/i }));
+
+    // Now the session should be visible
+    expect(screen.getByText("My Worker")).toBeInTheDocument();
+  });
+
+  it("shows '+ New session' button when expanded and projects exist", () => {
+    render(
+      <SidebarOrchestrators
+        collapsed={false}
+        orchestrators={[{ name: "fleet", session: orchSession }]}
+        allSessions={[]}
+        projects={someProjects}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /toggle fleet sessions/i }));
+    expect(screen.getByText("+ New session")).toBeInTheDocument();
+  });
+
+  it("does not show '+ New session' when no projects configured", () => {
+    render(
+      <SidebarOrchestrators
+        collapsed={false}
+        orchestrators={[{ name: "fleet", session: orchSession }]}
+        allSessions={[]}
+        projects={noProjects}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /toggle fleet sessions/i }));
+    expect(screen.queryByText("+ New session")).not.toBeInTheDocument();
   });
 
   describe("start button on orchestrator rows", () => {
@@ -178,6 +268,8 @@ describe("SidebarOrchestrators", () => {
         <SidebarOrchestrators
           collapsed={false}
           orchestrators={[{ name: "fleet", session: null }]}
+          allSessions={[]}
+          projects={noProjects}
           activeSessionId={undefined}
           onNavigate={() => {}}
         />,
@@ -190,6 +282,8 @@ describe("SidebarOrchestrators", () => {
         <SidebarOrchestrators
           collapsed={false}
           orchestrators={[{ name: "fleet", session: orchSession }]}
+          allSessions={[]}
+          projects={noProjects}
           activeSessionId={undefined}
           onNavigate={() => {}}
         />,
@@ -202,6 +296,8 @@ describe("SidebarOrchestrators", () => {
         <SidebarOrchestrators
           collapsed={false}
           orchestrators={[{ name: "fleet", session: null }]}
+          allSessions={[]}
+          projects={noProjects}
           activeSessionId={undefined}
           onNavigate={() => {}}
         />,
@@ -223,6 +319,8 @@ describe("SidebarOrchestrators", () => {
         <SidebarOrchestrators
           collapsed
           orchestrators={[{ name: "fleet", session: null }]}
+          allSessions={[]}
+          projects={noProjects}
           activeSessionId={undefined}
           onNavigate={() => {}}
         />,
