@@ -77,6 +77,38 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      # Auto-generate a changeset when none are present. Derives the bump type
+      # from conventional commit prefixes since the last git tag: any `feat:`
+      # commit → minor, everything else → patch. This means every PR that
+      # merges to main produces a release without developers needing to run
+      # `pnpm changeset` manually.
+      - name: Auto-generate changeset
+        run: |
+          pending=$(find .changeset -name '*.md' ! -name 'README.md' 2>/dev/null | wc -l)
+          if [ "$pending" -gt 0 ]; then
+            exit 0
+          fi
+
+          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          range="${last_tag:+${last_tag}..}HEAD"
+          commits=$(git log "$range" --pretty=format:"%s" 2>/dev/null | head -50)
+
+          if [ -z "$commits" ]; then
+            exit 0
+          fi
+
+          bump="patch"
+          if echo "$commits" | grep -qE "^feat(\([^)]+\))?!?:"; then
+            bump="minor"
+          fi
+
+          summary=$(echo "$commits" | sed 's/^/- /')
+          sha=$(git rev-parse --short HEAD)
+          printf '---\n"@made-by-moonlight/athene": %s\n---\n\n%s\n' \
+            "$bump" "$summary" > ".changeset/auto-${sha}.md"
+
+          echo "Generated ${bump} changeset ($(echo "$commits" | wc -l | tr -d ' ') commits)."
+
       # If changeset files exist, bump versions, commit, and push to main.
       # The version-bump commit is excluded from future release runs via the
       # job-level `if:` guard above, preventing a second publish attempt.
