@@ -42,10 +42,10 @@ function makeSession(overrides: Partial<Session> & { id: string }): Session {
 
 const metaSession = makeSession({ id: "meta-coordinator-1" });
 
-const mockEnsureMetaOrchestrator = vi.fn(async () => metaSession);
+const mockEnsureOrchestrator = vi.fn(async () => metaSession);
 
 const mockSessionManager: Partial<SessionManager> = {
-  ensureMetaOrchestrator: mockEnsureMetaOrchestrator,
+  ensureOrchestrator: mockEnsureOrchestrator,
 };
 
 const mockConfig: OrchestratorConfig = {
@@ -85,7 +85,7 @@ vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
-    generateMetaOrchestratorPrompt: vi.fn(() => "generated-system-prompt"),
+    generateOrchestratorPrompt: vi.fn(() => "generated-system-prompt"),
   };
 });
 
@@ -106,10 +106,10 @@ function makeRequest(name: string): NextRequest {
 describe("POST /api/meta/[name]/start", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockEnsureMetaOrchestrator.mockResolvedValue(metaSession);
+    mockEnsureOrchestrator.mockResolvedValue(metaSession);
   });
 
-  it("starts a configured meta orchestrator and returns 200 with sessionId", async () => {
+  it("starts a configured orchestrator and returns 200 with sessionId", async () => {
     const res = await POST(makeRequest("fleet-manager"), {
       params: Promise.resolve({ name: "fleet-manager" }),
     });
@@ -117,14 +117,14 @@ describe("POST /api/meta/[name]/start", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.sessionId).toBe("meta-coordinator-1");
-    expect(mockEnsureMetaOrchestrator).toHaveBeenCalledWith({
+    expect(mockEnsureOrchestrator).toHaveBeenCalledWith({
       name: "fleet-manager",
       systemPrompt: "generated-system-prompt",
       agent: "claude-code",
     });
   });
 
-  it("returns 404 for an unknown meta orchestrator name", async () => {
+  it("returns 404 for an unknown orchestrator name", async () => {
     const res = await POST(makeRequest("unknown-meta"), {
       params: Promise.resolve({ name: "unknown-meta" }),
     });
@@ -132,11 +132,11 @@ describe("POST /api/meta/[name]/start", () => {
     expect(res.status).toBe(404);
     const body = await res.json();
     expect(body.error).toMatch(/unknown-meta/i);
-    expect(mockEnsureMetaOrchestrator).not.toHaveBeenCalled();
+    expect(mockEnsureOrchestrator).not.toHaveBeenCalled();
   });
 
-  it("returns 500 when ensureMetaOrchestrator throws", async () => {
-    mockEnsureMetaOrchestrator.mockRejectedValueOnce(new Error("runtime unavailable"));
+  it("returns 500 when ensureOrchestrator throws", async () => {
+    mockEnsureOrchestrator.mockRejectedValueOnce(new Error("runtime unavailable"));
 
     const res = await POST(makeRequest("fleet-manager"), {
       params: Promise.resolve({ name: "fleet-manager" }),

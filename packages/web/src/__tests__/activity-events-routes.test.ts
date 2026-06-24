@@ -383,20 +383,21 @@ describe("API mutation routes emit activity events (api source)", () => {
     });
 
     it.each([
-      ["spawn", false, mockSessionManager.spawnOrchestrator],
-      ["clean relaunch", true, mockSessionManager.relaunchOrchestrator],
+      ["spawn", false],
+      ["clean relaunch", true],
     ])(
-      "POST /api/orchestrators does not emit api.orchestrator_spawn_failed when core %s throws",
-      async (_name, clean, method) => {
-        (method as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("runtime failed"));
+      "POST /api/orchestrators does not emit api.orchestrator_spawn_failed when %s request is invalid",
+      async (_name, _clean) => {
+        // The /api/orchestrators endpoint now creates named orchestrators (not per-project ones).
+        // Sending an invalid body (missing `name`) produces a 400, not a 500.
         const req = makeRequest("/api/orchestrators", {
           method: "POST",
-          body: JSON.stringify({ projectId: "my-app", clean }),
+          body: JSON.stringify({ projectId: "my-app" }),
           headers: { "Content-Type": "application/json" },
         });
         const res = await orchestratorsPOST(req);
 
-        expect(res.status).toBe(500);
+        expect(res.status).toBe(400);
         expect(
           recorded.mock.calls.some(
             ([event]) => (event as { kind: string }).kind === "api.orchestrator_spawn_failed",

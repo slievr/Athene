@@ -1062,17 +1062,18 @@ describe("API Routes", () => {
       });
     });
 
-    it("returns 404 for an unknown project", async () => {
+    it("returns 400 when name is missing", async () => {
+      // POST /api/orchestrators now creates named orchestrators; `name` is required.
       const req = makeRequest("/api/orchestrators", {
         method: "POST",
-        body: JSON.stringify({ projectId: "unknown-app" }),
+        body: JSON.stringify({ scope: "all" }),
         headers: { "Content-Type": "application/json" },
       });
       const res = await orchestratorsPOST(req);
 
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(400);
       const data = await res.json();
-      expect(data.error).toMatch(/Unknown project/);
+      expect(data.error).toMatch(/name/);
     });
 
     it("returns 400 for invalid JSON", async () => {
@@ -1088,17 +1089,18 @@ describe("API Routes", () => {
       expect(data.error).toMatch(/Invalid JSON body/);
     });
 
-    it("returns 400 when projectId is missing", async () => {
+    it("returns 400 when scope is invalid", async () => {
+      // POST /api/orchestrators now creates named orchestrators; scope must be "all" or { projects: [...] }.
       const req = makeRequest("/api/orchestrators", {
         method: "POST",
-        body: JSON.stringify({}),
+        body: JSON.stringify({ name: "test-orch", scope: "invalid-scope" }),
         headers: { "Content-Type": "application/json" },
       });
 
       const res = await orchestratorsPOST(req);
       expect(res.status).toBe(400);
       const data = await res.json();
-      expect(data.error).toMatch(/projectId/);
+      expect(data.error).toMatch(/scope/);
     });
 
     it("returns 500 when orchestrator spawn fails", async () => {

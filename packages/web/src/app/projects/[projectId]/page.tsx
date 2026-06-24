@@ -36,8 +36,7 @@ export default async function ProjectPage(props: {
         projectName={pageData.projectName}
         projects={pageData.projects}
         orchestrators={pageData.orchestrators}
-        metaOrchestrators={pageData.metaOrchestrators}
-        sidebarOrchestrators={pageData.sidebarOrchestrators}
+        namedOrchestrators={pageData.namedOrchestrators}
         attentionZones={pageData.attentionZones}
       />
     </div>

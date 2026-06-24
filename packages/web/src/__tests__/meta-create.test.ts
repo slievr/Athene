@@ -12,8 +12,8 @@ vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
-    appendMetaOrchestrator: vi.fn(),
-    generateMetaOrchestratorPrompt: vi.fn(() => "system-prompt"),
+    appendOrchestrator: vi.fn(),
+    generateOrchestratorPrompt: vi.fn(() => "system-prompt"),
   };
 });
 
@@ -28,7 +28,7 @@ vi.mock("@/lib/observability", () => ({
 
 import { POST } from "@/app/api/meta/route";
 import { getServices, invalidatePortfolioServicesCache } from "@/lib/services";
-import { appendMetaOrchestrator } from "@made-by-moonlight/athene-core";
+import { appendOrchestrator } from "@made-by-moonlight/athene-core";
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -40,7 +40,7 @@ function makeRequest(body: unknown) {
   });
 }
 
-const mockEnsureMetaOrchestrator = vi.fn(async () => ({ id: "meta-session-1" }));
+const mockEnsureOrchestrator = vi.fn(async () => ({ id: "meta-session-1" }));
 
 const mockConfig = {
   configPath: "/tmp/agent-orchestrator.yaml",
@@ -51,10 +51,10 @@ const mockConfig = {
 beforeEach(() => {
   vi.mocked(getServices).mockResolvedValue({
     config: mockConfig,
-    sessionManager: { ensureMetaOrchestrator: mockEnsureMetaOrchestrator },
+    sessionManager: { ensureOrchestrator: mockEnsureOrchestrator },
   } as never);
-  mockEnsureMetaOrchestrator.mockResolvedValue({ id: "meta-session-1" });
-  vi.mocked(appendMetaOrchestrator).mockImplementation(() => undefined);
+  mockEnsureOrchestrator.mockResolvedValue({ id: "meta-session-1" });
+  vi.mocked(appendOrchestrator).mockImplementation(() => undefined);
   vi.mocked(invalidatePortfolioServicesCache).mockImplementation(() => undefined);
   mockConfig.metaOrchestrators = {};
 });
@@ -95,13 +95,13 @@ describe("POST /api/meta", () => {
     const res = await POST(makeRequest({ name: "main", scope: "all" }));
     expect(res.status).toBe(201);
 
-    expect(appendMetaOrchestrator).toHaveBeenCalledWith("/tmp/agent-orchestrator.yaml", {
+    expect(appendOrchestrator).toHaveBeenCalledWith("/tmp/agent-orchestrator.yaml", {
       name: "main",
       scope: "all",
       agent: undefined,
     });
     expect(invalidatePortfolioServicesCache).toHaveBeenCalled();
-    expect(mockEnsureMetaOrchestrator).toHaveBeenCalledWith(
+    expect(mockEnsureOrchestrator).toHaveBeenCalledWith(
       expect.objectContaining({ name: "main" }),
     );
 
@@ -114,14 +114,14 @@ describe("POST /api/meta", () => {
       makeRequest({ name: "scoped", scope: { projects: ["proj-a"] }, agent: "codex" }),
     );
     expect(res.status).toBe(201);
-    expect(appendMetaOrchestrator).toHaveBeenCalledWith(
+    expect(appendOrchestrator).toHaveBeenCalledWith(
       "/tmp/agent-orchestrator.yaml",
       expect.objectContaining({ scope: { projects: ["proj-a"] }, agent: "codex" }),
     );
   });
 
-  it("returns 500 when ensureMetaOrchestrator throws", async () => {
-    mockEnsureMetaOrchestrator.mockRejectedValueOnce(new Error("runtime failure"));
+  it("returns 500 when ensureOrchestrator throws", async () => {
+    mockEnsureOrchestrator.mockRejectedValueOnce(new Error("runtime failure"));
     const res = await POST(makeRequest({ name: "m", scope: "all" }));
     expect(res.status).toBe(500);
     const body = await res.json();

@@ -1,89 +1,90 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { generateOrchestratorPrompt, recordActivityEvent } from "@made-by-moonlight/athene-core";
-import { getServices } from "@/lib/services";
-import { validateIdentifier, validateConfiguredProject } from "@/lib/validation";
+import { type NextRequest } from "next/server";
+import {
+  appendOrchestrator,
+  generateOrchestratorPrompt,
+} from "@made-by-moonlight/athene-core";
+import { getServices, invalidatePortfolioServicesCache } from "@/lib/services";
+import { validateIdentifier } from "@/lib/validation";
+import { getCorrelationId, jsonWithCorrelation } from "@/lib/observability";
 
-function classifySpawnError(
-  projectId: string,
-  error: unknown,
-): {
-  status: number;
-  payload: Record<string, unknown>;
-} {
-  const message = error instanceof Error ? error.message : "Failed to spawn orchestrator";
-
-  if (
-    message.includes("already exists and is still registered with git") ||
-    message.includes("outside AO-managed worktree directories") ||
-    message.includes('Found multiple worktrees for orchestrator branch "')
-  ) {
-    return {
-      status: 409,
-      payload: {
-        error: [
-          `AO found an older orchestrator workspace for "${projectId}" but could not safely reuse it automatically.`,
-          "Your repository is safe.",
-          "Review the existing workspace, then either reuse it manually or remove it and create a fresh orchestrator workspace.",
-        ].join(" "),
-        code: "orchestrator_workspace_conflict",
-        recovery: "reuse-or-recreate-workspace",
-      },
-    };
-  }
-
-  return {
-    status: 500,
-    payload: { error: message },
-  };
-}
-
+/** POST /api/orchestrators — Create a new named orchestrator and start it. */
 export async function POST(request: NextRequest) {
+  const correlationId = getCorrelationId(request);
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return jsonWithCorrelation({ error: "Invalid JSON body" }, { status: 400 }, correlationId);
   }
 
-  const projectErr = validateIdentifier(body.projectId, "projectId");
-  if (projectErr) {
-    return NextResponse.json({ error: projectErr }, { status: 400 });
+  const nameErr = validateIdentifier(body.name, "name");
+  if (nameErr) {
+    return jsonWithCorrelation({ error: nameErr }, { status: 400 }, correlationId);
+  }
+  const name = body.name as string;
+
+  // Validate scope shape
+  const scope = body.scope;
+  if (scope !== "all" && (typeof scope !== "object" || !Array.isArray((scope as Record<string, unknown>).projects))) {
+    return jsonWithCorrelation(
+      { error: 'scope must be "all" or { projects: string[] }' },
+      { status: 400 },
+      correlationId,
+    );
   }
 
-  const clean = body.clean === true;
+  const agent = typeof body.agent === "string" && body.agent.length > 0 ? body.agent : undefined;
 
   try {
-    const { config, sessionManager } = await getServices();
-    const projectId = body.projectId as string;
-    const configProjectErr = validateConfiguredProject(config.projects, projectId);
-    if (configProjectErr) {
-      return NextResponse.json({ error: configProjectErr }, { status: 404 });
+    const { config } = await getServices();
+
+    const orchMap = config.orchestrators ?? config.metaOrchestrators ?? {};
+    if (Object.hasOwn(orchMap, name)) {
+      return jsonWithCorrelation(
+        { error: `An orchestrator named '${name}' already exists` },
+        { status: 409 },
+        correlationId,
+      );
     }
-    const project = config.projects[projectId];
 
-    const systemPrompt = generateOrchestratorPrompt({ config, projectId, project });
-    const session = clean
-      ? await sessionManager.relaunchOrchestrator({ projectId, systemPrompt })
-      : await sessionManager.spawnOrchestrator({ projectId, systemPrompt });
+    // Validate explicit project IDs exist
+    if (typeof scope === "object" && scope !== null) {
+      const projectIds = (scope as { projects: string[] }).projects;
+      for (const id of projectIds) {
+        if (!Object.hasOwn(config.projects, id)) {
+          return jsonWithCorrelation(
+            { error: `Unknown project ID: '${id}'` },
+            { status: 400 },
+            correlationId,
+          );
+        }
+      }
+    }
 
-    recordActivityEvent({
-      projectId,
-      sessionId: session.id,
-      source: "api",
-      kind: "api.orchestrator_spawn_requested",
-      summary: `orchestrator spawn requested for ${projectId}`,
+    // Write to config file
+    appendOrchestrator(config.configPath, {
+      name,
+      scope: scope as "all" | { projects: string[] },
+      agent,
     });
 
-    return NextResponse.json(
-      {
-        orchestrator: {
-          id: session.id,
-          projectId,
-          projectName: project.name,
-        },
-      },
-      { status: 201 },
-    );
+    // Reload config so ensureOrchestrator sees the new entry
+    invalidatePortfolioServicesCache();
+    const { config: freshConfig, sessionManager: freshSm } = await getServices();
+
+    const systemPrompt = generateOrchestratorPrompt({ config: freshConfig, name });
+    const freshOrchMap = freshConfig.orchestrators ?? freshConfig.metaOrchestrators;
+    const orchCfg = freshOrchMap?.[name];
+    const session = await freshSm.ensureOrchestrator({
+      name,
+      systemPrompt,
+      agent: orchCfg?.agent,
+    });
+
+    return jsonWithCorrelation({ sessionId: session.id }, { status: 201 }, correlationId);
   } catch (err) {
-    const classified = classifySpawnError(body.projectId as string, err);
-    return NextResponse.json(classified.payload, { status: classified.status });
+    return jsonWithCorrelation(
+      { error: err instanceof Error ? err.message : "Failed to create orchestrator" },
+      { status: 500 },
+      correlationId,
+    );
   }
 }
