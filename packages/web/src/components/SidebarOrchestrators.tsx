@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getAttentionLevel, type DashboardSession } from "@/lib/types";
 import { cn } from "@/lib/cn";
-import { orchestratorDashboardPath } from "@/lib/routes";
+import { orchestratorDashboardPath, orchestratorSessionPath } from "@/lib/routes";
 
 /** A named orchestrator and its (optional) session, for the sidebar. */
 export interface SidebarOrchestrator {
@@ -151,19 +151,26 @@ export function SidebarOrchestrators({
   if (collapsed) {
     return (
       <div className="project-sidebar__orch-collapsed flex flex-col items-center gap-1">
-        {orchestrators.map((o) => (
-          <a
-            key={o.name}
-            href={orchestratorDashboardPath(o.name)}
-            onClick={handleClick(orchestratorDashboardPath(o.name), o.session ?? undefined)}
-            className="project-sidebar__orch-glyph"
-            data-level={o.session ? getAttentionLevel(o.session) : undefined}
-            title={o.name}
-            aria-label={`Open ${o.name} orchestrator dashboard`}
-          >
-            ◆
-          </a>
-        ))}
+        {orchestrators.map((o) => {
+          const dest = o.session ? orchestratorSessionPath(o.name) : orchestratorDashboardPath(o.name);
+          return (
+            <a
+              key={o.name}
+              href={dest}
+              onClick={handleClick(dest, o.session ?? undefined)}
+              className="project-sidebar__orch-glyph"
+              data-level={o.session ? getAttentionLevel(o.session) : undefined}
+              title={o.session ? `${o.name} (terminal)` : o.name}
+              aria-label={
+                o.session
+                  ? `Open ${o.name} orchestrator terminal`
+                  : `Open ${o.name} orchestrator dashboard`
+              }
+            >
+              ◆
+            </a>
+          );
+        })}
       </div>
     );
   }
@@ -237,13 +244,14 @@ export function SidebarOrchestrators({
         </form>
       )}
       {orchestrators.map((o) => {
-        const href = orchestratorDashboardPath(o.name);
+        const fleetHref = orchestratorDashboardPath(o.name);
+        const terminalHref = orchestratorSessionPath(o.name);
         const isStarting = startingOrch.has(o.name);
         return (
           <a
             key={o.name}
-            href={href}
-            onClick={handleClick(href, o.session ?? undefined)}
+            href={fleetHref}
+            onClick={handleClick(fleetHref, o.session ?? undefined)}
             className={cn(
               "project-sidebar__orch-row",
               activeSessionId === o.name && "project-sidebar__orch-row--active",
@@ -269,7 +277,34 @@ export function SidebarOrchestrators({
                 )}
               </button>
             ) : (
-              <ActivityDot session={o.session} />
+              <span className="flex items-center gap-1 shrink-0">
+                <a
+                  href={terminalHref}
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onNavigate(terminalHref, o.session ?? undefined);
+                  }}
+                  title="View orchestrator terminal"
+                  aria-label={`Open ${o.name} terminal`}
+                  className="project-sidebar__orch-terminal-btn"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="h-3.5 w-3.5"
+                    aria-hidden="true"
+                  >
+                    <rect x="2" y="3" width="20" height="14" rx="2" />
+                    <path d="m8 10 3 3-3 3" />
+                    <path d="M13 16h3" />
+                  </svg>
+                </a>
+                <ActivityDot session={o.session} />
+              </span>
             )}
           </a>
         );

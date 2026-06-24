@@ -5437,6 +5437,28 @@ body:not(.is-resizing-x) .sidebar-wrapper {
 }
 
 /* Start button shown on meta orchestrator rows when not yet running */
+.project-sidebar__orch-terminal-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 3px;
+  color: var(--color-text-tertiary);
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.project-sidebar__orch-row:hover .project-sidebar__orch-terminal-btn {
+  opacity: 0.6;
+}
+
+.project-sidebar__orch-terminal-btn:hover {
+  opacity: 1 !important;
+  color: var(--color-text-primary);
+}
+
 .project-sidebar__orch-start-btn {
   display: flex;
   align-items: center;

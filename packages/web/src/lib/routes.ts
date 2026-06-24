@@ -22,6 +22,10 @@ export function orchestratorDashboardPath(name: string): string {
   return `/orchestrators/${encodeURIComponent(name)}`;
 }
 
+export function orchestratorSessionPath(name: string): string {
+  return `/sessions/${encodeURIComponent(name)}`;
+}
+
 /** @deprecated Use orchestratorDashboardPath */
 export function metaDashboardPath(name: string): string {
   return orchestratorDashboardPath(name);

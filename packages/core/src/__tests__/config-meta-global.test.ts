@@ -149,6 +149,50 @@ describe("metaOrchestrators via the global config path", () => {
   });
 });
 
+// Regression: orchestrators key written by appendOrchestrator must survive
+// buildEffectiveConfigFromGlobalConfigPath (it previously only forwarded metaOrchestrators).
+describe("orchestrators key preserved through global config path", () => {
+  let tempRoot: string;
+  let originalHome: string | undefined;
+  let originalUserProfile: string | undefined;
+
+  beforeEach(() => {
+    tempRoot = join(tmpdir(), `ao-orch-global-${randomUUID()}`);
+    mkdirSync(join(tempRoot, ".agent-orchestrator"), { recursive: true });
+    originalHome = process.env["HOME"];
+    originalUserProfile = process.env["USERPROFILE"];
+    process.env["HOME"] = tempRoot;
+    process.env["USERPROFILE"] = tempRoot;
+  });
+
+  afterEach(() => {
+    process.env["HOME"] = originalHome;
+    process.env["USERPROFILE"] = originalUserProfile;
+    rmSync(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  });
+
+  it("preserves orchestrators key so generateOrchestratorPrompt does not throw Unknown orchestrator", () => {
+    const configPath = join(tempRoot, ".agent-orchestrator", "config.yaml");
+    writeFileSync(
+      configPath,
+      [
+        "projects: {}",
+        "orchestrators:",
+        "  fleet:",
+        "    scope: all",
+        "",
+      ].join("\n"),
+    );
+
+    const config = loadConfig(configPath);
+    expect(config.orchestrators?.["fleet"]).toBeDefined();
+
+    // This must not throw "Unknown orchestrator: fleet"
+    const prompt = generateOrchestratorPrompt({ config, name: "fleet" });
+    expect(prompt).toContain("fleet");
+  });
+});
+
 // dual-read: metaOrchestrators in global config is exposed as orchestrators
 describe("dual-read: metaOrchestrators in global config", () => {
   let tempRoot: string;

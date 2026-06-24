@@ -957,6 +957,7 @@ function buildEffectiveConfigFromFlatLocalPath(
     notifiers: globalConfig.notifiers,
     notificationRouting: globalConfig.notificationRouting,
     reactions: globalConfig.reactions,
+    orchestrators: globalConfig.orchestrators,
     metaOrchestrators: globalConfig.metaOrchestrators,
     projects: {
       [projectId]: {
@@ -1016,6 +1017,7 @@ function buildEffectiveConfigFromGlobalConfigPath(configPath: string): LoadedCon
     notifiers: globalConfig.notifiers,
     notificationRouting: globalConfig.notificationRouting,
     reactions: globalConfig.reactions,
+    orchestrators: globalConfig.orchestrators,
     metaOrchestrators: globalConfig.metaOrchestrators,
     projects,
   });
