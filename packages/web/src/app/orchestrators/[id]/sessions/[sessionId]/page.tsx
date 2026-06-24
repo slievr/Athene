@@ -104,8 +104,8 @@ function LoadingContent() {
 
 export default function OrchestratorSessionPage() {
   const params = useParams();
-  const id = params.id as string;
-  const orchestratorName = params.name as string;
+  const id = params.sessionId as string;
+  const orchestratorName = params.id as string;
 
   const cachedSession = (() => {
     if (typeof sessionStorage === "undefined") return null;

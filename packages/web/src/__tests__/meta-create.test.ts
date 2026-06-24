@@ -99,6 +99,7 @@ describe("POST /api/meta", () => {
       name: "main",
       scope: "all",
       agent: undefined,
+      label: undefined,
     });
     expect(invalidatePortfolioServicesCache).toHaveBeenCalled();
     expect(mockEnsureOrchestrator).toHaveBeenCalledWith(
@@ -106,7 +107,8 @@ describe("POST /api/meta", () => {
     );
 
     const body = await res.json();
-    expect(body).toEqual({ sessionId: "meta-session-1" });
+    expect(body).toMatchObject({ sessionId: "meta-session-1" });
+    expect(typeof body.id).toBe("string");
   });
 
   it("happy path with specific project scope and agent override", async () => {

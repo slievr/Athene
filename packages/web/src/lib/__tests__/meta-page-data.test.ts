@@ -32,9 +32,11 @@ const session = (id: string, projectId: string, metadata: Record<string, string>
   status: "working",
 });
 
+const ORCH_UUID = "uuid-meta-1";
+
 const config = {
   projects: { web: { sessionPrefix: "web" }, api: { sessionPrefix: "api" } },
-  metaOrchestrators: { "meta-1": { scope: "all", discover: false } },
+  metaOrchestrators: { "meta-1": { scope: "all", discover: false, id: ORCH_UUID } },
   dashboard: undefined,
 };
 
@@ -53,10 +55,10 @@ describe("getMetaPageData", () => {
       registry: {},
       sessionManager: { listCached: vi.fn().mockResolvedValue([]) },
     });
-    expect(await getMetaPageData("nope")).toBeNull();
+    expect(await getMetaPageData("nope-uuid")).toBeNull();
   });
 
-  it("returns only sessions owned by the named meta orchestrator", async () => {
+  it("returns only sessions owned by the named meta orchestrator (looked up by UUID)", async () => {
     const sessions = [
       session("web-1", "web", { ownerKind: "meta", metaOwner: "meta-1" }),
       session("web-2", "web", {}), // project-owned → excluded
@@ -69,7 +71,7 @@ describe("getMetaPageData", () => {
       sessionManager: { listCached: vi.fn().mockResolvedValue(sessions) },
     });
 
-    const data = await getMetaPageData("meta-1");
+    const data = await getMetaPageData(ORCH_UUID);
     expect(data).not.toBeNull();
     expect(data!.sessions.map((s) => s.id)).toEqual(["web-1"]);
     expect(data!.projects.map((p) => p.id)).toEqual(["web", "api"]);

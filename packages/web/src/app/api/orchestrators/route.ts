@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
   }
 
   const agent = typeof body.agent === "string" && body.agent.length > 0 ? body.agent : undefined;
+  const label = typeof body.label === "string" ? body.label.trim() || undefined : undefined;
 
   try {
     const { config } = await getServices();
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
       name,
       scope: scope as "all" | string[],
       agent,
+      label,
     });
 
     // Reload config so ensureOrchestrator sees the new entry
@@ -70,15 +72,16 @@ export async function POST(request: NextRequest) {
     const { config: freshConfig, sessionManager: freshSm } = await getServices();
 
     const systemPrompt = generateOrchestratorPrompt({ config: freshConfig, name });
-    const freshOrchMap = freshConfig.orchestrators ?? freshConfig.metaOrchestrators;
-    const orchCfg = freshOrchMap?.[name];
+    const freshOrchMap = freshConfig.orchestrators ?? freshConfig.metaOrchestrators ?? {};
+    const orchCfg = freshOrchMap[name];
+    const newId = (freshOrchMap[name] as { id?: string })?.id ?? name;
     const session = await freshSm.ensureOrchestrator({
       name,
       systemPrompt,
       agent: orchCfg?.agent,
     });
 
-    return jsonWithCorrelation({ sessionId: session.id }, { status: 201 }, correlationId);
+    return jsonWithCorrelation({ sessionId: session.id, id: newId }, { status: 201 }, correlationId);
   } catch (err) {
     return jsonWithCorrelation(
       { error: err instanceof Error ? err.message : "Failed to create orchestrator" },

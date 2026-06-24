@@ -7,18 +7,9 @@ import { getSessionTitle } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { orchestratorDashboardPath, orchestratorSessionPath, projectSessionPath } from "@/lib/routes";
 import type { ProjectInfo } from "@/lib/project-name";
+import type { SidebarOrchestrator } from "@/lib/orchestrators";
 
-/** A named orchestrator and its (optional) session, for the sidebar. */
-export interface SidebarOrchestrator {
-  /** YAML key slug (never changes). */
-  name: string;
-  /** Stable UUID from config. */
-  id: string;
-  /** Display label from config `name` field. Falls back to slug if absent. */
-  label: string;
-  /** The orchestrator session (under projectId "_meta"), if running. */
-  session: DashboardSession | null;
-}
+export type { SidebarOrchestrator };
 
 // ---------------------------------------------------------------------------
 // Deprecated type aliases kept for callers not yet migrated.
@@ -134,9 +125,9 @@ export function SidebarOrchestrators({
     );
     if (owning) {
       setExpandedOrchestrators((prev) => {
-        if (prev.has(owning.name)) return prev;
+        if (prev.has(owning.id)) return prev;
         const next = new Set(prev);
-        next.add(owning.name);
+        next.add(owning.id);
         return next;
       });
     }
@@ -247,18 +238,18 @@ export function SidebarOrchestrators({
       onNavigate(href, session ?? undefined);
     };
 
-  const handleStartOrch = (name: string) => async (e: React.MouseEvent) => {
+  const handleStartOrch = (orchId: string) => async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (startingOrch.has(name)) return;
-    setStartingOrch((prev) => new Set(prev).add(name));
+    if (startingOrch.has(orchId)) return;
+    setStartingOrch((prev) => new Set(prev).add(orchId));
     try {
-      await fetch(`/api/orchestrators/${encodeURIComponent(name)}/start`, { method: "POST" });
+      await fetch(`/api/orchestrators/${encodeURIComponent(orchId)}/start`, { method: "POST" });
       router.refresh();
     } finally {
       setStartingOrch((prev) => {
         const next = new Set(prev);
-        next.delete(name);
+        next.delete(orchId);
         return next;
       });
     }
@@ -269,20 +260,20 @@ export function SidebarOrchestrators({
       <div className="project-sidebar__orch-collapsed flex flex-col items-center gap-1">
         {orchestrators.map((o) => {
           const dest = o.session
-            ? orchestratorSessionPath(o.name, o.session.id)
-            : orchestratorDashboardPath(o.name);
+            ? orchestratorSessionPath(o.id, o.session.id)
+            : orchestratorDashboardPath(o.id);
           return (
-            <div key={o.name} className="flex flex-col items-center gap-0.5 w-full px-1">
+            <div key={o.id} className="flex flex-col items-center gap-0.5 w-full px-1">
               <a
                 href={dest}
                 onClick={handleClick(dest, o.session ?? undefined)}
                 className="project-sidebar__orch-glyph"
                 data-level={o.session ? getAttentionLevel(o.session) : undefined}
-                title={o.session ? `${o.name} (terminal)` : o.name}
+                title={o.session ? `${o.label} (terminal)` : o.label}
                 aria-label={
                   o.session
-                    ? `Open ${o.name} orchestrator terminal`
-                    : `Open ${o.name} orchestrator dashboard`
+                    ? `Open ${o.label} orchestrator terminal`
+                    : `Open ${o.label} orchestrator dashboard`
                 }
               >
                 ◆
@@ -360,24 +351,24 @@ export function SidebarOrchestrators({
         </form>
       )}
       {orchestrators.map((o) => {
-        const fleetHref = orchestratorDashboardPath(o.name);
-        const isStarting = startingOrch.has(o.name);
-        const isExpanded = expandedOrchestrators.has(o.name);
+        const fleetHref = orchestratorDashboardPath(o.id);
+        const isStarting = startingOrch.has(o.id);
+        const isExpanded = expandedOrchestrators.has(o.id);
         const subSessions = getOrchestratorSubSessions(allSessions, o.name);
         // Dropdown: the orchestrator's own session first, then sub-orchestrators.
         const dropdownSessions: Array<{ session: DashboardSession; href: string }> = [];
         if (o.session) {
           dropdownSessions.push({
             session: o.session,
-            href: orchestratorSessionPath(o.name, o.session.id),
+            href: orchestratorSessionPath(o.id, o.session.id),
           });
         }
         for (const s of subSessions) {
-          dropdownSessions.push({ session: s, href: orchestratorSessionPath(o.name, s.id) });
+          dropdownSessions.push({ session: s, href: orchestratorSessionPath(o.id, s.id) });
         }
 
         return (
-          <div key={o.name} className="project-sidebar__project">
+          <div key={o.id} className="project-sidebar__project">
             {/* Orchestrator row */}
             <div className="project-sidebar__proj-row flex items-center">
               <button
@@ -389,17 +380,17 @@ export function SidebarOrchestrators({
                   }
                   setExpandedOrchestrators((prev) => {
                     const next = new Set(prev);
-                    if (next.has(o.name)) next.delete(o.name);
-                    else next.add(o.name);
+                    if (next.has(o.id)) next.delete(o.id);
+                    else next.add(o.id);
                     return next;
                   });
                 }}
                 className={cn(
                   "project-sidebar__proj-toggle",
-                  activeSessionId === o.name && "project-sidebar__proj-toggle--active",
+                  activeSessionId === o.id && "project-sidebar__proj-toggle--active",
                 )}
                 aria-expanded={isFleet ? undefined : isExpanded}
-                aria-label={isFleet ? `Filter fleet by ${o.name}` : `Toggle ${o.name} sessions`}
+                aria-label={isFleet ? `Filter fleet by ${o.label}` : `Toggle ${o.label} sessions`}
               >
                 <svg
                   className={cn(
@@ -418,7 +409,7 @@ export function SidebarOrchestrators({
                   <path d="m9 18 6-6-6-6" />
                 </svg>
                 <span className="project-sidebar__orch-glyph" aria-hidden="true">◆</span>
-                <span className="project-sidebar__orch-name min-w-0 flex-1 text-left">{o.name}</span>
+                <span className="project-sidebar__orch-name min-w-0 flex-1 text-left">{o.label}</span>
               </button>
 
               {/* Action buttons — outside the toggle button */}
@@ -427,8 +418,8 @@ export function SidebarOrchestrators({
                 <a
                   href={fleetHref}
                   onClick={handleClick(fleetHref, o.session ?? undefined)}
-                  title={`${o.name} fleet dashboard`}
-                  aria-label={`Open ${o.name} fleet dashboard`}
+                  title={`${o.label} fleet dashboard`}
+                  aria-label={`Open ${o.label} fleet dashboard`}
                   className="project-sidebar__orch-terminal-btn"
                 >
                   <svg
@@ -449,9 +440,9 @@ export function SidebarOrchestrators({
                 {o.session === null ? (
                   <button
                     type="button"
-                    onClick={handleStartOrch(o.name)}
+                    onClick={handleStartOrch(o.id)}
                     disabled={isStarting}
-                    aria-label={`Start ${o.name}`}
+                    aria-label={`Start ${o.label}`}
                     className="project-sidebar__orch-start-btn shrink-0"
                   >
                     {isStarting ? (
