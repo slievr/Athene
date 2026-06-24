@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync, renameSync, copyFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
-import { parse, stringify } from "yaml";
+import { parse } from "yaml";
 import type { Runtime, RuntimeHandle } from "../types.js";
 import { appendOrchestrator } from "../orchestrator-config-writer.js";
 
