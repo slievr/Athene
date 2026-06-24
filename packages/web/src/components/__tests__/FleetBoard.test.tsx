@@ -2,6 +2,14 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { FleetBoard } from "../FleetBoard";
 import type { DashboardSession } from "@/lib/types";
 
+const mockSearchParams = { get: vi.fn(() => null) };
+const mockPush = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => mockSearchParams,
+  useRouter: () => ({ push: mockPush }),
+}));
+
 vi.mock("@/hooks/useSessionEvents", () => ({
   useSessionEvents: vi.fn(),
 }));
@@ -12,16 +20,16 @@ vi.mock("../FleetColumn", () => ({
 }));
 vi.mock("../FleetFilterBar", () => ({
   FleetFilterBar: ({
-    orchestratorNames,
+    orchestrators,
     onFilterChange,
   }: {
-    orchestratorNames: string[];
+    orchestrators: { name: string }[];
     onFilterChange: (n: string | null) => void;
   }) => (
     <div>
-      {orchestratorNames.map((n) => (
-        <button key={n} onClick={() => onFilterChange(n)}>
-          {n}
+      {orchestrators.map((o) => (
+        <button key={o.name} onClick={() => onFilterChange(o.name)}>
+          {o.name}
         </button>
       ))}
       <button onClick={() => onFilterChange(null)}>All</button>
@@ -71,6 +79,8 @@ function makeSession(
 describe("FleetBoard", () => {
   beforeEach(() => {
     vi.mocked(useSessionEvents).mockReturnValue({ sessions: [], isConnected: true } as never);
+    mockSearchParams.get.mockReturnValue(null);
+    mockPush.mockReset();
   });
 
   it("filters out orchestrator sessions", () => {
@@ -102,6 +112,8 @@ describe("FleetBoard", () => {
   });
 
   it("filters groups by orchestratorName when filter is set", () => {
+    // Pre-set the URL filter to "alpha" so the board renders already filtered
+    mockSearchParams.get.mockReturnValue("alpha");
     vi.mocked(useSessionEvents).mockReturnValue({
       sessions: [
         makeSession("w-1", { parentSessionId: "orch-A", orchestratorOwner: "alpha" }),
@@ -110,8 +122,19 @@ describe("FleetBoard", () => {
       isConnected: true,
     } as never);
     render(<FleetBoard initialSessions={[]} />);
-    fireEvent.click(screen.getByText("alpha"));
-    // After filtering to alpha, only 1 group
+    // With filter="alpha", only the alpha group appears in the working column
     expect(screen.getByTestId("col-working")).toHaveTextContent("1 groups");
+  });
+
+  it("calls router.push with orch param when a filter chip is clicked", () => {
+    vi.mocked(useSessionEvents).mockReturnValue({
+      sessions: [
+        makeSession("w-1", { parentSessionId: "orch-A", orchestratorOwner: "alpha" }),
+      ],
+      isConnected: true,
+    } as never);
+    render(<FleetBoard initialSessions={[]} />);
+    fireEvent.click(screen.getByText("alpha"));
+    expect(mockPush).toHaveBeenCalledWith("/fleet?orch=alpha");
   });
 });

@@ -1,13 +1,16 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { FleetFilterBar } from "../FleetFilterBar";
+import { FleetFilterBar, type OrchestratorChipData } from "../FleetFilterBar";
 
 describe("FleetFilterBar", () => {
-  const names = ["fleet-meta", "api-orch"];
+  const orchestrators: OrchestratorChipData[] = [
+    { name: "fleet-meta", colorIndex: 0, spawnedAt: null },
+    { name: "api-orch", colorIndex: 1, spawnedAt: null },
+  ];
 
   it("renders All chip and one chip per orchestrator name", () => {
     render(
       <FleetFilterBar
-        orchestratorNames={names}
+        orchestrators={orchestrators}
         activeFilter={null}
         totalWorkers={5}
         onFilterChange={() => {}}
@@ -22,7 +25,7 @@ describe("FleetFilterBar", () => {
     const onChange = vi.fn();
     render(
       <FleetFilterBar
-        orchestratorNames={names}
+        orchestrators={orchestrators}
         activeFilter="fleet-meta"
         totalWorkers={3}
         onFilterChange={onChange}
@@ -36,7 +39,7 @@ describe("FleetFilterBar", () => {
     const onChange = vi.fn();
     render(
       <FleetFilterBar
-        orchestratorNames={names}
+        orchestrators={orchestrators}
         activeFilter={null}
         totalWorkers={5}
         onFilterChange={onChange}
@@ -49,12 +52,37 @@ describe("FleetFilterBar", () => {
   it("displays the worker count", () => {
     render(
       <FleetFilterBar
-        orchestratorNames={[]}
+        orchestrators={[]}
         activeFilter={null}
         totalWorkers={7}
         onFilterChange={() => {}}
       />,
     );
     expect(screen.getByText("7 workers")).toBeInTheDocument();
+  });
+
+  it("renders colored dot for each orchestrator chip", () => {
+    const { container } = render(
+      <FleetFilterBar
+        orchestrators={[{ name: "fleet-meta", colorIndex: 3, spawnedAt: null }]}
+        activeFilter={null}
+        totalWorkers={2}
+        onFilterChange={() => {}}
+      />,
+    );
+    expect(container.querySelector(".orch-dot-3")).toBeInTheDocument();
+  });
+
+  it("renders relative timestamp when spawnedAt is provided", () => {
+    const spawnedAt = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(); // 2h ago
+    render(
+      <FleetFilterBar
+        orchestrators={[{ name: "fleet-meta", colorIndex: 0, spawnedAt }]}
+        activeFilter={null}
+        totalWorkers={1}
+        onFilterChange={() => {}}
+      />,
+    );
+    expect(screen.getByText("2h ago")).toBeInTheDocument();
   });
 });

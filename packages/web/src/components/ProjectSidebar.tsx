@@ -929,6 +929,7 @@ function ProjectSidebarInner({
                     )}
                     aria-expanded={isExpanded}
                     aria-current={isActive ? "page" : undefined}
+                    aria-label={`${project.name} ${sessionsByProject.get(project.id)?.length ?? 0}`}
                   >
                     <svg
                       className={cn(
@@ -954,9 +955,11 @@ function ProjectSidebarInner({
                       aria-hidden="true"
                     />
                     <span className="project-sidebar__proj-name">{project.name}</span>
-                    <span className="project-sidebar__proj-count">
-                      {sessionsByProject.get(project.id)?.length ?? 0}
-                    </span>
+                    {(sessionsByProject.get(project.id)?.length ?? 0) > 0 ? (
+                      <span className="project-sidebar__proj-count">
+                        {sessionsByProject.get(project.id)?.length}
+                      </span>
+                    ) : null}
                   </button>
                 )}
 

@@ -5,8 +5,10 @@ import type { DashboardSession } from "@/lib/types";
 import type { ProjectInfo } from "@/lib/project-name";
 
 const mockRefresh = vi.fn();
+const mockPushNav = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockRefresh }),
+  useRouter: () => ({ refresh: mockRefresh, push: mockPushNav }),
+  usePathname: () => "/",
 }));
 
 const orchSession = {
