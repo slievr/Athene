@@ -111,9 +111,17 @@ jobs:
 
           summary=$(echo "$commits" | sed 's/^/- /')
           sha=$(git rev-parse --short HEAD)
+          # List every package in the linked group explicitly so changeset version
+          # bumps all of them, even if they have drifted to different versions.
+          linked=$(node -e "
+            const cfg = require('./.changeset/config.json');
+            (cfg.linked[0] || []).forEach(p => console.log(p));
+          ")
           {
             echo '---'
-            echo "\"@made-by-moonlight/athene\": ${bump}"
+            while IFS= read -r pkg; do
+              echo "\"${pkg}\": ${bump}"
+            done <<< "$linked"
             echo '---'
             echo ""
             echo "$summary"
