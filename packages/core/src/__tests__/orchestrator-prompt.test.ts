@@ -67,4 +67,14 @@ describe("generateOrchestratorPrompt", () => {
       /Unknown orchestrator/,
     );
   });
+
+  it("falls back to metaOrchestrators key when orchestrators is absent", () => {
+    const cfg = makeConfig({
+      orchestrators: undefined,
+      metaOrchestrators: { "orch-1": { scope: { projects: ["web"] }, discover: false } },
+    });
+    // Should not throw and should include the orchestrator name
+    const result = generateOrchestratorPrompt({ config: cfg, name: "orch-1" });
+    expect(result).toContain("orch-1");
+  });
 });

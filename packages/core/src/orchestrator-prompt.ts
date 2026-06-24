@@ -25,7 +25,7 @@ interface OrchestratorPromptRenderData {
 }
 
 function buildProjectCatalog(config: OrchestratorConfig, name: string): string {
-  const orchestrator = config.orchestrators?.[name];
+  const orchestrator = config.orchestrators?.[name] ?? config.metaOrchestrators?.[name];
   if (!orchestrator) {
     throw new Error(`Unknown orchestrator: ${name}`);
   }
@@ -44,7 +44,8 @@ function buildProjectCatalog(config: OrchestratorConfig, name: string): string {
 }
 
 function createRenderData(opts: OrchestratorPromptConfig): OrchestratorPromptRenderData {
-  const orchestrator: OrchestratorEntryConfig | undefined = opts.config.orchestrators?.[opts.name];
+  const orchestrator: OrchestratorEntryConfig | undefined =
+    opts.config.orchestrators?.[opts.name] ?? opts.config.metaOrchestrators?.[opts.name];
   if (!orchestrator) {
     throw new Error(`Unknown orchestrator: ${opts.name}`);
   }
