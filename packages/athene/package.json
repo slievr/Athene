@@ -1,6 +1,6 @@
 {
   "name": "@made-by-moonlight/athene",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Orchestrate parallel AI coding agents — global CLI wrapper",
   "keywords": [
     "ai",
