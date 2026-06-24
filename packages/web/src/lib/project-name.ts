@@ -8,6 +8,8 @@ import { ConfigNotFoundError, getGlobalConfigPath, loadConfig } from "@made-by-m
 export interface ProjectInfo {
   id: string;
   name: string;
+  /** Absolute path to the project's local repository. */
+  path: string;
   sessionPrefix?: string;
   resolveError?: string;
 }
@@ -150,11 +152,13 @@ export const getAllProjects = cache((): ProjectInfo[] => {
       ...Object.entries(config.projects).map(([id, project]) => ({
         id,
         name: project.name ?? id,
+        path: project.path,
         sessionPrefix: project.sessionPrefix ?? id,
       })),
       ...Object.entries(config.degradedProjects).map(([id, project]) => ({
         id,
         name: id,
+        path: "",
         sessionPrefix: id,
         resolveError: project.resolveError,
       })),

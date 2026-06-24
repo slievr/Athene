@@ -10,7 +10,12 @@ import type { ProjectInfo } from "@/lib/project-name";
 
 /** A named orchestrator and its (optional) session, for the sidebar. */
 export interface SidebarOrchestrator {
+  /** YAML key slug (never changes). */
   name: string;
+  /** Stable UUID from config. */
+  id: string;
+  /** Display label from config `name` field. Falls back to slug if absent. */
+  label: string;
   /** The orchestrator session (under projectId "_meta"), if running. */
   session: DashboardSession | null;
 }

@@ -20,6 +20,7 @@ import {
   createPluginRegistry,
   createSessionManager,
   createLifecycleManager,
+  ensureOrchestratorUUIDs,
   type LoadedConfig,
   type PluginRegistry,
   type OpenCodeSessionManager,
@@ -104,6 +105,7 @@ export function invalidatePortfolioServicesCache(): void {
 
 async function initServices(): Promise<Services> {
   const config = loadDashboardConfig();
+  ensureOrchestratorUUIDs(config.configPath);
   const registry = createPluginRegistry();
 
   // Register plugins explicitly (webpack can't handle dynamic import() in core)
