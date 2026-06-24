@@ -269,6 +269,51 @@ describe("runtime.create()", () => {
     expect(mockExecFileCustom).toHaveBeenCalledTimes(1);
   });
 
+  it("kills stale orphaned session on 'duplicate session' error and retries", async () => {
+    const runtime = create();
+
+    // 1: new-session fails with duplicate session (stale orphan from prior run)
+    mockTmuxError("duplicate session: stale-session");
+    // 2: kill-session removes the stale session
+    mockTmuxSuccess();
+    // 3: new-session retry succeeds
+    mockTmuxSuccess();
+    // 4: set-option status off
+    mockTmuxSuccess();
+
+    const handle = await runtime.create({
+      sessionId: "stale-session",
+      workspacePath: "/tmp/ws",
+      launchCommand: "echo hi",
+      environment: {},
+    });
+
+    expect(handle.id).toBe("stale-session");
+    expect(mockExecFileCustom).toHaveBeenCalledWith(
+      "tmux",
+      ["kill-session", "-t", "stale-session"],
+      expectedTmuxOptions,
+    );
+    expect(mockExecFileCustom).toHaveBeenCalledTimes(4);
+  });
+
+  it("surfaces non-duplicate-session errors from new-session", async () => {
+    const runtime = create();
+
+    mockTmuxError("tmux: cannot use socket path");
+
+    await expect(
+      runtime.create({
+        sessionId: "socket-fail",
+        workspacePath: "/tmp/ws",
+        launchCommand: "echo",
+        environment: {},
+      }),
+    ).rejects.toThrow("tmux: cannot use socket path");
+
+    expect(mockExecFileCustom).toHaveBeenCalledTimes(1);
+  });
+
   it("cleans up session if set-option fails", async () => {
     const runtime = create();
 
