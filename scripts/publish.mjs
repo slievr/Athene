@@ -2,8 +2,13 @@
 // Publishes workspace packages to npm using the npm CLI.
 // Used in place of `changeset publish` so that npm (not pnpm) handles
 // the actual publish request, enabling native OIDC trusted publishing.
+//
+// `pnpm pack` is used to generate the tarball because it rewrites
+// `workspace:*` dependencies to their resolved semver versions. `npm pack`
+// does not understand the workspace protocol and publishes the literal
+// `workspace:*` string, which breaks `npm install -g @made-by-moonlight/athene`.
 import { execSync } from 'child_process';
-import { readFileSync } from 'fs';
+import { readFileSync, rmSync } from 'fs';
 
 const root = process.cwd();
 
@@ -29,7 +34,13 @@ for (const { path: dir, private: isPrivate } of packages) {
   }
 
   console.log(`  publish  ${name}@${version}`);
-  execSync('npm publish', { cwd: dir, stdio: 'inherit' });
+  // pnpm pack rewrites workspace:* → resolved version; npm pack does not.
+  const tarball = execSync('pnpm pack', { cwd: dir, encoding: 'utf-8' }).trim();
+  try {
+    execSync(`npm publish ${tarball}`, { cwd: dir, stdio: 'inherit' });
+  } finally {
+    try { rmSync(`${dir}/${tarball}`); } catch { /* best-effort cleanup */ }
+  }
   published++;
 }
 
