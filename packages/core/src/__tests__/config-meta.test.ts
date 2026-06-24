@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { validateConfig, assertMetaScopeProjectsExist } from "../config.js";
 
+
 const base = {
   projects: {
     web: { path: "/tmp/web", description: "UI app", sessionPrefix: "web" },
@@ -83,5 +84,33 @@ describe("metaOrchestrators config", () => {
     const message = thrown instanceof Error ? thrown.message : String(thrown);
     // The superRefine must not blow up on undefined `projects`.
     expect(message).not.toMatch(/Cannot convert undefined or null to object/);
+  });
+});
+
+describe("dual-read: orchestrators / metaOrchestrators", () => {
+  it("parses orchestrators key (new)", () => {
+    const cfg = validateConfig({
+      ...base,
+      orchestrators: { platform: { scope: "all" } },
+    });
+    expect(cfg.orchestrators?.platform.scope).toBe("all");
+  });
+
+  it("parses metaOrchestrators key (legacy) and exposes it as orchestrators", () => {
+    const cfg = validateConfig({
+      ...base,
+      metaOrchestrators: { platform: { scope: "all" } },
+    });
+    expect(cfg.orchestrators?.platform.scope).toBe("all");
+  });
+
+  it("new orchestrators key takes precedence when both present", () => {
+    const cfg = validateConfig({
+      ...base,
+      orchestrators: { orch: { scope: "all" } },
+      metaOrchestrators: { old: { scope: "all" } },
+    });
+    expect(cfg.orchestrators?.orch).toBeDefined();
+    expect(cfg.orchestrators?.old).toBeUndefined();
   });
 });

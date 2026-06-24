@@ -362,7 +362,7 @@ const MetaScopeSchema = z.union([
   z.object({ projects: z.array(z.string()).min(1) }),
 ]);
 
-const MetaOrchestratorConfigSchema = z.object({
+const OrchestratorEntryConfigSchema = z.object({
   scope: MetaScopeSchema,
   // Include newly-registered projects in this meta orchestrator's scope.
   // NOTE (current behavior): scope is resolved live by `meta-status` and the
@@ -402,12 +402,20 @@ const OrchestratorConfigSchema = z
   notifiers: z.record(NotifierConfigSchema).default({}),
   notificationRouting: z.record(z.array(z.string())).default({}),
   reactions: z.record(ReactionConfigSchema).default({}),
+  orchestrators: z
+    .record(
+      z
+        .string()
+        .regex(/^[a-zA-Z0-9_-]+$/, "orchestrator name must match [a-zA-Z0-9_-]+"),
+      OrchestratorEntryConfigSchema,
+    )
+    .optional(),
   metaOrchestrators: z
     .record(
       z
         .string()
         .regex(/^[a-zA-Z0-9_-]+$/, "meta orchestrator name must match [a-zA-Z0-9_-]+"),
-      MetaOrchestratorConfigSchema,
+      OrchestratorEntryConfigSchema,
     )
     .optional(),
   })
@@ -917,6 +925,7 @@ function buildEffectiveConfigFromFlatLocalPath(
   // Validate meta scopes against the FULL registry before projecting down to the
   // single cwd project below (otherwise valid multi-project scopes would be
   // rejected by validateConfig against the partial projects map).
+  assertMetaScopeProjectsExist(globalConfig.orchestrators, Object.keys(globalConfig.projects));
   assertMetaScopeProjectsExist(globalConfig.metaOrchestrators, Object.keys(globalConfig.projects));
 
   const canonicalProjectDir = (() => {
@@ -965,6 +974,7 @@ function buildEffectiveConfigFromGlobalConfigPath(configPath: string): LoadedCon
   // Validate meta scopes against the FULL registry — including projects that may
   // degrade (and thus be excluded from the effective `projects` map below) — so a
   // scope referencing a temporarily-degraded but registered project still loads.
+  assertMetaScopeProjectsExist(globalConfig.orchestrators, Object.keys(globalConfig.projects));
   assertMetaScopeProjectsExist(globalConfig.metaOrchestrators, Object.keys(globalConfig.projects));
 
   const projects: Record<string, OrchestratorConfig["projects"][string]> = {};
@@ -1031,6 +1041,10 @@ export function findConfig(startDir?: string): string | null {
  */
 export function validateWrappedConfig(raw: unknown): OrchestratorConfig {
   const config = validateConfig(raw);
+  // Check both keys: orchestrators (new canonical) and metaOrchestrators (legacy).
+  // normalizeOrchestrators copies metaOrchestrators → orchestrators, so checking
+  // orchestrators covers both; checking metaOrchestrators handles any residual refs.
+  assertMetaScopeProjectsExist(config.orchestrators, Object.keys(config.projects));
   assertMetaScopeProjectsExist(config.metaOrchestrators, Object.keys(config.projects));
   return config;
 }
@@ -1112,11 +1126,23 @@ export function loadConfigWithPath(configPath?: string): {
   return { config: config as LoadedConfig, path };
 }
 
+/**
+ * Normalize dual-read: if only metaOrchestrators is present, copy it to orchestrators.
+ * If both are present, orchestrators (new key) wins.
+ */
+function normalizeOrchestrators(config: OrchestratorConfig): OrchestratorConfig {
+  if (config.metaOrchestrators && !config.orchestrators) {
+    return { ...config, orchestrators: config.metaOrchestrators };
+  }
+  return config;
+}
+
 /** Validate a raw config object */
 export function validateConfig(raw: unknown): OrchestratorConfig {
   const validated = OrchestratorConfigSchema.parse(raw);
 
   let config = validated as OrchestratorConfig;
+  config = normalizeOrchestrators(config);
   config = expandPaths(config);
   config = applyProjectDefaults(config);
   config = applyDefaultReactions(config);

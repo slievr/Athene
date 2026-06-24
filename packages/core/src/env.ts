@@ -32,7 +32,9 @@ export const ENV = {
   // -- Identity / session context (set on agent child processes) --
   /** Who is invoking the CLI: "human" | "orchestrator" | "agent" | "meta-orchestrator". */
   CALLER_TYPE: `${ENV_PREFIX}CALLER_TYPE`,
-  /** Name of the owning meta-orchestrator (set on meta-orchestrator children). */
+  /** Name of the owning orchestrator (set on orchestrator-spawned workers). */
+  ORCHESTRATOR_NAME: `${ENV_PREFIX}ORCHESTRATOR_NAME`,
+  /** @deprecated Use ORCHESTRATOR_NAME */
   META_NAME: `${ENV_PREFIX}META_NAME`,
   /** Session id exposed to the agent process (used by `ao report`, hooks, etc.). */
   SESSION_ID: `${ENV_PREFIX}SESSION_ID`,

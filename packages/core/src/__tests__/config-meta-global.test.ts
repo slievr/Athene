@@ -149,6 +149,38 @@ describe("metaOrchestrators via the global config path", () => {
   });
 });
 
+// dual-read: metaOrchestrators in global config is exposed as orchestrators
+describe("dual-read: metaOrchestrators in global config", () => {
+  let tempRoot: string;
+  let originalHome: string | undefined;
+  let originalUserProfile: string | undefined;
+
+  beforeEach(() => {
+    tempRoot = join(tmpdir(), `ao-meta-dualread-${randomUUID()}`);
+    mkdirSync(join(tempRoot, ".agent-orchestrator"), { recursive: true });
+    originalHome = process.env["HOME"];
+    originalUserProfile = process.env["USERPROFILE"];
+    process.env["HOME"] = tempRoot;
+    process.env["USERPROFILE"] = tempRoot;
+  });
+
+  afterEach(() => {
+    process.env["HOME"] = originalHome;
+    process.env["USERPROFILE"] = originalUserProfile;
+    rmSync(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  });
+
+  it("loads metaOrchestrators from global config and exposes as orchestrators", () => {
+    const configPath = join(tempRoot, ".agent-orchestrator", "config.yaml");
+    writeFileSync(
+      configPath,
+      ["projects: {}", "metaOrchestrators:", "  g1:", "    scope: all", ""].join("\n"),
+    );
+    const config = loadConfig(configPath);
+    expect(config.metaOrchestrators?.g1 ?? config.orchestrators?.g1).toBeDefined();
+  });
+});
+
 // ath-rev-21 #2: the canonical-global branch is
 // `buildEffectiveConfigFromGlobalConfigPath(path) ?? validateWrappedConfig(normalizedParsed)`.
 // The builder already fails loud on an unknown meta scope, but the `??` fallback

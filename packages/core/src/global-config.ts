@@ -242,10 +242,17 @@ export const GlobalConfigSchema = z
     /** Reaction rules (default reactions merged at load time). */
     reactions: z.record(z.object({}).passthrough()).default({}),
     /**
+     * Named orchestrators (portfolio-scoped coordinators). New canonical field.
+     * Kept loose here (passthrough entries) — the strict shape is validated by
+     * OrchestratorConfigSchema when the effective config is built.
+     */
+    orchestrators: z.record(z.object({}).passthrough()).optional(),
+    /**
      * Named meta orchestrators (portfolio-scoped coordinators). Kept loose here
      * (passthrough entries) — the strict shape is validated by
      * OrchestratorConfigSchema when the effective config is built. Preserving it
      * here ensures it survives parsing of ~/.agent-orchestrator/config.yaml.
+     * @deprecated Use orchestrators.
      */
     metaOrchestrators: z.record(z.object({}).passthrough()).optional(),
   })
@@ -372,7 +379,12 @@ export function loadGlobalConfig(
     });
   }
 
-  const config = GlobalConfigSchema.parse(parsed);
+  let config = GlobalConfigSchema.parse(parsed);
+
+  // Normalize dual-read: if only metaOrchestrators is present, copy to orchestrators.
+  if (config.metaOrchestrators && !config.orchestrators) {
+    config = { ...config, orchestrators: config.metaOrchestrators };
+  }
 
   for (const [projectId, entry] of Object.entries(config.projects)) {
     entry.path = normalizeRegistryProjectPath(projectId, entry.path);
