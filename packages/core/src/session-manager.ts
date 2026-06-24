@@ -1807,6 +1807,18 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
             getEnvString(ENV.META_NAME) ||
             "default"
           ),
+          // Stamp the stable UUID for the owning orchestrator (when available).
+          // Lookup by slug from the resolved orchestratorOwner value.
+          ...(() => {
+            const ownerSlug =
+              spawnConfig.orchestratorOwner ||
+              spawnConfig.metaOwner ||
+              getEnvString(ENV.ORCHESTRATOR_NAME) ||
+              getEnvString(ENV.META_NAME);
+            if (!ownerSlug) return {};
+            const orchEntry = (config.orchestrators ?? config.metaOrchestrators)?.[ownerSlug];
+            return orchEntry?.id ? { orchestratorId: orchEntry.id } : {};
+          })(),
           // Parent session stamping: when a worker is spawned from within an
           // orchestrator session, ATHENE_SESSION_ID holds the orchestrator's
           // session ID. This links workers back to their parent for fleet views.

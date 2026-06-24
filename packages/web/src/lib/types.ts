@@ -95,6 +95,8 @@ export interface DashboardSession {
   ownerKind?: "meta" | "project";
   /** Name of the dispatching meta orchestrator (set only when ownerKind === "meta"). */
   metaOwner?: string | null;
+  /** Stable UUID of the owning orchestrator (undefined for sessions not owned by an orchestrator). */
+  orchestratorId?: string | null;
   status: SessionStatus;
   activity: ActivityState | null;
   activitySignal?: DashboardActivitySignal;
