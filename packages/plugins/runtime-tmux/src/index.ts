@@ -104,16 +104,35 @@ export function create(): Runtime {
           ? writeLaunchScript(launchCommand)
           : withKeepAliveShell(launchCommand);
 
-      await tmux(
-        "new-session",
-        "-d",
-        "-s",
-        sessionName,
-        "-c",
-        config.workspacePath,
-        ...envArgs,
-        shellCommand,
-      );
+      // Attempt to create the session. If tmux already has a session with this
+      // name (stale orphan from a previous unclean shutdown with no AO metadata),
+      // kill it and retry once rather than surfacing "duplicate session".
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          await tmux(
+            "new-session",
+            "-d",
+            "-s",
+            sessionName,
+            "-c",
+            config.workspacePath,
+            ...envArgs,
+            shellCommand,
+          );
+          break;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (attempt === 0 && msg.includes("duplicate session")) {
+            try {
+              await tmux("kill-session", "-t", sessionName);
+            } catch {
+              // Best-effort: if kill fails, let the retry fail naturally
+            }
+            continue;
+          }
+          throw err;
+        }
+      }
 
       // Hide the tmux status bar — sessions are embedded in the web terminal,
       // and the green bar at the bottom is visual noise (and racy with the
