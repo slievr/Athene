@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 
 const hoisted = vi.hoisted(() => ({
   getProjectRouteDataMock: vi.fn(),
-  getDashboardPageDataMock: vi.fn(),
 }));
 
 vi.mock("next/link", () => ({
@@ -25,42 +24,34 @@ vi.mock("@/lib/project-route-data", () => ({
   getProjectRouteData: hoisted.getProjectRouteDataMock,
 }));
 
-vi.mock("@/lib/dashboard-page-data", () => ({
-  getDashboardPageData: hoisted.getDashboardPageDataMock,
-}));
-
-vi.mock("@/components/Dashboard", () => ({
-  Dashboard: () => <div data-testid="dashboard" />,
-}));
-
 import ProjectPage from "./page";
 
 describe("ProjectPage", () => {
-  it("renders the dashboard inside a bounded flex item owned by the project shell", async () => {
+  it("renders project settings with name and id", async () => {
     hoisted.getProjectRouteDataMock.mockResolvedValue({
       projectId: "project-1",
-      project: { id: "project-1" },
+      project: {
+        name: "Project 1",
+        path: "/tmp/project-1",
+        defaultBranch: "main",
+        sessionPrefix: "proj",
+        repo: "owner/repo",
+        agent: "claude-code",
+        tracker: { plugin: "github" },
+        scm: { plugin: "github" },
+      },
       projects: [{ id: "project-1", name: "Project 1" }],
       degradedProject: null,
-    });
-    hoisted.getDashboardPageDataMock.mockResolvedValue({
-      sessions: [],
-      selectedProjectId: "project-1",
-      projectName: "Project 1",
-      projects: [{ id: "project-1", name: "Project 1" }],
-      orchestrators: [],
-      attentionZones: "simple",
     });
 
     render(await ProjectPage({ params: Promise.resolve({ projectId: "project-1" }) }));
 
-    expect(screen.getByTestId("dashboard").parentElement).toHaveClass(
-      "flex",
-      "min-h-0",
-      "min-w-0",
-      "flex-1",
-    );
-    expect(screen.getByTestId("dashboard").parentElement).not.toHaveClass("min-h-screen");
+    expect(screen.getByText("Project 1")).toBeInTheDocument();
+    expect(screen.getByText("project-1")).toBeInTheDocument();
+    expect(screen.getByText("Configuration")).toBeInTheDocument();
+    expect(screen.getByText("/tmp/project-1")).toBeInTheDocument();
+    expect(screen.getByText("main")).toBeInTheDocument();
+    expect(screen.getByText("owner/repo")).toBeInTheDocument();
   });
 
   it("renders degraded project state when the project is degraded", async () => {

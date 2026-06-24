@@ -1807,6 +1807,10 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
             getEnvString(ENV.META_NAME) ||
             "default"
           ),
+          // Parent session stamping: when a worker is spawned from within an
+          // orchestrator session, ATHENE_SESSION_ID holds the orchestrator's
+          // session ID. This links workers back to their parent for fleet views.
+          ...(getEnvString(ENV.SESSION_ID) ? { parentSessionId: getEnvString(ENV.SESSION_ID) } : {}),
         },
       };
 

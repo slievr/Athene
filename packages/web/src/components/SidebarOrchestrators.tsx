@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { getAttentionLevel, type DashboardSession } from "@/lib/types";
 import { getSessionTitle } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -95,6 +95,8 @@ export function SidebarOrchestrators({
   onNavigate,
 }: SidebarOrchestratorsProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isFleet = pathname?.startsWith("/fleet") ?? false;
   const [startingOrch, setStartingOrch] = useState<Set<string>>(new Set());
   const [expandedOrchestrators, setExpandedOrchestrators] = useState<Set<string>>(new Set());
   const [showCreate, setShowCreate] = useState(false);
@@ -376,6 +378,10 @@ export function SidebarOrchestrators({
               <button
                 type="button"
                 onClick={() => {
+                  if (isFleet) {
+                    router.push(`/fleet?orch=${encodeURIComponent(o.name)}`);
+                    return;
+                  }
                   setExpandedOrchestrators((prev) => {
                     const next = new Set(prev);
                     if (next.has(o.name)) next.delete(o.name);
@@ -387,13 +393,14 @@ export function SidebarOrchestrators({
                   "project-sidebar__proj-toggle",
                   activeSessionId === o.name && "project-sidebar__proj-toggle--active",
                 )}
-                aria-expanded={isExpanded}
-                aria-label={`Toggle ${o.name} sessions`}
+                aria-expanded={isFleet ? undefined : isExpanded}
+                aria-label={isFleet ? `Filter fleet by ${o.name}` : `Toggle ${o.name} sessions`}
               >
                 <svg
                   className={cn(
                     "project-sidebar__proj-chevron",
-                    isExpanded && "project-sidebar__proj-chevron--open",
+                    !isFleet && isExpanded && "project-sidebar__proj-chevron--open",
+                    isFleet && "opacity-0",
                   )}
                   width="10"
                   height="10"

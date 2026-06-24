@@ -378,6 +378,13 @@ export function getSessionMetaOwner(
   return session.metadata?.["metaOwner"] ?? null;
 }
 
+/** Session ID of the orchestrator session that spawned this worker, or null. */
+export function getSessionParentId(
+  session: { metadata?: Record<string, string> },
+): string | null {
+  return session.metadata?.["parentSessionId"] ?? null;
+}
+
 /** Config for creating a new session */
 export interface SessionSpawnConfig {
   projectId: string;

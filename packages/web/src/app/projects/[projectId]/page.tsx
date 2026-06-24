@@ -1,7 +1,5 @@
 import { notFound } from "next/navigation";
-import { Dashboard } from "@/components/Dashboard";
 import { DegradedProjectState } from "@/components/DegradedProjectState";
-import { getDashboardPageData } from "@/lib/dashboard-page-data";
 import { getProjectRouteData } from "@/lib/project-route-data";
 
 export const dynamic = "force-dynamic";
@@ -26,19 +24,41 @@ export default async function ProjectPage(props: {
     );
   }
 
-  const pageData = await getDashboardPageData(projectId);
+  const { project } = routeData;
+
+  const rows: Array<{ label: string; value: string }> = [
+    { label: "Path", value: project?.path ?? "" },
+    { label: "Default branch", value: project?.defaultBranch ?? "" },
+    ...(project?.repo ? [{ label: "Repository", value: project.repo }] : []),
+    ...(project?.agent ? [{ label: "Agent", value: project.agent }] : []),
+    ...(project?.runtime ? [{ label: "Runtime", value: project.runtime }] : []),
+    ...(project?.tracker?.plugin ? [{ label: "Tracker", value: project.tracker.plugin }] : []),
+    ...(project?.scm?.plugin ? [{ label: "SCM", value: project.scm.plugin }] : []),
+  ];
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--color-bg-canvas)]">
-      <Dashboard
-        initialSessions={pageData.sessions}
-        projectId={pageData.selectedProjectId}
-        projectName={pageData.projectName}
-        projects={pageData.projects}
-        orchestrators={pageData.orchestrators}
-        namedOrchestrators={pageData.namedOrchestrators}
-        attentionZones={pageData.attentionZones}
-      />
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--color-bg-canvas)] p-6">
+      <div className="flex flex-col gap-6 max-w-xl">
+        <div>
+          <h1 className="text-base font-semibold text-[--color-text-primary] mb-1">
+            {project?.name ?? projectId}
+          </h1>
+          <p className="text-xs text-[--color-text-tertiary] font-mono">{projectId}</p>
+        </div>
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xs font-semibold tracking-widest uppercase text-[--color-text-tertiary]">
+            Configuration
+          </h2>
+          <div className="flex flex-col gap-2 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border-default)] p-4">
+            {rows.map(({ label, value }) => (
+              <div key={label} className="flex items-baseline gap-3">
+                <span className="text-xs text-[--color-text-secondary] w-32 shrink-0">{label}</span>
+                <span className="text-xs text-[--color-text-primary] font-mono break-all">{value}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

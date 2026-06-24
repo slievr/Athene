@@ -40,6 +40,8 @@ interface SessionCardProps {
   onRestore?: (sessionId: string) => void;
   /** Optional per-project color accent (identity axis). Shown in multi-project views. */
   projectAccent?: ProjectAccent;
+  /** Optional Tailwind border-color class applied as `border-l-2 {accentClass}` when projectAccent is absent. */
+  accentClass?: string;
 }
 
 function getPRDotClass(p: DashboardPR): string {
@@ -93,7 +95,7 @@ function getRepoInitials(repo: string): string {
     .slice(0, 3);
 }
 
-function SessionCardView({ session, onKill, onMerge, onRestore, projectAccent }: SessionCardProps) {
+function SessionCardView({ session, onKill, onMerge, onRestore, projectAccent, accentClass }: SessionCardProps) {
   const [killConfirming, setKillConfirming] = useState(false);
 
   // Only play the entrance animation on the very first mount of this session.
@@ -155,8 +157,8 @@ function SessionCardView({ session, onKill, onMerge, onRestore, projectAccent }:
       className={cn(
         "session-card border",
         !hasEntered && "kanban-card-enter",
-        projectAccent && "border-l-2",
-        projectAccent && projectColorBorderClass(projectAccent.slot),
+        (projectAccent || accentClass) && "border-l-2",
+        projectAccent ? projectColorBorderClass(projectAccent.slot) : accentClass,
       )}
     >
       <div className="session-card__header">
@@ -397,7 +399,8 @@ function areSessionCardPropsEqual(prev: SessionCardProps, next: SessionCardProps
     prev.session === next.session &&
     prev.onKill === next.onKill &&
     prev.onMerge === next.onMerge &&
-    prev.onRestore === next.onRestore
+    prev.onRestore === next.onRestore &&
+    prev.accentClass === next.accentClass
   );
 }
 
