@@ -44,6 +44,8 @@ import {
   reapAoOrphans,
   type DaemonChildSweepResult,
   type AoOrphanProcess,
+  retirePerProjectOrchestrators,
+  getAoBaseDir,
 } from "@made-by-moonlight/athene-core";
 import { parse as yamlParse, stringify as yamlStringify } from "yaml";
 import { exec, execSilent, git } from "../lib/shell.js";
@@ -868,6 +870,19 @@ async function runStartup(
 ): Promise<number> {
   await runtimePreflight(config);
 
+  // Retire any per-project orchestrator sessions left over from the pre-collapse
+  // layout. Fire-and-forget with a warning — migration failure must not block startup.
+  await retirePerProjectOrchestrators(
+    getAoBaseDir(),
+    getGlobalConfigPath(),
+    null,
+  ).catch((e: unknown) => {
+    console.warn(
+      "Migration warning:",
+      e instanceof Error ? e.message : String(e),
+    );
+  });
+
   // Ask about the auto-update channel once on first `athene start` after this
   // feature ships. No-op on subsequent runs (idempotent — guarded by the
   // presence of `updateChannel` in the global config).
@@ -928,10 +943,6 @@ async function runStartup(
   }
 
   let selectedOrchestratorId: string | null = null;
-
-  // Per-project orchestrator auto-start has been removed as part of the
-  // orchestrator tier collapse. Named orchestrators are started via `athene meta-start`.
-  // TODO(ath-18): wire up named orchestrator start from config.orchestrators.
 
   if (shouldStartLifecycle) {
     try {
@@ -1339,9 +1350,6 @@ async function attachAndSpawnOrchestrator(opts: {
     ),
   );
 
-  // Per-project orchestrator auto-start has been removed as part of the
-  // orchestrator tier collapse. Named orchestrators are started via `athene meta-start`.
-  // TODO(ath-18): wire up named orchestrator start from config.orchestrators.
   if (justCreated) {
     console.log(chalk.green(`\n✓ Project "${projectId}" registered in the global config.`));
   } else {

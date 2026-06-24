@@ -4,10 +4,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import {
+  resolveOrchestratorName,
+  partitionOrchestratorSessions,
+  loadOrchestratorRegistryConfig,
+  // Backward-compat aliases — verify they still work.
   resolveMetaName,
   partitionMetaSessions,
   loadMetaRegistryConfig,
-} from "../../src/commands/meta.js";
+} from "../../src/commands/orchestrator.js";
 import type { Session } from "@made-by-moonlight/athene-core";
 
 const sess = (over: Partial<Session>): Session =>
@@ -21,29 +25,35 @@ const sess = (over: Partial<Session>): Session =>
     ...over,
   }) as unknown as Session;
 
-describe("resolveMetaName", () => {
+describe("resolveOrchestratorName", () => {
   it("throws when none are configured", () => {
-    expect(() => resolveMetaName([])).toThrow(/No meta orchestrators/);
+    expect(() => resolveOrchestratorName([])).toThrow(/No orchestrators are configured/);
   });
 
-  it("defaults to the sole configured meta", () => {
-    expect(resolveMetaName(["meta-1"])).toBe("meta-1");
+  it("defaults to the sole configured orchestrator", () => {
+    expect(resolveOrchestratorName(["orch-1"])).toBe("orch-1");
   });
 
   it("returns the requested name when valid", () => {
-    expect(resolveMetaName(["a", "b"], "b")).toBe("b");
+    expect(resolveOrchestratorName(["a", "b"], "b")).toBe("b");
   });
 
   it("throws for an unknown requested name", () => {
-    expect(() => resolveMetaName(["a", "b"], "c")).toThrow(/Unknown meta orchestrator/);
+    expect(() => resolveOrchestratorName(["a", "b"], "c")).toThrow(/Unknown orchestrator/);
   });
 
   it("throws when ambiguous (multiple, none requested)", () => {
-    expect(() => resolveMetaName(["a", "b"])).toThrow(/specify one/);
+    expect(() => resolveOrchestratorName(["a", "b"])).toThrow(/specify one/);
   });
 });
 
-describe("partitionMetaSessions", () => {
+describe("resolveMetaName (backward-compat alias)", () => {
+  it("delegates to resolveOrchestratorName", () => {
+    expect(resolveMetaName(["meta-1"])).toBe("meta-1");
+  });
+});
+
+describe("partitionOrchestratorSessions", () => {
   it("splits owned workers from in-scope peers", () => {
     const sessions = [
       sess({ id: "web-1", projectId: "web", metadata: { ownerKind: "meta", metaOwner: "meta-1" } }),
@@ -51,7 +61,7 @@ describe("partitionMetaSessions", () => {
       sess({ id: "api-1", projectId: "api", metadata: { ownerKind: "meta", metaOwner: "other" } }), // other meta, in scope → peer
       sess({ id: "zzz-1", projectId: "zzz", metadata: {} }), // out of scope → ignored
     ];
-    const { owned, peers } = partitionMetaSessions(sessions, "meta-1", ["web", "api"]);
+    const { owned, peers } = partitionOrchestratorSessions(sessions, "meta-1", ["web", "api"]);
     expect(owned.map((s) => s.id)).toEqual(["web-1"]);
     expect(peers.map((s) => s.id).sort()).toEqual(["api-1", "web-2"]);
   });
@@ -69,22 +79,30 @@ describe("partitionMetaSessions", () => {
         } as unknown as Session["lifecycle"],
       }),
     ];
-    const { peers } = partitionMetaSessions(sessions, "meta-1", ["web"]);
+    const { peers } = partitionOrchestratorSessions(sessions, "meta-1", ["web"]);
     expect(peers).toEqual([]);
   });
 });
 
-describe("loadMetaRegistryConfig", () => {
+describe("partitionMetaSessions (backward-compat alias)", () => {
+  it("delegates to partitionOrchestratorSessions", () => {
+    const sessions = [
+      sess({ id: "web-1", projectId: "web", metadata: { metaOwner: "my-orch" } }),
+    ];
+    const { owned } = partitionMetaSessions(sessions, "my-orch", ["web"]);
+    expect(owned.map((s) => s.id)).toEqual(["web-1"]);
+  });
+});
+
+describe("loadOrchestratorRegistryConfig", () => {
   let tempRoot: string;
   let globalPath: string;
   let originalAoGlobalConfig: string | undefined;
 
   beforeEach(() => {
-    tempRoot = join(tmpdir(), `ao-meta-registry-${randomUUID()}`);
+    tempRoot = join(tmpdir(), `ao-orchestrator-registry-${randomUUID()}`);
     mkdirSync(tempRoot, { recursive: true });
     globalPath = join(tempRoot, "config.yaml");
-    // Point getGlobalConfigPath() at our temp global config (independent of cwd /
-    // the worktree's own agent-orchestrator.yaml).
     originalAoGlobalConfig = process.env["ATHENE_GLOBAL_CONFIG"];
     process.env["ATHENE_GLOBAL_CONFIG"] = globalPath;
   });
@@ -95,15 +113,30 @@ describe("loadMetaRegistryConfig", () => {
     rmSync(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   });
 
-  it("loads the GLOBAL registry (with metaOrchestrators), not a cwd flat-local projection", () => {
+  it("loads the GLOBAL registry (with orchestrators), not a cwd flat-local projection", () => {
+    // Use the canonical metaOrchestrators key so the global config builder
+    // propagates it through the loading chain (orchestrators is normalized from
+    // metaOrchestrators inside validateConfig).
+    writeFileSync(
+      globalPath,
+      ["projects: {}", "metaOrchestrators:", "  platform:", "    scope: all", ""].join("\n"),
+    );
+
+    const config = loadOrchestratorRegistryConfig();
+    // Orchestrators live only in the global registry — a flat-local config
+    // would not carry them. Their presence (via normalization) proves we loaded
+    // the global config.
+    expect(config.orchestrators?.platform ?? config.metaOrchestrators?.platform).toBeDefined();
+    expect(config.configPath).toBe(globalPath);
+  });
+
+  it("also works via loadMetaRegistryConfig backward-compat alias", () => {
     writeFileSync(
       globalPath,
       ["projects: {}", "metaOrchestrators:", "  platform:", "    scope: all", ""].join("\n"),
     );
 
     const config = loadMetaRegistryConfig();
-    // Meta orchestrators live only in the global registry — a flat-local config
-    // would not carry them. Their presence proves we loaded the global config.
     expect(config.metaOrchestrators?.platform).toBeDefined();
     expect(config.configPath).toBe(globalPath);
   });
