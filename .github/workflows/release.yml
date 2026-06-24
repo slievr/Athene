@@ -140,13 +140,17 @@ jobs:
           git checkout -b "$branch"
           git add -A
           git commit -m "chore: version packages"
-          git push origin "$branch"
+          # Force-push in case the branch exists from a prior failed run.
+          git push --force origin "$branch"
 
-          gh pr create \
-            --title "chore: version packages" \
-            --body "Automated version bump to ${new_version}. Merges automatically once CI passes." \
-            --head "$branch" \
-            --base main
+          # Create PR only if one doesn't already exist for this branch.
+          if ! gh pr view "$branch" --json number 2>/dev/null | grep -q number; then
+            gh pr create \
+              --title "chore: version packages" \
+              --body "Automated version bump to ${new_version}. Merges automatically once CI passes." \
+              --head "$branch" \
+              --base main
+          fi
           gh pr merge "$branch" --auto --merge
 
       # Check npm directly to determine whether to publish. This handles both
