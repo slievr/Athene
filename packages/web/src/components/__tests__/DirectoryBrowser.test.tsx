@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DirectoryBrowser } from "@/components/DirectoryBrowser";
@@ -408,6 +408,13 @@ describe("DirectoryBrowser", () => {
 
     const alpha = (await screen.findByText("alpha")).closest("button");
     expect(alpha).not.toBeNull();
+
+    // Flush the effect re-run triggered by the fetch resolving (the browser
+    // reference changes, causing useEffect([browser, selectedIndex]) to remove
+    // and re-attach the document keydown listener). Without this flush,
+    // fireEvent fires into the brief window between the two and the handler
+    // never runs — intermittently on CI where the scheduler is stricter.
+    await act(async () => {});
 
     // The dialog wrapper is an ancestor of the browser panes — the state focus
     // lands on when the modal opens. Keyboard nav must still respond.
