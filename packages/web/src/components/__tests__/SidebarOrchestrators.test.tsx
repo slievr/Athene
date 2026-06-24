@@ -301,6 +301,95 @@ describe("SidebarOrchestrators", () => {
     expect(screen.queryByText("+ New session")).not.toBeInTheDocument();
   });
 
+  it("hides the project select when there is exactly one project", () => {
+    render(
+      <SidebarOrchestrators
+        collapsed={false}
+        orchestrators={[{ name: "fleet", session: orchSession }]}
+        allSessions={[]}
+        projects={someProjects}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /toggle fleet sessions/i }));
+    fireEvent.click(screen.getByText("+ New session"));
+
+    // With a single project the select should not appear
+    expect(screen.queryByRole("combobox", { name: /project/i })).not.toBeInTheDocument();
+    // But the prompt input and spawn/cancel buttons should still be there
+    expect(screen.getByPlaceholderText("Prompt (optional)")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /spawn/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
+  });
+
+  it("shows project select when there are multiple projects", () => {
+    const multiProjects: ProjectInfo[] = [
+      { id: "proj-a", name: "Project A" } as ProjectInfo,
+      { id: "proj-b", name: "Project B" } as ProjectInfo,
+    ];
+    render(
+      <SidebarOrchestrators
+        collapsed={false}
+        orchestrators={[{ name: "fleet", session: orchSession }]}
+        allSessions={[]}
+        projects={multiProjects}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /toggle fleet sessions/i }));
+    fireEvent.click(screen.getByText("+ New session"));
+
+    expect(screen.getByRole("combobox", { name: /project/i })).toBeInTheDocument();
+  });
+
+  it("cancel button is always enabled (not disabled during spawn)", () => {
+    render(
+      <SidebarOrchestrators
+        collapsed={false}
+        orchestrators={[{ name: "fleet", session: orchSession }]}
+        allSessions={[]}
+        projects={someProjects}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /toggle fleet sessions/i }));
+    fireEvent.click(screen.getByText("+ New session"));
+
+    const cancelBtn = screen.getByRole("button", { name: /cancel/i });
+    expect(cancelBtn).not.toBeDisabled();
+  });
+
+  it("cancel closes the spawn form", () => {
+    render(
+      <SidebarOrchestrators
+        collapsed={false}
+        orchestrators={[{ name: "fleet", session: orchSession }]}
+        allSessions={[]}
+        projects={someProjects}
+        activeSessionId={undefined}
+        onNavigate={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /toggle fleet sessions/i }));
+    fireEvent.click(screen.getByText("+ New session"));
+
+    // Form is open
+    expect(screen.getByPlaceholderText("Prompt (optional)")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+
+    // Form is closed, back to the button
+    expect(screen.queryByPlaceholderText("Prompt (optional)")).not.toBeInTheDocument();
+    expect(screen.getByText("+ New session")).toBeInTheDocument();
+  });
+
   describe("start button on orchestrator rows", () => {
     beforeEach(() => {
       vi.clearAllMocks();
