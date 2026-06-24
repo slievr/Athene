@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Dashboard } from "@/components/Dashboard";
 import { getOrchestratorPageData } from "@/lib/orchestrator-page-data";
 import { orchestratorSessionPath } from "@/lib/routes";
+import { OrchestratorSpawnForm } from "@/components/OrchestratorSpawnForm";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,9 @@ export default async function OrchestratorPage(props: {
             {name}
           </a>
         </div>
+      )}
+      {data.projects.length > 0 && (
+        <OrchestratorSpawnForm orchestratorName={name} projects={data.projects} />
       )}
       <Dashboard
         initialSessions={data.sessions}
