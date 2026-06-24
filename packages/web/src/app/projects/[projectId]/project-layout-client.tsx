@@ -5,6 +5,7 @@ import { useParams, usePathname } from "next/navigation";
 import { useSessionEvents } from "@/hooks/useSessionEvents";
 import { useMuxOptional } from "@/providers/MuxProvider";
 import { ProjectSidebar, type ProjectSidebarOrchestrator } from "@/components/ProjectSidebar";
+import type { SidebarOrchestrator } from "@/components/SidebarOrchestrators";
 import { SidebarContext } from "@/components/workspace/SidebarContext";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "@/hooks/useMediaQuery";
 import type { DashboardSession } from "@/lib/types";
@@ -21,6 +22,7 @@ interface ProjectLayoutClientProps {
   initialSessions: DashboardSession[];
   initialProjects: ProjectInfo[];
   initialOrchestrators: ProjectSidebarOrchestrator[];
+  initialNamedOrchestrators?: SidebarOrchestrator[];
 }
 
 export function ProjectLayoutClient({
@@ -28,6 +30,7 @@ export function ProjectLayoutClient({
   initialSessions,
   initialProjects,
   initialOrchestrators,
+  initialNamedOrchestrators = [],
 }: ProjectLayoutClientProps) {
   const params = useParams();
   const pathname = usePathname();
@@ -72,6 +75,7 @@ export function ProjectLayoutClient({
               projects={initialProjects}
               sessions={sessions}
               orchestrators={initialOrchestrators}
+              namedOrchestrators={initialNamedOrchestrators}
               activeProjectId={projectId}
               activeSessionId={activeSessionId}
               loading={!liveSessionsResolved}

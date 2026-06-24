@@ -152,7 +152,7 @@ export function SidebarOrchestrators({
     return (
       <div className="project-sidebar__orch-collapsed flex flex-col items-center gap-1">
         {orchestrators.map((o) => {
-          const dest = o.session ? orchestratorSessionPath(o.name) : orchestratorDashboardPath(o.name);
+          const dest = o.session ? orchestratorSessionPath(o.name, o.session.id) : orchestratorDashboardPath(o.name);
           return (
             <a
               key={o.name}
@@ -245,7 +245,7 @@ export function SidebarOrchestrators({
       )}
       {orchestrators.map((o) => {
         const fleetHref = orchestratorDashboardPath(o.name);
-        const terminalHref = orchestratorSessionPath(o.name);
+        const terminalHref = o.session ? orchestratorSessionPath(o.name, o.session.id) : fleetHref;
         const isStarting = startingOrch.has(o.name);
         return (
           <a

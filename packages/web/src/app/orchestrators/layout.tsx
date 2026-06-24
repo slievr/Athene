@@ -1,10 +1,10 @@
 import { getDashboardPageData } from "@/lib/dashboard-page-data";
-import { ProjectLayoutClient } from "./[projectId]/project-layout-client";
+import { ProjectLayoutClient } from "@/app/projects/[projectId]/project-layout-client";
 import type { ReactNode } from "react";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProjectLayout({ children }: { children: ReactNode }) {
+export default async function OrchestratorLayout({ children }: { children: ReactNode }) {
   const pageData = await getDashboardPageData("all");
 
   return (
