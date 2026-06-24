@@ -1,6 +1,6 @@
 {
   "name": "@made-by-moonlight/athene-plugin-agent-opencode",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "Agent plugin: OpenCode",
   "license": "MIT",
   "type": "module",
