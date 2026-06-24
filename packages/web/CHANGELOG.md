@@ -1,5 +1,25 @@
 # @made-by-moonlight/athene-web
 
+## 0.11.1
+
+### Patch Changes
+
+- ed7c6c7: fix: republish athene with correct athene-cli dependency (0.11.0 had workspace:\* dep bug)
+- Updated dependencies [ed7c6c7]
+  - @made-by-moonlight/athene-core@0.11.1
+  - @made-by-moonlight/athene-plugin-runtime-tmux@0.11.1
+  - @made-by-moonlight/athene-plugin-runtime-process@0.11.1
+  - @made-by-moonlight/athene-plugin-agent-claude-code@0.11.1
+  - @made-by-moonlight/athene-plugin-agent-codex@0.11.1
+  - @made-by-moonlight/athene-plugin-agent-opencode@0.11.1
+  - @made-by-moonlight/athene-plugin-agent-cursor@0.11.1
+  - @made-by-moonlight/athene-plugin-agent-kimicode@0.11.1
+  - @made-by-moonlight/athene-plugin-workspace-worktree@0.11.1
+  - @made-by-moonlight/athene-plugin-tracker-github@0.11.1
+  - @made-by-moonlight/athene-plugin-tracker-linear@0.11.1
+  - @made-by-moonlight/athene-plugin-scm-github@0.11.1
+  - @made-by-moonlight/athene-plugin-agent-grok@0.2.2
+
 ## 0.11.0
 
 ### Minor Changes

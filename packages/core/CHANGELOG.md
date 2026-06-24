@@ -1,5 +1,11 @@
 # @made-by-moonlight/athene-core
 
+## 0.11.1
+
+### Patch Changes
+
+- ed7c6c7: fix: republish athene with correct athene-cli dependency (0.11.0 had workspace:\* dep bug)
+
 ## 0.11.0
 
 ### Minor Changes
