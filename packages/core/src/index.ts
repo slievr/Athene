@@ -534,6 +534,10 @@ export {
   inventoryHashDirs,
   convertKeyValueToJson,
 } from "./migration/storage-v2.js";
+
+// Per-project orchestrator retirement migration — retire lingering per-project
+// orchestrator sessions and ensure a default orchestrator config entry exists
+export { retirePerProjectOrchestrators } from "./migration/retire-per-project-orchestrators.js";
 export type {
   MigrationOptions,
   MigrationResult,
