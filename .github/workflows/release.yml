@@ -104,8 +104,13 @@ jobs:
 
           summary=$(echo "$commits" | sed 's/^/- /')
           sha=$(git rev-parse --short HEAD)
-          printf '---\n"@made-by-moonlight/athene": %s\n---\n\n%s\n' \
-            "$bump" "$summary" > ".changeset/auto-${sha}.md"
+          {
+            echo '---'
+            echo "\"@made-by-moonlight/athene\": ${bump}"
+            echo '---'
+            echo ""
+            echo "$summary"
+          } > ".changeset/auto-${sha}.md"
 
           echo "Generated ${bump} changeset ($(echo "$commits" | wc -l | tr -d ' ') commits)."
 
