@@ -672,7 +672,7 @@ process.exit(0);
 /**
  * PreToolUse hook that blocks native Claude subagent dispatch (the `Task` /
  * `Agent` tools) in ORCHESTRATOR sessions only. Orchestrators must delegate
- * implementation work through `ao spawn` (a tracked worker session with a
+ * implementation work through `athene spawn` (a tracked worker session with a
  * worktree, branch, lifecycle, and dashboard visibility); only read-only
  * Explore / Plan investigation agents are permitted.
  *
@@ -693,7 +693,7 @@ export const SUBAGENT_BLOCKER_SCRIPT_NODE = `#!/usr/bin/env node
 // Subagent Blocker Hook for Athene
 //
 // Blocks native Claude subagent dispatch (Task/Agent) in orchestrator
-// sessions. Orchestrators delegate via \`ao spawn\`; only read-only
+// sessions. Orchestrators delegate via \`athene spawn\`; only read-only
 // Explore/Plan investigation agents are allowed. No-ops for workers.
 
 const { readFileSync } = require("node:fs");
@@ -736,7 +736,7 @@ if (subagentType === "explore" || subagentType === "plan") {
 
 const reason =
   "Orchestrator sessions must not dispatch native subagents. Delegate " +
-  "implementation work through \`ao spawn\`, which creates a tracked worker " +
+  "implementation work through \`athene spawn\`, which creates a tracked worker " +
   "session (worktree, branch, lifecycle polling, dashboard visibility). Only " +
   "read-only Explore/Plan investigation agents are permitted from the orchestrator.";
 
@@ -1088,7 +1088,7 @@ function buildHookRegistrations(
     // Subagent-blocker: PreToolUse on Task|Agent only. Runtime-gated to
     // orchestrator sessions inside the script — installed everywhere, no-ops
     // for workers. Blocks native subagent dispatch so implementation work
-    // goes through `ao spawn` (read-only Explore/Plan agents stay allowed).
+    // goes through `athene spawn` (read-only Explore/Plan agents stay allowed).
     {
       event: "PreToolUse",
       matcher: "Task|Agent",

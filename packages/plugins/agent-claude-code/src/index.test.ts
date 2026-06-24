@@ -1557,7 +1557,7 @@ describe("subagent-blocker script — runtime behavior", () => {
     const parsed = JSON.parse(out);
     expect(parsed.hookSpecificOutput.hookEventName).toBe("PreToolUse");
     expect(parsed.hookSpecificOutput.permissionDecision).toBe("deny");
-    expect(parsed.hookSpecificOutput.permissionDecisionReason).toContain("ao spawn");
+    expect(parsed.hookSpecificOutput.permissionDecisionReason).toContain("athene spawn");
   });
 
   it("orchestrator + Agent general-purpose → deny JSON", () => {
