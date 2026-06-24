@@ -33,6 +33,7 @@ import { ProjectChip } from "./SessionCard.parts";
 import { getProjectColor } from "@/lib/project-color";
 import { projectDashboardPath, projectReviewPath, projectSessionPath } from "@/lib/routes";
 import { BottomSheet } from "./BottomSheet";
+import { ViewTabBar } from "./ViewTabBar";
 
 interface DashboardProps {
   initialSessions: DashboardSession[];
@@ -675,7 +676,10 @@ function DashboardInner({
         <main className="dashboard-main flex flex-col flex-1 min-h-0 overflow-hidden">
           <DynamicFavicon attentionLevels={attentionLevels} projectName={projectName} />
           <div className="dashboard-main__subhead">
-            <h1 className="dashboard-main__title">Board</h1>
+            <div className="flex items-center gap-3">
+              <ViewTabBar />
+              <h1 className="dashboard-main__title">Board</h1>
+            </div>
             <p className="dashboard-main__subtitle">
               Live agent sessions flowing from work → review → merge.
             </p>

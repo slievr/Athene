@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import type { ProjectInfo } from "@/lib/project-name";
 import { getAttentionLevel, type DashboardSession } from "@/lib/types";
@@ -333,8 +333,6 @@ function ProjectSidebarInner({
   onMobileClose,
 }: ProjectSidebarProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  const isFleet = pathname === "/fleet";
   const _isLoading = loading || sessions === null;
   const { onPointerDown: onResizePointerDown, onDoubleClick: onResizeDoubleClick } = useResizable({
     cssVar: "--ao-sidebar-w",
@@ -793,17 +791,6 @@ function ProjectSidebarInner({
   return (
     <aside className="project-sidebar relative flex h-full flex-col">
       <SidebarBrand onToggleCollapsed={onToggleCollapsed} />
-      <Link
-        href="/fleet"
-        className={`flex items-center gap-2 px-3 py-1.5 mx-2 rounded-md text-xs font-medium transition-colors ${
-          isFleet
-            ? "bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)]"
-            : "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)]"
-        }`}
-      >
-        <span>⚡</span>
-        Fleet
-      </Link>
       <SidebarOrchestrators
         collapsed={false}
         orchestrators={namedOrchestrators}
