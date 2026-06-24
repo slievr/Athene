@@ -84,7 +84,7 @@ describe("POST /api/meta", () => {
 
   it("returns 400 for unknown project ID in scope", async () => {
     const res = await POST(
-      makeRequest({ name: "m", scope: { projects: ["proj-a", "unknown-project"] } }),
+      makeRequest({ name: "m", scope: ["proj-a", "unknown-project"] }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -111,12 +111,12 @@ describe("POST /api/meta", () => {
 
   it("happy path with specific project scope and agent override", async () => {
     const res = await POST(
-      makeRequest({ name: "scoped", scope: { projects: ["proj-a"] }, agent: "codex" }),
+      makeRequest({ name: "scoped", scope: ["proj-a"], agent: "codex" }),
     );
     expect(res.status).toBe(201);
     expect(appendOrchestrator).toHaveBeenCalledWith(
       "/tmp/agent-orchestrator.yaml",
-      expect.objectContaining({ scope: { projects: ["proj-a"] }, agent: "codex" }),
+      expect.objectContaining({ scope: ["proj-a"], agent: "codex" }),
     );
   });
 

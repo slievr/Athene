@@ -23,9 +23,9 @@ export async function POST(request: NextRequest) {
 
   // Validate scope shape
   const scope = body.scope;
-  if (scope !== "all" && (typeof scope !== "object" || !Array.isArray((scope as Record<string, unknown>).projects))) {
+  if (scope !== "all" && !Array.isArray(scope)) {
     return jsonWithCorrelation(
-      { error: 'scope must be "all" or { projects: string[] }' },
+      { error: 'scope must be "all" or an array of project IDs' },
       { status: 400 },
       correlationId,
     );
@@ -46,9 +46,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate explicit project IDs exist
-    if (typeof scope === "object" && scope !== null) {
-      const projectIds = (scope as { projects: string[] }).projects;
-      for (const id of projectIds) {
+    if (Array.isArray(scope)) {
+      for (const id of scope) {
         if (!Object.hasOwn(config.projects, id)) {
           return jsonWithCorrelation(
             { error: `Unknown project ID: '${id}'` },
@@ -62,7 +61,7 @@ export async function POST(request: NextRequest) {
     // Write to config file
     appendOrchestrator(config.configPath, {
       name,
-      scope: scope as "all" | { projects: string[] },
+      scope: scope as "all" | string[],
       agent,
     });
 
