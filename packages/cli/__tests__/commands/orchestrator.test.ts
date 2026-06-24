@@ -1,8 +1,10 @@
-import { afterEach, beforeEach, describe, it, expect } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
+import { Command } from "commander";
+import { registerMeta } from "../../src/commands/meta.js";
 import {
   resolveOrchestratorName,
   partitionOrchestratorSessions,
@@ -139,5 +141,25 @@ describe("loadOrchestratorRegistryConfig", () => {
     const config = loadMetaRegistryConfig();
     expect(config.metaOrchestrators?.platform).toBeDefined();
     expect(config.configPath).toBe(globalPath);
+  });
+});
+
+describe("meta-start deprecation alias", () => {
+  it("meta-start <name> emits a deprecation warning", async () => {
+    const program = new Command();
+    registerMeta(program);
+
+    // Stub out the forwarding parse so it doesn't actually try to run
+    // `orchestrator start` (which would hit real I/O and process.exit).
+    const parseSpy = vi.spyOn(program, "parse").mockReturnValue(program);
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await program.parseAsync(["meta-start", "my-orch"], { from: "user" });
+    } catch {
+      // shouldn't throw now, but guard anyway
+    }
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("deprecated"));
+    warnSpy.mockRestore();
+    parseSpy.mockRestore();
   });
 });
