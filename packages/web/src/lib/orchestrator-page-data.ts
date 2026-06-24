@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
-import { getSessionMetaOwner, isCoordinatorSession } from "@made-by-moonlight/athene-core";
+import { isCoordinatorSession } from "@made-by-moonlight/athene-core";
 import {
   type DashboardSession,
   type DashboardAttentionZoneMode,
@@ -86,8 +86,8 @@ export const getOrchestratorPageData = cache(async function getOrchestratorPageD
   // the _meta scope and are not in this project-scoped list, but the guard is cheap).
   const coreSessions = allSessions.filter(
     (s) =>
-      getSessionMetaOwner(s) === name &&
-      !isCoordinatorSession(s),
+      !isCoordinatorSession(s) &&
+      (s.metadata["orchestratorOwner"] === name || s.metadata["metaOwner"] === name),
   );
 
   pageData.sessions = coreSessions.map(sessionToDashboard);

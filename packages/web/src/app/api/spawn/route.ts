@@ -34,6 +34,13 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  if (body.orchestratorOwner !== undefined && body.orchestratorOwner !== null) {
+    const orchErr = validateIdentifier(body.orchestratorOwner, "orchestratorOwner");
+    if (orchErr) {
+      return jsonWithCorrelation({ error: orchErr }, { status: 400 }, correlationId);
+    }
+  }
+
   try {
     const { config, sessionManager } = await getServices();
     const projectId = body.projectId as string;
@@ -70,6 +77,7 @@ export async function POST(request: NextRequest) {
       projectId,
       issueId: (body.issueId as string) ?? undefined,
       prompt: prompt || undefined,
+      orchestratorOwner: (body.orchestratorOwner as string) ?? undefined,
     });
 
     recordApiObservation({
