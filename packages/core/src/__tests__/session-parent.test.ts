@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getSessionParentId } from "../types.js";
-import type { Session } from "../types.js";
+import { getSessionParentId, type Session } from "../types.js";
 
 function stubSession(metadata: Record<string, string> = {}): Pick<Session, "metadata"> {
   return { metadata };
