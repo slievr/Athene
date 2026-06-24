@@ -139,6 +139,9 @@ jobs:
           branch="release/${new_version}"
 
           git checkout -b "$branch"
+          # Exclude workflow files — GITHUB_TOKEN cannot push commits that
+          # modify .github/workflows/ without the `workflows` permission.
+          git checkout HEAD -- .github/ 2>/dev/null || true
           git add -A
           git commit -m "chore: version packages"
           # Force-push in case the branch exists from a prior failed run.
