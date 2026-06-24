@@ -41,7 +41,6 @@ import {
   type Runtime,
   type Agent,
   type Workspace,
-  type WorkspaceCreateConfig,
   type Tracker,
   type SCM,
   type PluginRegistry,

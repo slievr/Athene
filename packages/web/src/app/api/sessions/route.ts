@@ -27,7 +27,7 @@ function compareOrchestratorRecency(
 
 function listProjectOrchestratorSessions(
   sessions: Parameters<typeof listDashboardOrchestrators>[0],
-  projects: Parameters<typeof listDashboardOrchestrators>[1],
+  _projects: Parameters<typeof listDashboardOrchestrators>[1],
 ): Parameters<typeof listDashboardOrchestrators>[0] {
   const projectOrchestrators = sessions
     .filter((session) => isOrchestratorSession(session))
