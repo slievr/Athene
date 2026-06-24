@@ -159,15 +159,17 @@ jobs:
           # Force-push in case the branch exists from a prior failed run.
           git push --force origin "$branch"
 
-          # Create PR only if one doesn't already exist for this branch.
+          # Create PR and merge it immediately. The release/* exclusion in the
+          # branch ruleset means no status checks are required for these PRs.
+          # We skip --admin so this works with GITHUB_TOKEN (no PAT needed).
           if ! gh pr view "$branch" --json number 2>/dev/null | grep -q number; then
             gh pr create \
               --title "chore: version packages" \
-              --body "Automated version bump to ${new_version}. Merges automatically once CI passes." \
+              --body "Automated version bump to ${new_version}." \
               --head "$branch" \
               --base main
           fi
-          gh pr merge "$branch" --auto --merge
+          gh pr merge "$branch" --merge
 
       # Determine release state. `is_release_commit` is true if the version
       # step just ran a bump (did_bump=true) — publish.mjs handles skipping
