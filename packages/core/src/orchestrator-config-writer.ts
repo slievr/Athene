@@ -114,6 +114,6 @@ export function deleteOrchestrator(configPath: string, id: string): void {
   const slug = Object.keys(orchMap).find((k) => orchMap[k].id === id);
   if (!slug) throw new Error(`Orchestrator with id '${id}' not found`);
 
-  delete orchMap[slug];
-  writeOrchMap(configPath, doc, orchMap, key);
+  const { [slug]: _removed, ...remaining } = orchMap;
+  writeOrchMap(configPath, doc, remaining, key);
 }
