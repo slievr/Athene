@@ -242,3 +242,8 @@ export async function startProjectSupervisor(
 export function stopProjectSupervisor(): void {
   activeSupervisor?.stop();
 }
+
+/** Trigger an immediate reconcile cycle without waiting for the next interval tick. No-op if the supervisor is not running. */
+export function triggerReconcileNow(): void {
+  void activeSupervisor?.reconcileNow();
+}

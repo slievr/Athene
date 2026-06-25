@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import {
   ENV,
   getEnvString,
+  isWindows,
   legacyEnvName,
   loadConfig,
   recordActivityEvent,
@@ -19,7 +20,7 @@ import { exec } from "../lib/shell.js";
 import { banner } from "../lib/format.js";
 import { getPluginRegistry, getSessionManager } from "../lib/create-session-manager.js";
 import { findProjectForDirectory } from "../lib/project-resolution.js";
-import { getRunning } from "../lib/running-state.js";
+import { getRunning, type RunningState } from "../lib/running-state.js";
 import { projectSessionUrl } from "../lib/routes.js";
 
 /**
@@ -109,25 +110,26 @@ interface SpawnClaimOptions {
  * `athene spawn` is a one-shot CLI — it can't start polling in its own process
  * (the interval would keep the CLI alive forever and duplicate work).
  *
- * Refuse to spawn if no `athene start` is running, or if the running instance is
- * not polling this project. Without an active daemon, sessions get worktrees
- * and tmux panes but no lifecycle reactions (CI-failure routing, review
- * comments, revive transitions, event log). That silent blackout is a
- * worse failure mode than creating no session at all — so fail fast with
+ * Refuse to spawn if no `athene start` is running. Without an active daemon,
+ * sessions get worktrees and tmux panes but no lifecycle reactions (CI-failure
+ * routing, review comments, revive transitions, event log). That silent blackout
+ * is a worse failure mode than creating no session at all — so fail fast with
  * an actionable error.
+ *
+ * We no longer gate on running.projects.includes(projectId): the project
+ * supervisor auto-attaches a lifecycle worker within its polling interval once
+ * the first session exists. Requiring the project to already be supervised
+ * created a chicken-and-egg deadlock where the first session could never be
+ * spawned.
  */
-async function ensureAOPollingProject(projectId: string): Promise<void> {
+async function ensureAthenePollingProject(_projectId: string): Promise<RunningState> {
   const running = await getRunning();
   if (!running) {
     throw new Error(
-      `AO is not running — lifecycle polling is inactive. Run \`athene start\` before spawning sessions so they get CI/review routing and state advancement.`,
+      `Athene is not running — lifecycle polling is inactive. Run \`athene start\` before spawning sessions so they get CI/review routing and state advancement.`,
     );
   }
-  if (!running.projects.includes(projectId)) {
-    throw new Error(
-      `The running AO instance (pid ${running.pid}) is not polling project "${projectId}". Run \`athene start ${projectId}\` before spawning so sessions get tracked.`,
-    );
-  }
+  return running;
 }
 
 /**
@@ -473,9 +475,10 @@ export function registerSpawn(program: Command): void {
           assignOnGithub: opts.assignOnGithub,
         };
 
+        let running: RunningState;
         try {
           await runSpawnPreflight(config, projectId, claimOptions);
-          await ensureAOPollingProject(projectId);
+          running = await ensureAthenePollingProject(projectId);
         } catch (err) {
           recordActivityEvent({
             projectId,
@@ -508,6 +511,17 @@ export function registerSpawn(program: Command): void {
         } catch (err) {
           console.error(chalk.red(`✗ ${err instanceof Error ? err.message : String(err)}`));
           process.exit(1);
+        }
+
+        // Signal the daemon to run an immediate supervisor reconcile so the
+        // lifecycle worker for this project starts now rather than waiting
+        // for the next 60s interval tick.
+        if (!isWindows()) {
+          try {
+            process.kill(running.pid, "SIGUSR2");
+          } catch {
+            // Best-effort — daemon may have exited between the check and now.
+          }
         }
       },
     );
@@ -577,11 +591,12 @@ export function registerBatchSpawn(program: Command): void {
 
       const sm = await getSessionManager(config);
 
+      let batchRunning: RunningState | null = null;
       for (const [groupProjectId, items] of groups) {
         // Pre-flight once per project group so a missing prerequisite fails fast.
         try {
           await runSpawnPreflight(config, groupProjectId);
-          await ensureAOPollingProject(groupProjectId);
+          batchRunning = await ensureAthenePollingProject(groupProjectId);
         } catch (err) {
           recordActivityEvent({
             projectId: groupProjectId,
@@ -652,6 +667,16 @@ export function registerBatchSpawn(program: Command): void {
               ),
             );
           }
+        }
+      }
+
+      // Signal the daemon to reconcile immediately so lifecycle workers start
+      // without waiting for the next 60s supervisor tick.
+      if (!isWindows() && batchRunning && created.length > 0) {
+        try {
+          process.kill(batchRunning.pid, "SIGUSR2");
+        } catch {
+          // Best-effort — daemon may have exited between the check and now.
         }
       }
 

@@ -78,7 +78,7 @@ import {
   type RunningState,
 } from "../lib/running-state.js";
 import { attachToDaemon, killExistingDaemon } from "../lib/daemon.js";
-import { startProjectSupervisor } from "../lib/project-supervisor.js";
+import { startProjectSupervisor, triggerReconcileNow } from "../lib/project-supervisor.js";
 import { isHumanCaller } from "../lib/caller-context.js";
 import { detectEnvironment } from "../lib/detect-env.js";
 import {
@@ -949,6 +949,13 @@ async function runStartup(
       spinner.start("Starting project supervisor");
       await startProjectSupervisor({ configPath: config.configPath });
       spinner.succeed("Lifecycle project supervisor started");
+      // Let athene spawn trigger an immediate reconcile after creating a session
+      // rather than waiting for the next 60s interval tick.
+      if (!isWindows()) {
+        process.on("SIGUSR2", () => {
+          triggerReconcileNow();
+        });
+      }
     } catch (err) {
       spinner.fail("Project supervisor failed to start");
       recordActivityEvent({
