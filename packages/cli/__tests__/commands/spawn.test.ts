@@ -1045,7 +1045,7 @@ describe("spawn daemon-polling enforcement", () => {
       .mocked(console.error)
       .mock.calls.map((c) => String(c[0]))
       .join("\n");
-    expect(errors).toContain("AO is not running");
+    expect(errors).toContain("Athene is not running");
     expect(errors).toContain("athene start");
     expect(mockSessionManager.spawn).not.toHaveBeenCalled();
   });
@@ -1093,7 +1093,7 @@ describe("batch-spawn daemon-polling enforcement", () => {
       .mocked(console.error)
       .mock.calls.map((c) => String(c[0]))
       .join("\n");
-    expect(errors).toContain("AO is not running");
+    expect(errors).toContain("Athene is not running");
     expect(errors).toContain("athene start");
     expect(mockSessionManager.spawn).not.toHaveBeenCalled();
   });

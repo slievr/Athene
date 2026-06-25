@@ -124,7 +124,7 @@ async function offerWindowsRuntimeSwitch(configPath: string): Promise<boolean> {
   console.log(chalk.dim(`  Config: ${configPath}`));
   console.log(
     chalk.dim(
-      "  AO can rewrite `runtime: tmux` -> `runtime: process` in this file.\n" +
+      "  Athene can rewrite `runtime: tmux` -> `runtime: process` in this file.\n" +
         "  If the file is git-tracked, you'll see this as a local change.",
     ),
   );
@@ -266,7 +266,7 @@ export async function warnAboutOpenClawStatus(config: OrchestratorConfig): Promi
     if (installation.state === "running") {
       console.log(
         chalk.yellow(
-          `⚠ OpenClaw is running at ${installation.gatewayUrl} but AO is not configured to use it. Run \`athene setup openclaw\` if you want OpenClaw notifications.`,
+          `⚠ OpenClaw is running at ${installation.gatewayUrl} but Athene is not configured to use it. Run \`athene setup openclaw\` if you want OpenClaw notifications.`,
         ),
       );
     }
@@ -303,7 +303,7 @@ export async function runtimePreflight(config: OrchestratorConfig): Promise<void
   if (config.power?.preventIdleSleep !== false) {
     const sleepHandle = preventIdleSleep();
     if (sleepHandle) {
-      console.log(chalk.dim("  Preventing macOS idle sleep while AO is running"));
+      console.log(chalk.dim("  Preventing macOS idle sleep while Athene is running"));
     }
   }
 

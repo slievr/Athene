@@ -839,7 +839,7 @@ async function startDashboard(
     const formatted = formatCommandError(err, {
       cmd,
       args,
-      action: "start the AO dashboard",
+      action: "start the Athene dashboard",
       installHints: genericInstallHints(cmd),
     });
     console.error(chalk.red("Dashboard failed to start:"), formatted.message);
@@ -1296,16 +1296,16 @@ async function maybeSweepAoOrphansOnStart(reapOrphans: boolean | undefined): Pro
   if (!reapOrphans && isHumanCaller()) {
     console.log(
       chalk.yellow(
-        `\n  Found ${orphans.length} orphaned AO child process(es): ${describeAoOrphans(orphans)}`,
+        `\n  Found ${orphans.length} orphaned Athene child process(es): ${describeAoOrphans(orphans)}`,
       ),
     );
-    reapOrphans = await promptConfirm("Kill orphaned AO child processes before starting?", true);
+    reapOrphans = await promptConfirm("Kill orphaned Athene child processes before starting?", true);
   }
 
   if (!reapOrphans) {
     console.log(
       chalk.yellow(
-        `  Found ${orphans.length} orphaned AO child process(es). Run \`athene start --reap-orphans\` to clean them up.`,
+        `  Found ${orphans.length} orphaned Athene child process(es). Run \`athene start --reap-orphans\` to clean them up.`,
       ),
     );
     return;
@@ -1314,7 +1314,7 @@ async function maybeSweepAoOrphansOnStart(reapOrphans: boolean | undefined): Pro
   const result = await reapAoOrphans(orphans);
   console.log(
     chalk.green(
-      `  Reaped ${result.attempted} orphaned AO child process(es): ${formatSweepSummary(result)}`,
+      `  Reaped ${result.attempted} orphaned Athene child process(es): ${formatSweepSummary(result)}`,
     ),
   );
 }
@@ -1346,7 +1346,7 @@ async function attachAndSpawnOrchestrator(opts: {
     chalk.dim(
       justCreated
         ? "\n  Spawning orchestrator session...\n"
-        : "\n  Attaching to running AO instance...\n",
+        : "\n  Attaching to running Athene instance...\n",
     ),
   );
 
@@ -1399,7 +1399,7 @@ export function registerStart(program: Command): void {
     .option("--rebuild", "Clean and rebuild dashboard before starting")
     .option("--dev", "Use Next.js dev server with hot reload (for dashboard UI development)")
     .option("--interactive", "Prompt to configure config settings")
-    .option("--reap-orphans", "Kill orphaned AO child processes before starting")
+    .option("--reap-orphans", "Kill orphaned Athene child processes before starting")
     .option("--restore", "Restore sessions from last athene stop without prompting")
     .option("--no-restore", "Skip restoring sessions from last athene stop")
     .action(
@@ -1464,7 +1464,7 @@ export function registerStart(program: Command): void {
               // Non-human caller, no arg or URL/path arg: print info and
               // exit. Project-id args fall through to attach+spawn so
               // automation can `athene start <id>` against a live daemon.
-              console.log(`AO is already running.`);
+              console.log(`Athene is already running.`);
               console.log(`Dashboard: ${dashboardUrl(running.port)}`);
               console.log(`PID: ${running.pid}`);
               console.log(`Projects: ${running.projects.join(", ")}`);
@@ -1474,7 +1474,7 @@ export function registerStart(program: Command): void {
             }
 
             if (isHumanCaller() && !projectArg) {
-              console.log(chalk.cyan(`\nℹ AO is already running.`));
+              console.log(chalk.cyan(`\nℹ Athene is already running.`));
               console.log(`  Dashboard: ${chalk.cyan(dashboardUrl(running.port))}`);
               console.log(`  PID: ${running.pid} | Up since: ${running.startedAt}`);
               console.log(`  Projects: ${running.projects.join(", ")}\n`);
@@ -1502,7 +1502,7 @@ export function registerStart(program: Command): void {
                   : [];
 
               const choice = await promptSelect(
-                "AO is already running. What do you want to do?",
+                "Athene is already running. What do you want to do?",
                 [
                   { value: "open", label: "Open dashboard", hint: "Keep the current instance" },
                   {
@@ -1671,7 +1671,7 @@ export function registerStart(program: Command): void {
               !resolvedProject.justCreated &&
               running.projects.includes(projectId)
             ) {
-              console.log(chalk.cyan(`\nℹ AO is already running.`));
+              console.log(chalk.cyan(`\nℹ Athene is already running.`));
               console.log(`  Dashboard: ${chalk.cyan(dashboardUrl(running.port))}`);
               console.log(`  Project "${projectId}" is already registered and running.\n`);
               openUrl(dashboardUrl(running.port));
@@ -1896,7 +1896,7 @@ export function registerStop(program: Command): void {
     .command("stop [project]")
     .description("Stop orchestrator agent and dashboard")
     .option("--purge-session", "Delete mapped OpenCode session when stopping")
-    .option("--all", "Stop all running AO instances")
+    .option("--all", "Stop all running Athene instances")
     .option("-y, --yes", "Confirm stopping active sessions without prompting")
     .action(async (projectArg?: string, opts: { purgeSession?: boolean; all?: boolean; yes?: boolean } = {}) => {
       recordActivityEvent({
@@ -1928,10 +1928,10 @@ export function registerStop(program: Command): void {
             // and process groups on Unix; it swallows "already dead" internally.
             await killProcessTree(running.pid, "SIGTERM");
             await unregister();
-            console.log(chalk.green(`\n✓ Stopped AO on port ${running.port}`));
+            console.log(chalk.green(`\n✓ Stopped Athene on port ${running.port}`));
             console.log(chalk.dim(`  Projects: ${running.projects.join(", ")}\n`));
           } else {
-            console.log(chalk.yellow("No running AO instance found in running.json."));
+            console.log(chalk.yellow("No running Athene instance found in running.json."));
           }
           return;
         }
@@ -1969,7 +1969,7 @@ export function registerStop(program: Command): void {
         if (projectArg) {
           console.log(chalk.bold(`\nStopping orchestrator for ${chalk.cyan(project.name)}\n`));
         } else {
-          console.log(chalk.bold(`\nStopping AO across all projects\n`));
+          console.log(chalk.bold(`\nStopping Athene across all projects\n`));
         }
 
         const sm = await getSessionManager(config);
@@ -1998,7 +1998,7 @@ export function registerStop(program: Command): void {
           if (activeSessions.length > 0) {
             if (!projectArg && opts.yes !== true && isHumanCaller()) {
               const confirmed = await promptConfirm(
-                `Stop AO and ${activeSessions.length} active session(s)?`,
+                `Stop Athene and ${activeSessions.length} active session(s)?`,
                 false,
               );
               if (!confirmed) {

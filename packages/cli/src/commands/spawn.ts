@@ -120,12 +120,12 @@ async function ensureAOPollingProject(projectId: string): Promise<void> {
   const running = await getRunning();
   if (!running) {
     throw new Error(
-      `AO is not running — lifecycle polling is inactive. Run \`athene start\` before spawning sessions so they get CI/review routing and state advancement.`,
+      `Athene is not running — lifecycle polling is inactive. Run \`athene start\` before spawning sessions so they get CI/review routing and state advancement.`,
     );
   }
   if (!running.projects.includes(projectId)) {
     throw new Error(
-      `The running AO instance (pid ${running.pid}) is not polling project "${projectId}". Run \`athene start ${projectId}\` before spawning so sessions get tracked.`,
+      `The running Athene instance (pid ${running.pid}) is not polling project "${projectId}". Run \`athene start ${projectId}\` before spawning so sessions get tracked.`,
     );
   }
 }
