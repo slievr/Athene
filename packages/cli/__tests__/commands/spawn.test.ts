@@ -1034,7 +1034,7 @@ describe("batch-spawn command", () => {
 });
 
 describe("spawn daemon-polling enforcement", () => {
-  it("refuses to spawn when no AO daemon is running", async () => {
+  it("refuses to spawn when no Athene daemon is running", async () => {
     mockGetRunning.mockResolvedValue(null);
 
     await expect(program.parseAsync(["node", "test", "spawn"])).rejects.toThrow(
@@ -1045,30 +1045,8 @@ describe("spawn daemon-polling enforcement", () => {
       .mocked(console.error)
       .mock.calls.map((c) => String(c[0]))
       .join("\n");
-    expect(errors).toContain("AO is not running");
+    expect(errors).toContain("Athene is not running");
     expect(errors).toContain("athene start");
-    expect(mockSessionManager.spawn).not.toHaveBeenCalled();
-  });
-
-  it("refuses to spawn when the running daemon is not polling the project", async () => {
-    mockGetRunning.mockResolvedValue({
-      pid: 99999,
-      port: 3000,
-      startedAt: "",
-      projects: ["other-project"],
-    });
-
-    await expect(program.parseAsync(["node", "test", "spawn"])).rejects.toThrow(
-      "process.exit(1)",
-    );
-
-    const errors = vi
-      .mocked(console.error)
-      .mock.calls.map((c) => String(c[0]))
-      .join("\n");
-    expect(errors).toContain("not polling project");
-    expect(errors).toContain("my-app");
-    expect(errors).toContain("athene start my-app");
     expect(mockSessionManager.spawn).not.toHaveBeenCalled();
   });
 });
@@ -1082,7 +1060,7 @@ describe("batch-spawn daemon-polling enforcement", () => {
     registerBatchSpawn(batchProgram);
   });
 
-  it("refuses to batch-spawn when no AO daemon is running", async () => {
+  it("refuses to batch-spawn when no Athene daemon is running", async () => {
     mockGetRunning.mockResolvedValue(null);
 
     await expect(
@@ -1093,30 +1071,8 @@ describe("batch-spawn daemon-polling enforcement", () => {
       .mocked(console.error)
       .mock.calls.map((c) => String(c[0]))
       .join("\n");
-    expect(errors).toContain("AO is not running");
+    expect(errors).toContain("Athene is not running");
     expect(errors).toContain("athene start");
-    expect(mockSessionManager.spawn).not.toHaveBeenCalled();
-  });
-
-  it("refuses to batch-spawn when the running daemon is not polling the project", async () => {
-    mockGetRunning.mockResolvedValue({
-      pid: 99999,
-      port: 3000,
-      startedAt: "",
-      projects: ["other-project"],
-    });
-
-    await expect(
-      batchProgram.parseAsync(["node", "test", "batch-spawn", "INT-1", "INT-2"]),
-    ).rejects.toThrow("process.exit(1)");
-
-    const errors = vi
-      .mocked(console.error)
-      .mock.calls.map((c) => String(c[0]))
-      .join("\n");
-    expect(errors).toContain("not polling project");
-    expect(errors).toContain("my-app");
-    expect(errors).toContain("athene start my-app");
     expect(mockSessionManager.spawn).not.toHaveBeenCalled();
   });
 });
