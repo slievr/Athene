@@ -373,13 +373,14 @@ function ProjectSidebarInner({
   usePopoverClamp(Boolean(projectMenuOpenId), projectMenuPopoverRef);
 
   useEffect(() => {
+    if (!settingsOpen || currentVersion) return;
     let cancelled = false;
     fetch("/api/version", { cache: "no-store" })
       .then((r) => (r.ok ? (r.json() as Promise<{ current: string }>) : null))
       .then((data) => { if (!cancelled && data) setCurrentVersion(data.current); })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, []);
+  }, [settingsOpen, currentVersion]);
 
   // Persist the session-id preference across reloads.
   useEffect(() => {
