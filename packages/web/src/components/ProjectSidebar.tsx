@@ -364,12 +364,22 @@ function ProjectSidebarInner({
   const [restartingOrchestratorProjectId, setRestartingOrchestratorProjectId] = useState<string | null>(null);
   const [removedProjectIds, setRemovedProjectIds] = useState<Set<string>>(new Set());
   const [addProjectOpen, setAddProjectOpen] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState<string | null>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const settingsPopoverRef = useRef<HTMLDivElement>(null);
   const projectMenuRef = useRef<HTMLDivElement>(null);
   const projectMenuPopoverRef = useRef<HTMLDivElement>(null);
   usePopoverClamp(settingsOpen, settingsPopoverRef);
   usePopoverClamp(Boolean(projectMenuOpenId), projectMenuPopoverRef);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/version", { cache: "no-store" })
+      .then((r) => (r.ok ? (r.json() as Promise<{ current: string }>) : null))
+      .then((data) => { if (!cancelled && data) setCurrentVersion(data.current); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   // Persist the session-id preference across reloads.
   useEffect(() => {
@@ -1265,6 +1275,11 @@ function ProjectSidebarInner({
                   <span>Theme</span>
                   <ThemeToggle className="project-sidebar__theme-toggle" />
                 </div>
+                {currentVersion && (
+                  <div className="project-sidebar__settings-version">
+                    v{currentVersion}
+                  </div>
+                )}
               </div>
             ) : null}
           </div>
