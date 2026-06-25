@@ -1276,9 +1276,9 @@ function ProjectSidebarInner({
                   <span>Theme</span>
                   <ThemeToggle className="project-sidebar__theme-toggle" />
                 </div>
-                {currentVersion && (
+                {process.env.NEXT_PUBLIC_APP_VERSION && (
                   <div className="project-sidebar__settings-version">
-                    v{currentVersion}
+                    v{process.env.NEXT_PUBLIC_APP_VERSION}
                   </div>
                 )}
               </div>
