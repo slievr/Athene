@@ -184,6 +184,7 @@ export function sessionToDashboard(session: Session): DashboardSession {
     userPrompt: session.metadata["userPrompt"] ?? null,
     displayName: session.metadata["displayName"] ?? null,
     displayNameUserSet: session.metadata["displayNameUserSet"] === "true",
+    orchestratorId: session.metadata["orchestratorId"] ?? null,
     summary,
     summaryIsFallback: agentSummary ? (session.agentInfo?.summaryIsFallback ?? false) : false,
     contextWindow: session.agentInfo?.contextWindow ?? null,

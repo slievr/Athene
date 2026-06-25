@@ -3,20 +3,21 @@ import { Dashboard } from "@/components/Dashboard";
 import { getOrchestratorPageData } from "@/lib/orchestrator-page-data";
 import { orchestratorSessionPath } from "@/lib/routes";
 import { OrchestratorSpawnForm } from "@/components/OrchestratorSpawnForm";
+import { OrchestratorSettingsBar } from "@/components/OrchestratorSettingsBar";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrchestratorPage(props: {
-  params: Promise<{ name: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { name } = await props.params;
-  const data = await getOrchestratorPageData(name);
+  const { id } = await props.params;
+  const data = await getOrchestratorPageData(id);
 
   if (!data) {
     notFound();
   }
 
-  const ownSession = data.orchestrators.find((o) => o.name === name)?.session ?? null;
+  const ownSession = data.orchestrators.find((o) => o.id === id)?.session ?? null;
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--color-bg-canvas)]">
@@ -26,7 +27,7 @@ export default async function OrchestratorPage(props: {
             Orchestrator session:
           </span>
           <a
-            href={orchestratorSessionPath(name, ownSession.id)}
+            href={orchestratorSessionPath(id, ownSession.id)}
             className="flex items-center gap-1.5 text-[12px] font-mono text-[var(--color-text-primary)] hover:underline"
           >
             <svg
@@ -41,20 +42,28 @@ export default async function OrchestratorPage(props: {
               <path d="m8 10 3 3-3 3" />
               <path d="M13 16h3" />
             </svg>
-            {name}
+            {data.id}
           </a>
         </div>
       )}
+      <OrchestratorSettingsBar
+        orchId={id}
+        currentLabel={data.label}
+        currentScope={data.scope}
+        currentDiscover={data.discover}
+        projects={data.projects}
+        sessionCount={data.sessions.length}
+      />
       {data.projects.length > 0 && (
-        <OrchestratorSpawnForm orchestratorName={name} projects={data.projects} />
+        <OrchestratorSpawnForm orchestratorName={data.slug} projects={data.projects} />
       )}
       <Dashboard
         initialSessions={data.sessions}
-        projectName={name}
+        projectName={data.label}
         projects={data.projects}
         orchestrators={[]}
         namedOrchestrators={data.orchestrators}
-        metaOwner={name}
+        metaOwner={data.slug}
         attentionZones={data.attentionZones}
         dashboardLoadError={data.dashboardLoadError}
       />

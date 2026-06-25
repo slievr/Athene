@@ -30,7 +30,7 @@ const makeConfig = (over: Partial<OrchestratorConfig> = {}): OrchestratorConfig 
     reactions: {},
     readyThresholdMs: 300_000,
     orchestrators: {
-      "meta-1": { scope: { projects: ["web"] }, discover: true, rules: "prefer api" },
+      "meta-1": { scope: ["/x/web"], discover: true, rules: "prefer api" },
     },
     ...over,
   }) as OrchestratorConfig;
@@ -56,7 +56,7 @@ describe("generateOrchestratorPrompt", () => {
   });
 
   it("omits the rules section when no rules are configured", () => {
-    const cfg = makeConfig({ orchestrators: { "meta-1": { scope: { projects: ["web"] }, discover: false } } });
+    const cfg = makeConfig({ orchestrators: { "meta-1": { scope: ["/tmp/web"], discover: false } } });
     const p = generateOrchestratorPrompt({ config: cfg, name: "meta-1" });
     expect(p).not.toContain("Project-Specific Rules");
     expect(p).not.toContain("prefer api");
@@ -71,7 +71,7 @@ describe("generateOrchestratorPrompt", () => {
   it("falls back to metaOrchestrators key when orchestrators is absent", () => {
     const cfg = makeConfig({
       orchestrators: undefined,
-      metaOrchestrators: { "orch-1": { scope: { projects: ["web"] }, discover: false } },
+      metaOrchestrators: { "orch-1": { scope: ["/tmp/web"], discover: false } },
     });
     // Should not throw and should include the orchestrator name
     const result = generateOrchestratorPrompt({ config: cfg, name: "orch-1" });

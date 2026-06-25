@@ -29,7 +29,7 @@ describe("SidebarOrchestrators", () => {
     render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "orch-1", session: null }]}
+        orchestrators={[{ name: "orch-1", id: "uuid-1", label: "orch-1", session: null }]}
         allSessions={[]}
         projects={noProjects}
         activeSessionId={undefined}
@@ -45,8 +45,8 @@ describe("SidebarOrchestrators", () => {
       <SidebarOrchestrators
         collapsed={false}
         orchestrators={[
-          { name: "alpha", session: null },
-          { name: "beta", session: null },
+          { name: "alpha", id: "uuid-alpha", label: "alpha", session: null },
+          { name: "beta", id: "uuid-beta", label: "beta", session: null },
         ]}
         allSessions={[]}
         projects={noProjects}
@@ -79,7 +79,7 @@ describe("SidebarOrchestrators", () => {
     render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "fleet", session: orchSession }]}
+        orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
         allSessions={[]}
         projects={noProjects}
         activeSessionId={undefined}
@@ -89,25 +89,25 @@ describe("SidebarOrchestrators", () => {
     expect(screen.getAllByText("◆").length).toBeGreaterThan(0);
   });
 
-  it("links to /orchestrators/<name> for each row", () => {
+  it("links to /orchestrators/<id> for each row", () => {
     const { container } = render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "fleet", session: orchSession }]}
+        orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
         allSessions={[]}
         projects={noProjects}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
     );
-    expect(container.querySelector('a[href="/orchestrators/fleet"]')).toBeTruthy();
+    expect(container.querySelector('a[href="/orchestrators/uuid-fleet"]')).toBeTruthy();
   });
 
   it("renders no inline styles", () => {
     const { container } = render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "orch-1", session: orchSession }]}
+        orchestrators={[{ name: "orch-1", id: "uuid-1", label: "orch-1", session: orchSession }]}
         allSessions={[]}
         projects={noProjects}
         activeSessionId={undefined}
@@ -121,7 +121,7 @@ describe("SidebarOrchestrators", () => {
     const { container } = render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "orch-1", session: orchSession }]}
+        orchestrators={[{ name: "orch-1", id: "uuid-1", label: "orch-1", session: orchSession }]}
         allSessions={[]}
         projects={noProjects}
         activeSessionId={undefined}
@@ -135,7 +135,7 @@ describe("SidebarOrchestrators", () => {
     const { container } = render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "orch-1", session: null }]}
+        orchestrators={[{ name: "orch-1", id: "uuid-1", label: "orch-1", session: null }]}
         allSessions={[]}
         projects={noProjects}
         activeSessionId={undefined}
@@ -149,7 +149,7 @@ describe("SidebarOrchestrators", () => {
     const { container } = render(
       <SidebarOrchestrators
         collapsed
-        orchestrators={[{ name: "orch-1", session: orchSession }]}
+        orchestrators={[{ name: "orch-1", id: "uuid-1", label: "orch-1", session: orchSession }]}
         allSessions={[]}
         projects={noProjects}
         activeSessionId={undefined}
@@ -157,7 +157,7 @@ describe("SidebarOrchestrators", () => {
       />,
     );
     // When a session is running the collapsed glyph links directly to the session terminal.
-    expect(container.querySelector('a[href="/orchestrators/orch-1/sessions/orch-1"]')).toBeTruthy();
+    expect(container.querySelector('a[href="/orchestrators/uuid-1/sessions/orch-1"]')).toBeTruthy();
     expect(container.querySelector("[style]")).toBeNull();
   });
 
@@ -165,14 +165,14 @@ describe("SidebarOrchestrators", () => {
     const { container } = render(
       <SidebarOrchestrators
         collapsed
-        orchestrators={[{ name: "orch-1", session: null }]}
+        orchestrators={[{ name: "orch-1", id: "uuid-1", label: "orch-1", session: null }]}
         allSessions={[]}
         projects={noProjects}
         activeSessionId={undefined}
         onNavigate={() => {}}
       />,
     );
-    expect(container.querySelector('a[href="/orchestrators/orch-1"]')).toBeTruthy();
+    expect(container.querySelector('a[href="/orchestrators/uuid-1"]')).toBeTruthy();
   });
 
   it("navigates to fleet dashboard when fleet link is clicked", () => {
@@ -180,17 +180,17 @@ describe("SidebarOrchestrators", () => {
     const { container } = render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "fleet", session: orchSession }]}
+        orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
         allSessions={[]}
         projects={noProjects}
         activeSessionId={undefined}
         onNavigate={onNavigate}
       />,
     );
-    const fleetLink = container.querySelector('a[href="/orchestrators/fleet"]') as HTMLAnchorElement;
+    const fleetLink = container.querySelector('a[href="/orchestrators/uuid-fleet"]') as HTMLAnchorElement;
     expect(fleetLink).toBeTruthy();
     fleetLink.click();
-    expect(onNavigate).toHaveBeenCalledWith("/orchestrators/fleet", orchSession);
+    expect(onNavigate).toHaveBeenCalledWith("/orchestrators/uuid-fleet", orchSession);
   });
 
   it("expands to show sub-orchestrator sessions in the dropdown", () => {
@@ -206,7 +206,7 @@ describe("SidebarOrchestrators", () => {
     render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "fleet", session: orchSession }]}
+        orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
         allSessions={[subOrchSession]}
         projects={noProjects}
         activeSessionId={undefined}
@@ -237,7 +237,7 @@ describe("SidebarOrchestrators", () => {
     render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "fleet", session: orchSession }]}
+        orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
         allSessions={[workerSession]}
         projects={noProjects}
         activeSessionId={undefined}
@@ -255,7 +255,7 @@ describe("SidebarOrchestrators", () => {
     const { container } = render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "fleet", session: orchSession }]}
+        orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
         allSessions={[orchSession]}
         projects={noProjects}
         activeSessionId={undefined}
@@ -267,7 +267,7 @@ describe("SidebarOrchestrators", () => {
 
     // The orchestrator's own session link should appear in the expanded list
     expect(
-      container.querySelector('a[href="/orchestrators/fleet/sessions/orch-1"]'),
+      container.querySelector('a[href="/orchestrators/uuid-fleet/sessions/orch-1"]'),
     ).toBeTruthy();
   });
 
@@ -275,7 +275,7 @@ describe("SidebarOrchestrators", () => {
     render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "fleet", session: orchSession }]}
+        orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
         allSessions={[]}
         projects={someProjects}
         activeSessionId={undefined}
@@ -291,7 +291,7 @@ describe("SidebarOrchestrators", () => {
     render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "fleet", session: orchSession }]}
+        orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
         allSessions={[]}
         projects={noProjects}
         activeSessionId={undefined}
@@ -307,7 +307,7 @@ describe("SidebarOrchestrators", () => {
     render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "fleet", session: orchSession }]}
+        orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
         allSessions={[]}
         projects={someProjects}
         activeSessionId={undefined}
@@ -334,7 +334,7 @@ describe("SidebarOrchestrators", () => {
     render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "fleet", session: orchSession }]}
+        orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
         allSessions={[]}
         projects={multiProjects}
         activeSessionId={undefined}
@@ -352,7 +352,7 @@ describe("SidebarOrchestrators", () => {
     render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "fleet", session: orchSession }]}
+        orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
         allSessions={[]}
         projects={someProjects}
         activeSessionId={undefined}
@@ -371,7 +371,7 @@ describe("SidebarOrchestrators", () => {
     render(
       <SidebarOrchestrators
         collapsed={false}
-        orchestrators={[{ name: "fleet", session: orchSession }]}
+        orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
         allSessions={[]}
         projects={someProjects}
         activeSessionId={undefined}
@@ -405,7 +405,7 @@ describe("SidebarOrchestrators", () => {
       render(
         <SidebarOrchestrators
           collapsed={false}
-          orchestrators={[{ name: "fleet", session: null }]}
+          orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: null }]}
           allSessions={[]}
           projects={noProjects}
           activeSessionId={undefined}
@@ -419,7 +419,7 @@ describe("SidebarOrchestrators", () => {
       render(
         <SidebarOrchestrators
           collapsed={false}
-          orchestrators={[{ name: "fleet", session: orchSession }]}
+          orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
           allSessions={[]}
           projects={noProjects}
           activeSessionId={undefined}
@@ -429,11 +429,11 @@ describe("SidebarOrchestrators", () => {
       expect(screen.queryByRole("button", { name: /start fleet/i })).toBeNull();
     });
 
-    it("calls the start API and refreshes when start button is clicked", async () => {
+    it("calls the start API with the orchestrator UUID and refreshes when start button is clicked", async () => {
       render(
         <SidebarOrchestrators
           collapsed={false}
-          orchestrators={[{ name: "fleet", session: null }]}
+          orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: null }]}
           allSessions={[]}
           projects={noProjects}
           activeSessionId={undefined}
@@ -445,7 +445,7 @@ describe("SidebarOrchestrators", () => {
 
       await waitFor(() => {
         expect(vi.mocked(fetch)).toHaveBeenCalledWith(
-          "/api/orchestrators/fleet/start",
+          "/api/orchestrators/uuid-fleet/start",
           { method: "POST" },
         );
         expect(mockRefresh).toHaveBeenCalled();
@@ -456,7 +456,7 @@ describe("SidebarOrchestrators", () => {
       render(
         <SidebarOrchestrators
           collapsed
-          orchestrators={[{ name: "fleet", session: null }]}
+          orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: null }]}
           allSessions={[]}
           projects={noProjects}
           activeSessionId={undefined}
@@ -480,7 +480,7 @@ describe("SidebarOrchestrators", () => {
       render(
         <SidebarOrchestrators
           collapsed={false}
-          orchestrators={[{ name: "fleet", session: orchSession }]}
+          orchestrators={[{ name: "fleet", id: "uuid-fleet", label: "fleet", session: orchSession }]}
           allSessions={[orchSession]}
           projects={noProjects}
           activeSessionId={undefined}
@@ -504,5 +504,5 @@ describe("SidebarOrchestrators", () => {
 });
 
 // Verify the type alias still works (compile-time check)
-const _typeCheck: SidebarOrchestrator = { name: "test", session: null };
+const _typeCheck: SidebarOrchestrator = { name: "test", id: "uuid-test", label: "test", session: null };
 void _typeCheck;

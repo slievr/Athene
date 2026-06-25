@@ -53,7 +53,7 @@ function createRenderData(opts: OrchestratorPromptConfig): OrchestratorPromptRen
   const scopeDescription =
     orchestrator.scope === "all"
       ? "all registered projects"
-      : `projects: ${orchestrator.scope.projects.join(", ")}`;
+      : `directories: ${(orchestrator.scope as string[]).join(", ")}`;
 
   return {
     metaName: opts.name,

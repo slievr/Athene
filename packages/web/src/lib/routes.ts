@@ -18,15 +18,17 @@ export function projectSessionHashPath(projectId: string, sessionId: string, has
   return `${projectSessionPath(projectId, sessionId)}${hash}`;
 }
 
-export function orchestratorDashboardPath(name: string): string {
-  return `/orchestrators/${encodeURIComponent(name)}`;
+/** @param id The orchestrator's UUID. */
+export function orchestratorDashboardPath(id: string): string {
+  return `/orchestrators/${encodeURIComponent(id)}`;
 }
 
-export function orchestratorSessionPath(name: string, sessionId: string): string {
-  return `/orchestrators/${encodeURIComponent(name)}/sessions/${encodeURIComponent(sessionId)}`;
+/** @param id The orchestrator's UUID. */
+export function orchestratorSessionPath(id: string, sessionId: string): string {
+  return `/orchestrators/${encodeURIComponent(id)}/sessions/${encodeURIComponent(sessionId)}`;
 }
 
 /** @deprecated Use orchestratorDashboardPath */
-export function metaDashboardPath(name: string): string {
-  return orchestratorDashboardPath(name);
+export function metaDashboardPath(id: string): string {
+  return orchestratorDashboardPath(id);
 }

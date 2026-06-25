@@ -214,7 +214,14 @@ export { checkSpawnCollision, formatHardRefusal } from "./spawn-collision.js";
 export type { SpawnCollisionResult, SpawnCollisionIntent } from "./spawn-collision.js";
 
 // Orchestrator config writer
-export { appendOrchestrator, type OrchestratorWriteInput } from "./orchestrator-config-writer.js";
+export {
+  appendOrchestrator,
+  ensureOrchestratorUUIDs,
+  updateOrchestrator,
+  deleteOrchestrator,
+  type OrchestratorWriteInput,
+  type OrchestratorUpdateInput,
+} from "./orchestrator-config-writer.js";
 
 // Shared utilities
 export {

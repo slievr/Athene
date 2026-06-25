@@ -3,8 +3,8 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { CreateMetaOrchestratorModal } from "@/components/CreateMetaOrchestratorModal";
 
 const projects = [
-  { id: "proj-a", name: "Project Alpha" },
-  { id: "proj-b", name: "Project Beta" },
+  { id: "proj-a", name: "Project Alpha", path: "/repos/alpha" },
+  { id: "proj-b", name: "Project Beta", path: "/repos/beta" },
 ];
 
 describe("CreateMetaOrchestratorModal", () => {

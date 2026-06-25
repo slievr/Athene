@@ -23,7 +23,16 @@ import {
 const FAST_METADATA_ENRICH_TIMEOUT_MS = 3_000;
 
 export interface OrchestratorPageData {
-  name: string;
+  /** Orchestrator UUID from config. */
+  id: string;
+  /** YAML key slug (never changes). */
+  slug: string;
+  /** Display label from config `name` field. Falls back to slug if absent. */
+  label: string;
+  /** Scope: "all" or an array of directory paths. */
+  scope: "all" | string[];
+  /** Whether auto-discovery is enabled. */
+  discover: boolean;
   sessions: DashboardSession[];
   /**
    * Full registered project set (registration order). Passed to Dashboard as
@@ -38,22 +47,27 @@ export interface OrchestratorPageData {
 }
 
 /**
- * Page data for `/orchestrators/<name>`: the worker fleet owned by the named
- * orchestrator, aggregated across all in-scope projects. Returns null when the
+ * Page data for `/orchestrators/<id>`: the worker fleet owned by the orchestrator
+ * with the given UUID, aggregated across all in-scope projects. Returns null when the
  * orchestrator is not configured (the route renders notFound()).
  */
 export const getOrchestratorPageData = cache(async function getOrchestratorPageData(
-  name: string,
+  orchId: string,
 ): Promise<OrchestratorPageData | null> {
   let config: Awaited<ReturnType<typeof getServices>>["config"];
   let registry: Awaited<ReturnType<typeof getServices>>["registry"];
   let allSessions: Awaited<
     ReturnType<Awaited<ReturnType<typeof getServices>>["sessionManager"]["listCached"]>
   >;
+  let orchSlug: string;
 
   const projects = getAllProjects();
   const pageData: OrchestratorPageData = {
-    name,
+    id: orchId,
+    slug: "",
+    label: "",
+    scope: "all",
+    discover: false,
     sessions: [],
     projects,
     orchestrators: [],
@@ -64,10 +78,21 @@ export const getOrchestratorPageData = cache(async function getOrchestratorPageD
     const services = await getServices();
     config = services.config;
     registry = services.registry;
-    const orchMap = config.orchestrators ?? config.metaOrchestrators;
-    if (!orchMap?.[name]) {
+    const orchMap = config.orchestrators ?? config.metaOrchestrators ?? {};
+    // Find config entry by UUID
+    const orchEntry = Object.entries(orchMap).find(
+      ([, v]) => (v as { id?: string }).id === orchId,
+    );
+    if (!orchEntry) {
       return null;
     }
+    [orchSlug] = orchEntry;
+    // Populate display label same pattern as SidebarOrchestrator
+    const orchConfig = orchMap[orchSlug] as { name?: string; scope?: "all" | string[]; discover?: boolean } | undefined;
+    pageData.slug = orchSlug;
+    pageData.label = orchConfig?.name ?? orchSlug;
+    pageData.scope = orchConfig?.scope ?? "all";
+    pageData.discover = orchConfig?.discover ?? false;
     pageData.attentionZones = config.dashboard?.attentionZones ?? DEFAULT_ATTENTION_ZONE_MODE;
     pageData.orchestrators = await listSidebarOrchestrators(config, registry);
     try {
@@ -87,7 +112,9 @@ export const getOrchestratorPageData = cache(async function getOrchestratorPageD
   const coreSessions = allSessions.filter(
     (s) =>
       !isCoordinatorSession(s) &&
-      (s.metadata["orchestratorOwner"] === name || s.metadata["metaOwner"] === name),
+      (s.metadata["orchestratorId"] === orchId ||
+        s.metadata["orchestratorOwner"] === orchSlug ||
+        s.metadata["metaOwner"] === orchSlug),
   );
 
   pageData.sessions = coreSessions.map(sessionToDashboard);

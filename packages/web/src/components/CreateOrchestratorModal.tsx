@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 const BUILT_IN_AGENTS = ["claude-code", "codex", "cursor", "kimicode", "grok", "opencode"] as const;
 
 export interface CreateOrchestratorModalProps {
-  projects: Array<{ id: string; name: string }>;
+  projects: Array<{ id: string; name: string; path: string }>;
   existingNames: string[];
   onClose: () => void;
   onSuccess: () => void;
@@ -38,13 +38,13 @@ export function CreateOrchestratorModal({
     setNameError(validateName(name, existingNames));
   };
 
-  const toggleProject = (id: string) => {
+  const toggleProject = (path: string) => {
     setSelectedProjects((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
+      if (next.has(path)) {
+        next.delete(path);
       } else {
-        next.add(id);
+        next.add(path);
       }
       return next;
     });
@@ -58,10 +58,8 @@ export function CreateOrchestratorModal({
       return;
     }
 
-    const scope =
-      scopeMode === "all"
-        ? "all"
-        : ({ projects: [...selectedProjects] } as { projects: string[] });
+    const scope: "all" | string[] =
+      scopeMode === "all" ? "all" : [...selectedProjects];
 
     setSubmitting(true);
     setApiError(null);
@@ -158,8 +156,8 @@ export function CreateOrchestratorModal({
                   <label key={p.id} className="flex cursor-pointer items-center gap-2 text-sm">
                     <input
                       type="checkbox"
-                      checked={selectedProjects.has(p.id)}
-                      onChange={() => toggleProject(p.id)}
+                      checked={selectedProjects.has(p.path)}
+                      onChange={() => toggleProject(p.path)}
                       className="accent-[var(--color-accent)]"
                     />
                     <span className="text-[var(--color-text-primary)]">{p.name}</span>

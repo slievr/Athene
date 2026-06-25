@@ -23,15 +23,16 @@ export async function POST(request: NextRequest) {
 
   // Validate scope shape
   const scope = body.scope;
-  if (scope !== "all" && (typeof scope !== "object" || !Array.isArray((scope as Record<string, unknown>).projects))) {
+  if (scope !== "all" && !Array.isArray(scope)) {
     return jsonWithCorrelation(
-      { error: 'scope must be "all" or { projects: string[] }' },
+      { error: 'scope must be "all" or an array of project paths' },
       { status: 400 },
       correlationId,
     );
   }
 
   const agent = typeof body.agent === "string" && body.agent.length > 0 ? body.agent : undefined;
+  const label = typeof body.label === "string" ? body.label.trim() || undefined : undefined;
 
   try {
     const { config } = await getServices();
@@ -45,13 +46,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate explicit project IDs exist
-    if (typeof scope === "object" && scope !== null) {
-      const projectIds = (scope as { projects: string[] }).projects;
-      for (const id of projectIds) {
-        if (!Object.hasOwn(config.projects, id)) {
+    // Validate that array entries are non-empty strings (they are directory paths)
+    if (Array.isArray(scope)) {
+      for (const entry of scope) {
+        if (typeof entry !== "string" || !entry) {
           return jsonWithCorrelation(
-            { error: `Unknown project ID: '${id}'` },
+            { error: "scope array entries must be non-empty strings" },
             { status: 400 },
             correlationId,
           );
@@ -62,8 +62,9 @@ export async function POST(request: NextRequest) {
     // Write to config file
     appendOrchestrator(config.configPath, {
       name,
-      scope: scope as "all" | { projects: string[] },
+      scope: scope as "all" | string[],
       agent,
+      label,
     });
 
     // Reload config so ensureOrchestrator sees the new entry
@@ -71,15 +72,16 @@ export async function POST(request: NextRequest) {
     const { config: freshConfig, sessionManager: freshSm } = await getServices();
 
     const systemPrompt = generateOrchestratorPrompt({ config: freshConfig, name });
-    const freshOrchMap = freshConfig.orchestrators ?? freshConfig.metaOrchestrators;
-    const orchCfg = freshOrchMap?.[name];
+    const freshOrchMap = freshConfig.orchestrators ?? freshConfig.metaOrchestrators ?? {};
+    const orchCfg = freshOrchMap[name];
+    const newId = (freshOrchMap[name] as { id?: string })?.id ?? name;
     const session = await freshSm.ensureOrchestrator({
       name,
       systemPrompt,
       agent: orchCfg?.agent,
     });
 
-    return jsonWithCorrelation({ sessionId: session.id }, { status: 201 }, correlationId);
+    return jsonWithCorrelation({ sessionId: session.id, id: newId }, { status: 201 }, correlationId);
   } catch (err) {
     return jsonWithCorrelation(
       { error: err instanceof Error ? err.message : "Failed to create orchestrator" },

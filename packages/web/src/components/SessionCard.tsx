@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useRef } from "react";
 import {
   type DashboardSession,
   type DashboardPR,
@@ -97,6 +97,26 @@ function getRepoInitials(repo: string): string {
 
 function SessionCardView({ session, onKill, onMerge, onRestore, projectAccent, accentClass }: SessionCardProps) {
   const [killConfirming, setKillConfirming] = useState(false);
+  const [editingLabel, setEditingLabel] = useState(false);
+  const [labelValue, setLabelValue] = useState(session.displayName ?? "");
+  const [labelSaving, setLabelSaving] = useState(false);
+  const labelInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingLabel) labelInputRef.current?.focus();
+  }, [editingLabel]);
+
+  const saveLabel = async () => {
+    if (!labelValue.trim()) { setEditingLabel(false); return; }
+    setLabelSaving(true);
+    await fetch(`/api/sessions/${encodeURIComponent(session.id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ displayName: labelValue.trim() }),
+    });
+    setLabelSaving(false);
+    setEditingLabel(false);
+  };
 
   // Only play the entrance animation on the very first mount of this session.
   // Subsequent remounts (e.g. attention-level column change) skip the animation
@@ -217,6 +237,55 @@ function SessionCardView({ session, onKill, onMerge, onRestore, projectAccent, a
       </div>
 
       <div className="session-card__body flex min-h-0 flex-1 flex-col">
+        {/* Session label — editable inline */}
+        <div className="group/label flex items-center gap-1 min-w-0 px-[10px] pt-[6px]">
+          {editingLabel ? (
+            <input
+              ref={labelInputRef}
+              value={labelValue}
+              onChange={(e) => setLabelValue(e.target.value)}
+              onBlur={() => void saveLabel()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void saveLabel();
+                if (e.key === "Escape") { setLabelValue(session.displayName ?? ""); setEditingLabel(false); }
+              }}
+              disabled={labelSaving}
+              onClick={(e) => e.stopPropagation()}
+              placeholder="Add label…"
+              className="w-full rounded border border-[var(--color-accent)] bg-[var(--color-bg-elevated)] px-1.5 py-0.5 text-[11px] text-[var(--color-text-primary)] focus:outline-none"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setEditingLabel(true); }}
+              className="flex min-w-0 items-center gap-1"
+              title="Add or edit label"
+            >
+              {session.displayNameUserSet && session.displayName ? (
+                <span className="truncate text-[11px] font-medium text-[var(--color-text-primary)]">
+                  {session.displayName}
+                </span>
+              ) : null}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className={cn(
+                  "h-2.5 w-2.5 shrink-0 text-[var(--color-text-muted)]",
+                  session.displayNameUserSet && session.displayName
+                    ? "opacity-0 group-hover/label:opacity-100"
+                    : "opacity-0 group-hover/label:opacity-50",
+                )}
+                aria-hidden="true"
+              >
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z" />
+              </svg>
+            </button>
+          )}
+        </div>
+
         <div className="card__title-wrap">
           <p className="card__title">{title}</p>
         </div>

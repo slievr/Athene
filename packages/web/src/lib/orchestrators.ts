@@ -53,7 +53,12 @@ async function runtimeNotDefinitelyMissing(
 
 /** A named orchestrator and its (optional) running session, for the sidebar. */
 export interface SidebarOrchestrator {
+  /** YAML key slug (never changes). */
   name: string;
+  /** Stable UUID from config. */
+  id: string;
+  /** Display label from config `name` field. Falls back to slug if absent. */
+  label: string;
   session: DashboardSession | null;
 }
 
@@ -70,22 +75,25 @@ export async function listSidebarOrchestrators(
   registry: PluginRegistry,
   probeTimeoutMs: number = META_PROBE_TIMEOUT_MS,
 ): Promise<SidebarOrchestrator[]> {
-  const names = Object.keys(config.orchestrators ?? config.metaOrchestrators ?? {});
+  const orchMap = config.orchestrators ?? config.metaOrchestrators ?? {};
+  const names = Object.keys(orchMap);
   // Probe all orchestrators CONCURRENTLY under a bounded per-probe deadline, so a single
   // hung tmux/ps probe can't stall the dashboard SSR render (total ≈ slowest
   // probe, capped at probeTimeoutMs — not the sum of sequential probes).
   return Promise.all(
     names.map(async (name): Promise<SidebarOrchestrator> => {
+      const orchEntry = orchMap[name] as { id?: string; name?: string } | undefined;
+      const id = orchEntry?.id ?? name;
+      const label = orchEntry?.name ?? name;
       const raw = readMetadataRaw(getMetaSessionsDir(name), name);
       if (!raw) {
-        return { name, session: null };
+        return { name, id, label, session: null };
       }
       const core = sessionFromMetadata(name, raw, {
         projectId: "_meta",
         sessionKind: "orchestrator",
       });
-      const orchMap = config.orchestrators ?? config.metaOrchestrators;
-      const agentName = orchMap?.[name]?.agent ?? config.defaults.agent;
+      const agentName = orchMap[name]?.agent ?? config.defaults.agent;
       const agent = registry.get<Agent>("agent", agentName);
       const dash = sessionToDashboard(core);
       if (!(await runtimeNotDefinitelyMissing(core, agent, probeTimeoutMs))) {
@@ -104,7 +112,7 @@ export async function listSidebarOrchestrators(
           dash.lifecycle.runtimeState = "exited";
         }
       }
-      return { name, session: dash };
+      return { name, id, label, session: dash };
     }),
   );
 }

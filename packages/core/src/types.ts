@@ -1499,11 +1499,16 @@ export interface OrchestratorConfig {
   _externalPluginEntries?: ExternalPluginEntryRef[];
 }
 
-export type OrchestratorScope = "all" | { projects: string[] };
+/** "all" = every registered project; string[] = list of project directory paths. */
+export type OrchestratorScope = "all" | string[];
 /** @deprecated Use OrchestratorScope */
 export type MetaScope = OrchestratorScope;
 
 export interface OrchestratorEntryConfig {
+  /** Stable UUID — assigned at creation, used in URLs and session metadata. */
+  id?: string;
+  /** Human-readable display label. Falls back to the YAML key slug if absent. */
+  name?: string;
   /** Which projects this orchestrator can route into. */
   scope: OrchestratorScope;
   /**

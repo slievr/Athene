@@ -59,7 +59,7 @@ describe("metaOrchestrators via the global config path", () => {
     expect(prompt).toContain("prefer api for billing");
   });
 
-  it("loads a multi-project explicit scope (validated against the full registry, not a projection)", () => {
+  it("loads a multi-project explicit scope (directory paths, not project IDs)", () => {
     mkdirSync(join(tempRoot, "web"), { recursive: true });
     mkdirSync(join(tempRoot, "api"), { recursive: true });
     const configPath = join(tempRoot, ".agent-orchestrator", "config.yaml");
@@ -74,18 +74,21 @@ describe("metaOrchestrators via the global config path", () => {
         "metaOrchestrators:",
         "  meta-1:",
         "    scope:",
-        "      projects: [web, api]",
+        `      - ${join(tempRoot, "web")}`,
+        `      - ${join(tempRoot, "api")}`,
         "",
       ].join("\n"),
     );
 
-    // Both web and api are registered, so the explicit scope must NOT throw even
-    // if individual projects degrade during effective resolution.
     const config = loadConfig(configPath);
     expect(config.metaOrchestrators?.["meta-1"]).toBeDefined();
+    expect(config.metaOrchestrators?.["meta-1"].scope).toEqual([
+      join(tempRoot, "web"),
+      join(tempRoot, "api"),
+    ]);
   });
 
-  it("still fails loud when an explicit scope references a truly-unregistered project", () => {
+  it("loads without error when scope references a directory path not in projects (no registry validation)", () => {
     mkdirSync(join(tempRoot, "web"), { recursive: true });
     const configPath = join(tempRoot, ".agent-orchestrator", "config.yaml");
     writeFileSync(
@@ -97,37 +100,21 @@ describe("metaOrchestrators via the global config path", () => {
         "metaOrchestrators:",
         "  meta-1:",
         "    scope:",
-        "      projects: [web, ghost]",
+        `      - ${join(tempRoot, "web")}`,
+        `      - ${join(tempRoot, "ghost")}`,
         "",
       ].join("\n"),
     );
 
-    expect(() => loadConfig(configPath)).toThrow(/unknown project 'ghost'/);
+    // Scope is directory paths — no registry validation, so this must not throw.
+    expect(() => loadConfig(configPath)).not.toThrow();
   });
 
-  it("wrapped local config fails loud on a meta scope referencing an unregistered project", () => {
+  it("wrapped local config with directory-path scope loads", () => {
     const projDir = join(tempRoot, "proj");
     mkdirSync(projDir, { recursive: true });
-    const wrappedPath = join(projDir, "agent-orchestrator.yaml");
-    writeFileSync(
-      wrappedPath,
-      [
-        "projects:",
-        "  web:",
-        `    path: ${join(tempRoot, "web")}`,
-        "metaOrchestrators:",
-        "  meta-1:",
-        "    scope:",
-        "      projects: [web, ghost]",
-        "",
-      ].join("\n"),
-    );
-    expect(() => loadConfig(wrappedPath)).toThrow(/unknown project 'ghost'/);
-  });
-
-  it("wrapped local config with all-valid meta scope ids loads", () => {
-    const projDir = join(tempRoot, "proj2");
-    mkdirSync(projDir, { recursive: true });
+    mkdirSync(join(tempRoot, "web"), { recursive: true });
+    mkdirSync(join(tempRoot, "api"), { recursive: true });
     const wrappedPath = join(projDir, "agent-orchestrator.yaml");
     writeFileSync(
       wrappedPath,
@@ -140,7 +127,8 @@ describe("metaOrchestrators via the global config path", () => {
         "metaOrchestrators:",
         "  meta-1:",
         "    scope:",
-        "      projects: [web, api]",
+        `      - ${join(tempRoot, "web")}`,
+        `      - ${join(tempRoot, "api")}`,
         "",
       ].join("\n"),
     );
@@ -227,25 +215,24 @@ describe("dual-read: metaOrchestrators in global config", () => {
 
 // ath-rev-21 #2: the canonical-global branch is
 // `buildEffectiveConfigFromGlobalConfigPath(path) ?? validateWrappedConfig(normalizedParsed)`.
-// The builder already fails loud on an unknown meta scope, but the `??` fallback
-// must not silently load a bad scope. The fallback is wired through
-// validateWrappedConfig, so this asserts that guard fails loud (and loads a valid
-// scope) directly — proving the fallback honors the same invariant as the builder.
+// Scope now uses directory paths — no registry validation. These tests confirm the
+// new behavior: validateWrappedConfig accepts any directory-path scope without throwing.
 describe("validateWrappedConfig (canonical-global fallback guard)", () => {
-  it("fails loud on a meta scope referencing an unregistered project", () => {
+  it("does not throw on a scope with directory paths (no registry validation)", () => {
     expect(() =>
       validateWrappedConfig({
         projects: { web: { path: "/tmp/web" } },
-        metaOrchestrators: { "meta-1": { scope: { projects: ["web", "ghost"] } } },
+        metaOrchestrators: { "meta-1": { scope: ["/tmp/web", "/tmp/ghost"] } },
       }),
-    ).toThrow(/unknown project 'ghost'/);
+    ).not.toThrow();
   });
 
-  it("accepts a meta scope whose projects are all registered", () => {
+  it("accepts a directory-path scope", () => {
     const config = validateWrappedConfig({
       projects: { web: { path: "/tmp/web" }, api: { path: "/tmp/api" } },
-      metaOrchestrators: { "meta-1": { scope: { projects: ["web", "api"] } } },
+      metaOrchestrators: { "meta-1": { scope: ["/tmp/web", "/tmp/api"] } },
     });
     expect(config.metaOrchestrators?.["meta-1"]).toBeDefined();
+    expect(config.metaOrchestrators?.["meta-1"].scope).toEqual(["/tmp/web", "/tmp/api"]);
   });
 });
