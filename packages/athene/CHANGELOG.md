@@ -1,5 +1,11 @@
 # @made-by-moonlight/athene
 
+## 0.12.0
+
+### Patch Changes
+
+- @made-by-moonlight/athene-cli@0.12.0
+
 ## 0.11.3
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @made-by-moonlight/athene-plugin-tracker-gitlab
 
+## 0.12.0
+
+### Patch Changes
+
+- Updated dependencies [80ef5dc]
+  - @made-by-moonlight/athene-core@0.12.0
+  - @made-by-moonlight/athene-plugin-scm-gitlab@0.12.0
+
 ## 0.11.3
 
 ### Patch Changes

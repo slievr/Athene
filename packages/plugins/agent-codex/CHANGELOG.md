@@ -1,5 +1,12 @@
 # @made-by-moonlight/athene-plugin-agent-codex
 
+## 0.12.0
+
+### Patch Changes
+
+- Updated dependencies [80ef5dc]
+  - @made-by-moonlight/athene-core@0.12.0
+
 ## 0.11.3
 
 ### Patch Changes

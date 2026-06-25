@@ -1,6 +1,6 @@
 {
   "name": "@made-by-moonlight/athene-plugin-terminal-web",
-  "version": "0.11.3",
+  "version": "0.12.0",
   "description": "Terminal plugin: xterm.js web terminal",
   "license": "MIT",
   "type": "module",

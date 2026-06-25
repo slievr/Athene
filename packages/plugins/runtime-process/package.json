@@ -1,6 +1,6 @@
 {
   "name": "@made-by-moonlight/athene-plugin-runtime-process",
-  "version": "0.11.3",
+  "version": "0.12.0",
   "description": "Runtime plugin: child processes",
   "license": "MIT",
   "type": "module",
