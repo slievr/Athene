@@ -23,6 +23,12 @@ async function main(): Promise<void> {
   }
 
   const mod = await import(packageName) as { default: { create: () => unknown } };
+
+  if (typeof mod.default.create !== "function") {
+    console.error(`[adapter-shim] Plugin ${packageName} does not export a create function`);
+    process.exit(1);
+  }
+
   const plugin = mod.default.create();
 
   const rl = readline.createInterface({ input: process.stdin, terminal: false });
@@ -37,6 +43,7 @@ async function handleLine(line: string, plugin: unknown): Promise<void> {
   try {
     req = JSON.parse(line) as JsonRpcRequest;
   } catch {
+    console.error("[adapter-shim] Failed to parse JSON-RPC request:", line);
     return;
   }
 
@@ -54,6 +61,7 @@ async function handleLine(line: string, plugin: unknown): Promise<void> {
           sessionId: string;
           runtimeHandle: RuntimeHandle;
         };
+        // The Go engine serializes RuntimeHandle as a plain JSON object; reconstruct the expected shape here.
         result = await (plugin as Agent).isProcessRunning({
           id: sessionId,
           runtimeName: (runtimeHandle as RuntimeHandle).runtimeName ?? "",
