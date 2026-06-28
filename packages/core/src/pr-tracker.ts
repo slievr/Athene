@@ -45,9 +45,7 @@ export interface PRTracker {
   /** Read a single cache entry by key ("owner/repo#number"). */
   getCacheEntry(key: string): PREnrichmentData | undefined;
   /** Expose the full cache Map for consumers that need to iterate or pass it wholesale. */
-  getCache(): Map<string, PREnrichmentData>;
-  /** True when Guard 1 reported the repo's PR list unchanged (safe to skip detectPR). */
-  isPRListUnchanged(repo: string): boolean;
+  getCache(): ReadonlyMap<string, PREnrichmentData>;
 }
 
 export function createPRTracker(deps: PRTrackerDeps): PRTracker {
@@ -422,11 +420,8 @@ export function createPRTracker(deps: PRTrackerDeps): PRTracker {
     getCacheEntry(key: string): PREnrichmentData | undefined {
       return prEnrichmentCache.get(key);
     },
-    getCache(): Map<string, PREnrichmentData> {
+    getCache(): ReadonlyMap<string, PREnrichmentData> {
       return prEnrichmentCache;
-    },
-    isPRListUnchanged(repo: string): boolean {
-      return prListUnchangedRepos.has(repo);
     },
   };
 }

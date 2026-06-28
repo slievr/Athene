@@ -102,6 +102,7 @@ import {
 import { ENV, getEnvString, withLegacyEnvAliases } from "./env.js";
 import { openDb, closeDb } from "./db.js";
 import { createSessionStore, type SessionStore } from "./session-store.js";
+import type { Database as BetterSQLite3DB } from "better-sqlite3";
 
 const execFileAsync = promisify(execFile);
 const OPENCODE_DISCOVERY_TIMEOUT_MS = 10_000;
@@ -509,7 +510,7 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
   // If better-sqlite3 is unavailable (optional dep) or the DB can't open,
   // the store is skipped silently — flat files remain authoritative.
   const stores = new Map<string, SessionStore | null>();
-  const dbs = new Map<string, any>(); // Track DB instances for cleanup
+  const dbs = new Map<string, BetterSQLite3DB>(); // Track DB instances for cleanup
 
   function getStore(projectId: string): SessionStore | null {
     if (stores.has(projectId)) return stores.get(projectId) ?? null;

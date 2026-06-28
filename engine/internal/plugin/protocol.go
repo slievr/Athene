@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os/exec"
 	"sync"
 	"sync/atomic"
@@ -80,7 +79,10 @@ func (a *Adapter) Call(method string, params any) (json.RawMessage, error) {
 		return nil, err
 	}
 
-	resp := <-ch
+	resp, ok := <-ch
+	if !ok {
+		return nil, fmt.Errorf("plugin adapter closed while waiting for response to %q", method)
+	}
 	if resp.Error != nil {
 		return nil, fmt.Errorf("plugin error %d: %s", resp.Error.Code, resp.Error.Message)
 	}
@@ -88,13 +90,18 @@ func (a *Adapter) Call(method string, params any) (json.RawMessage, error) {
 }
 
 func (a *Adapter) readLoop() {
+	defer func() {
+		a.mu.Lock()
+		for id, ch := range a.pending {
+			close(ch)
+			delete(a.pending, id)
+		}
+		a.mu.Unlock()
+	}()
 	for {
 		var resp response
 		if err := a.dec.Decode(&resp); err != nil {
-			if err == io.EOF {
-				return
-			}
-			continue
+			return
 		}
 		a.mu.Lock()
 		if ch, ok := a.pending[resp.ID]; ok {

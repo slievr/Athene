@@ -269,7 +269,7 @@ interface ReactionSessionContext {
  */
 function buildEventContext(
   session: Session | ReactionSessionContext,
-  prEnrichmentCache: Map<string, PREnrichmentData>,
+  prEnrichmentCache: ReadonlyMap<string, PREnrichmentData>,
 ): EventContext {
   const sessionPRs = dedupePrInfos(
     "prs" in session && Array.isArray(session.prs) ? session.prs : session.pr ? [session.pr] : [],

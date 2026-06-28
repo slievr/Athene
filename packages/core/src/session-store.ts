@@ -50,7 +50,7 @@ function rowToSession(row: SessionRow, kv: Record<string, string>): Session {
     createdAt: new Date(row.created_at),
     lastActivityAt: row.last_activity_at !== null
       ? new Date(row.last_activity_at)
-      : (() => { throw new Error(`session ${row.id} has null last_activity_at`); })(),
+      : new Date(row.created_at),
     metadata: kv,
   };
 }
