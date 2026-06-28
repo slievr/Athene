@@ -1,6 +1,6 @@
 {
   "name": "@made-by-moonlight/athene-plugin-notifier-composio",
-  "version": "0.13.0",
+  "version": "0.13.1-nightly-a890b0ce311c8ab7bba4987d2f15737669aecb4e",
   "description": "Notifier plugin: Composio unified notifications (Slack, Discord, email)",
   "license": "MIT",
   "type": "module",
