@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Configure Trusted Publishing (OIDC) for all @made-by-moonlight/athene-* packages.
 #
+# Registers both release.yml (stable) and canary.yml (nightly) as trusted
+# publishers so both workflows can publish to npm without an NPM_TOKEN.
+#
 # Usage:
 #   ./scripts/configure-trusted-publishers.sh
 #
@@ -11,13 +14,13 @@
 #
 # The first package will open a browser tab for 2FA. When prompted,
 # tick "Skip 2FA for the next 5 minutes" before approving — this lets
-# the remaining ~29 packages run without further interruptions.
+# the remaining packages run without further interruptions.
 # A 2-second sleep between calls avoids rate limiting.
 
 set -euo pipefail
 
 REPO="slievr/Athene"
-FILE="release.yml"
+FILES=("release.yml" "canary.yml")
 
 PACKAGES=(
   "@made-by-moonlight/athene"
@@ -52,54 +55,60 @@ PACKAGES=(
   "@made-by-moonlight/athene-plugin-workspace-worktree"
 )
 
-echo "==> Configuring Trusted Publishing for ${#PACKAGES[@]} packages"
-echo "    repo: ${REPO}  file: ${FILE}"
+total=$(( ${#PACKAGES[@]} * ${#FILES[@]} ))
+echo "==> Configuring Trusted Publishing for ${#PACKAGES[@]} packages × ${#FILES[@]} workflows (${total} total)"
+echo "    repo: ${REPO}  files: ${FILES[*]}"
 echo ""
-echo "NOTE: The first package will open a browser tab for 2FA."
+echo "NOTE: The first entry will open a browser tab for 2FA."
 echo "      Tick 'Skip 2FA for the next 5 minutes' before approving."
 echo ""
 
 FIRST=true
 FAILED=()
 
-for pkg in "${PACKAGES[@]}"; do
-  echo -n "  configuring ${pkg} ... "
+for file in "${FILES[@]}"; do
+  echo "--- ${file} ---"
+  for pkg in "${PACKAGES[@]}"; do
+    echo -n "  configuring ${pkg} ... "
 
-  if $FIRST; then
-    # First call: interactive — browser 2FA will be required
-    FIRST=false
-    if npm trust github "$pkg" \
-        --repo "$REPO" \
-        --file "$FILE" \
-        --allow-publish; then
-      echo "ok"
+    if $FIRST; then
+      # First call: interactive — browser 2FA will be required
+      FIRST=false
+      if npm trust github "$pkg" \
+          --repo "$REPO" \
+          --file "$file" \
+          --allow-publish; then
+        echo "ok"
+      else
+        echo "FAILED"
+        FAILED+=("${file}:${pkg}")
+      fi
     else
-      echo "FAILED"
-      FAILED+=("$pkg")
+      # Subsequent calls: --yes skips the confirmation prompt;
+      # the 5-minute 2FA skip window handles authentication.
+      if npm trust github "$pkg" \
+          --repo "$REPO" \
+          --file "$file" \
+          --allow-publish \
+          --yes; then
+        echo "ok"
+      else
+        echo "FAILED"
+        FAILED+=("${file}:${pkg}")
+      fi
+      sleep 2
     fi
-  else
-    # Subsequent calls: --yes skips the confirmation prompt;
-    # the 5-minute 2FA skip window handles authentication.
-    if npm trust github "$pkg" \
-        --repo "$REPO" \
-        --file "$FILE" \
-        --allow-publish \
-        --yes; then
-      echo "ok"
-    else
-      echo "FAILED"
-      FAILED+=("$pkg")
-    fi
-    sleep 2
-  fi
+  done
+  echo ""
 done
 
-echo ""
 if [ ${#FAILED[@]} -eq 0 ]; then
-  echo "==> All ${#PACKAGES[@]} packages configured successfully."
+  echo "==> All ${total} entries configured successfully."
 else
-  echo "==> Done. The following packages FAILED and need to be retried:"
-  for pkg in "${FAILED[@]}"; do
-    echo "    npm trust github ${pkg} --repo ${REPO} --file ${FILE} --allow-publish --yes"
+  echo "==> Done. The following entries FAILED and need to be retried:"
+  for entry in "${FAILED[@]}"; do
+    f="${entry%%:*}"
+    p="${entry#*:}"
+    echo "    npm trust github ${p} --repo ${REPO} --file ${f} --allow-publish --yes"
   done
 fi

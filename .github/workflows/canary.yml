@@ -1,14 +1,11 @@
 name: Canary
 
-# Two-stage release pipeline (nightly canary side).
+# Nightly canary pipeline: snapshot versions → npm (--tag nightly) → GitHub prerelease.
 #
-# Nightly canary creates snapshot versions, tags, and a GitHub prerelease.
-# npm publishing is handled by a private cron job (AO) that polls GitHub
-# releases and publishes when a new prerelease tag is ahead of the current
-# npm nightly version.
-#
-# No NPM_TOKEN or publisher dispatch secrets are needed in this repo.
-# The only secret used is GITHUB_TOKEN (automatic).
+# Publishing uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret required.
+# id-token: write lets GitHub Actions mint an OIDC token; the npm CLI exchanges
+# it automatically for a short-lived publish credential.
+# See: https://docs.npmjs.com/trusted-publishers
 #
 # Cron schedule: 23:30 IST = 18:00 UTC, on Fri,Sat,Sun,Mon,Tue
 # (DOW 5,6,0,1,2). Wed/Thu are the bake window — no scheduled publishes.
@@ -27,6 +24,7 @@ concurrency:
 
 permissions:
   contents: write
+  id-token: write # npm provenance via OIDC
 
 jobs:
   canary:
@@ -86,9 +84,9 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         if: steps.check.outputs.skip != 'true'
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
-          # No `registry-url`: this workflow does not publish to npm.
+          registry-url: "https://registry.npmjs.org"
 
       - if: steps.check.outputs.skip != 'true'
         run: echo "HUSKY=0" >> $GITHUB_ENV
@@ -178,6 +176,14 @@ jobs:
           git tag "v$version"
           git push origin "v$version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # Publish snapshot packages to npm under the "nightly" dist-tag.
+      # scripts/publish.mjs skips already-published versions (idempotent).
+      # Uses the same pnpm pack → npm publish approach as release.yml so
+      # workspace:* deps are rewritten to resolved semver before publishing.
+      - name: Publish packages to npm
+        if: steps.check.outputs.skip != 'true'
+        run: node scripts/publish.mjs --tag nightly
 
       # Public-facing GitHub prerelease. `--prerelease` flags it as such
       # so consumers and tooling that filter by stability stay correct.
