@@ -97,7 +97,7 @@ export async function killExistingDaemon(running: RunningState): Promise<void> {
     await killProcessTree(running.pid, "SIGKILL");
     if (!(await waitForExit(running.pid, 3000))) {
       throw new Error(
-        `Failed to stop AO process (PID ${running.pid}). Check permissions or stop it manually.`,
+        `Failed to stop Athene process (PID ${running.pid}). Check permissions or stop it manually.`,
       );
     }
   }

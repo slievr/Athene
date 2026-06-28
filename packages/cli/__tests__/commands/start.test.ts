@@ -1132,7 +1132,7 @@ describe("stop command", () => {
       expect.anything(),
       expect.anything(),
     );
-    expect(mockPromptConfirm).toHaveBeenCalledWith("Stop AO and 2 active session(s)?", false);
+    expect(mockPromptConfirm).toHaveBeenCalledWith("Stop Athene and 2 active session(s)?", false);
     expect(mockSessionManager.kill).toHaveBeenCalledWith("p1-1", { purgeOpenCode: false });
     expect(mockSessionManager.kill).toHaveBeenCalledWith("p2-1", { purgeOpenCode: false });
   });
@@ -1723,7 +1723,7 @@ describe("start command — already-running detection", () => {
       .mocked(console.log)
       .mock.calls.map((c) => c.join(" "))
       .join("\n");
-    expect(output).toContain("AO is already running");
+    expect(output).toContain("Athene is already running");
     expect(output).toContain("PID: 9999");
   });
 
@@ -1748,7 +1748,7 @@ describe("start command — already-running detection", () => {
       .mocked(console.log)
       .mock.calls.map((c) => c.join(" "))
       .join("\n");
-    expect(output).toContain("AO is already running");
+    expect(output).toContain("Athene is already running");
   });
 
   it("path arg already registered + running: opens dashboard without prompting and does not mutate YAML", async () => {
@@ -1791,7 +1791,7 @@ describe("start command — already-running detection", () => {
         .mocked(console.log)
         .mock.calls.map((c) => c.join(" "))
         .join("\n");
-      expect(output).toContain("AO is already running");
+      expect(output).toContain("Athene is already running");
       expect(output).toContain("my-app");
       expect(output).toContain("already registered and running");
     } finally {
@@ -1849,7 +1849,7 @@ describe("start command — already-running detection", () => {
       .mocked(console.log)
       .mock.calls.map((c) => c.join(" "))
       .join("\n");
-    expect(output).toContain("AO is already running");
+    expect(output).toContain("Athene is already running");
   });
 
   it("kills existing process and continues when human caller selects 'restart'", async () => {
@@ -2074,7 +2074,7 @@ describe("start command — already-running detection", () => {
       .mocked(console.log)
       .mock.calls.map((c) => c.join(" "))
       .join("\n");
-    expect(output).toContain("AO is already running");
+    expect(output).toContain("Athene is already running");
 
     // YAML should be unchanged — no duplicate entry added
     const afterYaml = readFileSync(configPath, "utf-8");
