@@ -2,7 +2,6 @@ import type { Database as DB } from "better-sqlite3";
 import type {
   Session,
   CanonicalSessionLifecycle,
-  PRInfo,
   ActivityDetection,
   ActivitySignal,
 } from "./types.js";
@@ -43,13 +42,15 @@ function rowToSession(row: SessionRow, kv: Record<string, string>): Session {
     lifecycle: JSON.parse(row.lifecycle) as CanonicalSessionLifecycle,
     branch: row.branch,
     issueId: row.issue_id,
-    pr: null as PRInfo | null, // derived from lifecycle.pr by session-manager
+    pr: null, // derived from lifecycle.pr by session-manager
     prs: [],
     workspacePath: row.workspace_path,
     runtimeHandle: row.runtime_handle ? JSON.parse(row.runtime_handle) : null,
     agentInfo: row.agent_info ? JSON.parse(row.agent_info) : null,
     createdAt: new Date(row.created_at),
-    lastActivityAt: new Date(row.last_activity_at ?? row.created_at),
+    lastActivityAt: row.last_activity_at !== null
+      ? new Date(row.last_activity_at)
+      : (() => { throw new Error(`session ${row.id} has null last_activity_at`); })(),
     metadata: kv,
   };
 }
@@ -112,6 +113,8 @@ export function createSessionStore(db: DB): SessionStore {
     },
 
     update(id: string, patch: Partial<Session>): void {
+      // Note: status, pr, and prs are derived/in-memory fields and intentionally not stored.
+      // They are computed from lifecycle state and session manager context.
       const sets: string[] = [];
       const values: unknown[] = [];
 
