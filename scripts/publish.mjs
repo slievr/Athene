@@ -12,6 +12,11 @@ import { readFileSync, rmSync } from 'fs';
 
 const root = process.cwd();
 
+// Optional --tag <name> flag for publishing under a dist-tag (e.g. "nightly").
+// Without it, npm defaults to "latest".
+const tagIdx = process.argv.indexOf('--tag');
+const distTag = tagIdx !== -1 ? process.argv[tagIdx + 1] : null;
+
 const packages = JSON.parse(
   execSync('pnpm list --recursive --json --depth 0', { encoding: 'utf-8' })
 );
@@ -39,8 +44,9 @@ for (const { path: dir, private: isPrivate } of packages) {
   const packOutput = execSync('pnpm pack', { cwd: dir, encoding: 'utf-8' });
   const tarball = packOutput.split('\n').map(l => l.trim()).find(l => l.endsWith('.tgz'));
   if (!tarball) throw new Error(`pnpm pack produced no .tgz for ${name}:\n${packOutput}`);
+  const tagFlag = distTag ? ` --tag ${distTag}` : '';
   try {
-    execSync(`npm publish ${tarball}`, { cwd: dir, stdio: 'inherit' });
+    execSync(`npm publish ${tarball}${tagFlag}`, { cwd: dir, stdio: 'inherit' });
   } finally {
     try { rmSync(`${dir}/${tarball}`); } catch { /* best-effort cleanup */ }
   }

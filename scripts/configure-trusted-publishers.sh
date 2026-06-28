@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Configure Trusted Publishing (OIDC) for all @made-by-moonlight/athene-* packages.
 #
+# Both stable and canary releases are published by release.yml, so only
+# this one workflow file needs to be registered as a trusted publisher.
+#
 # Usage:
 #   ./scripts/configure-trusted-publishers.sh
 #

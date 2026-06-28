@@ -1,14 +1,10 @@
 name: Canary
 
-# Two-stage release pipeline (nightly canary side).
+# Nightly canary pipeline: snapshot versions → tag → GitHub prerelease.
 #
-# Nightly canary creates snapshot versions, tags, and a GitHub prerelease.
-# npm publishing is handled by a private cron job (AO) that polls GitHub
-# releases and publishes when a new prerelease tag is ahead of the current
-# npm nightly version.
-#
-# No NPM_TOKEN or publisher dispatch secrets are needed in this repo.
-# The only secret used is GITHUB_TOKEN (automatic).
+# npm publishing is handled by release.yml, which triggers on the v*-nightly-*
+# tag pushed here and publishes under --tag nightly using its existing OIDC
+# trusted-publisher registration. Only one workflow file needs to be registered.
 #
 # Cron schedule: 23:30 IST = 18:00 UTC, on Fri,Sat,Sun,Mon,Tue
 # (DOW 5,6,0,1,2). Wed/Thu are the bake window — no scheduled publishes.
@@ -88,7 +84,7 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
-          # No `registry-url`: this workflow does not publish to npm.
+          # No registry-url: npm publishing is handled by release.yml.
 
       - if: steps.check.outputs.skip != 'true'
         run: echo "HUSKY=0" >> $GITHUB_ENV
@@ -146,7 +142,7 @@ jobs:
       # `pnpm changeset version --snapshot` modifies package.json files
       # on disk but does NOT create a git commit. Without this commit,
       # the umbrella tag we push below would point at the pre-snapshot
-      # HEAD, so when the npm publisher checks out the tag it would see
+      # HEAD, so when release.yml checks out the tag it would see
       # the un-bumped versions and either publish wrong version numbers
       # or fail trying to republish an existing version.
       #
@@ -162,13 +158,13 @@ jobs:
           git add packages/*/package.json packages/plugins/*/package.json .changeset/
           git diff --cached --quiet || git commit -m 'chore: snapshot version bump [skip ci]'
 
-      # Push the umbrella `vX.Y.Z` tag pointing at the snapshot commit.
-      # The npm publisher resolves this tag to the snapshot commit with
-      # the bumped package.json versions.
+      # Push the umbrella `vX.Y.Z-nightly-*` tag pointing at the snapshot commit.
+      # This tag push triggers release.yml, which builds and publishes to npm
+      # under --tag nightly using its existing OIDC trusted-publisher registration.
       #
       # We deliberately skip `pnpm changeset tag`: it would create one
       # tag per publishable package (~27 here) every night, which adds
-      # up fast on the nightly cadence. The npm publisher only consumes
+      # up fast on the nightly cadence. release.yml only consumes
       # the umbrella tag, so the per-package tags are pure decoration.
       - name: Tag snapshot versions
         id: tag
