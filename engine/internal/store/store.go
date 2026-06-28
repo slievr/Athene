@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 
 	_ "modernc.org/sqlite"
 )
@@ -32,6 +33,7 @@ CREATE TABLE IF NOT EXISTS session_kv (
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_project_id ON sessions(project_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_created_at ON sessions(created_at);
 PRAGMA journal_mode=WAL;
 PRAGMA foreign_keys=ON;
 `
@@ -102,7 +104,10 @@ func (s *Store) ListSessions(projectID string) ([]*Session, error) {
 		if err != nil {
 			return nil, err
 		}
-		sess.KV, _ = s.getKV(sess.ID)
+		sess.KV, err = s.getKV(sess.ID)
+		if err != nil {
+			log.Printf("getKV for session %s: %v", sess.ID, err)
+		}
 		sessions = append(sessions, sess)
 	}
 	return sessions, rows.Err()

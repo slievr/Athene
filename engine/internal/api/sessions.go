@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
 	"github.com/slievr/athene/engine/internal/store"
 )
 
@@ -25,7 +26,9 @@ func listSessions(st *store.Store) http.HandlerFunc {
 			sessions = []*store.Session{}
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(sessions)
+		if err := json.NewEncoder(w).Encode(sessions); err != nil {
+			log.Error().Err(err).Msg("encode sessions response")
+		}
 	}
 }
 
@@ -42,6 +45,8 @@ func getSession(st *store.Store) http.HandlerFunc {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(sess)
+		if err := json.NewEncoder(w).Encode(sess); err != nil {
+			log.Error().Err(err).Msg("encode session response")
+		}
 	}
 }

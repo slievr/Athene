@@ -19,6 +19,7 @@
     "test": "turbo run test --filter=!@made-by-moonlight/athene-web",
     "test:integration": "pnpm --filter @made-by-moonlight/athene-integration-tests test:integration",
     "lint": "turbo run lint",
+    "lint:fix": "turbo run lint -- --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "pnpm -r clean",
