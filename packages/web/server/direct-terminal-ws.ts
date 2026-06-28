@@ -8,6 +8,32 @@ import type { WebSocketServer } from "ws";
 import { findTmux } from "./tmux-utils.js";
 import { createMuxWebSocket } from "./mux-websocket.js";
 
+/**
+ * Attach the mux WebSocket handler to an existing HTTP server.
+ * Used by the single Next.js custom server (server.ts) to colocate the WS
+ * endpoint on the same port as Next.js instead of a separate process.
+ */
+export function attachDirectTerminalWS(server: Server): void {
+  const TMUX = findTmux();
+
+  const muxWss = createMuxWebSocket(TMUX);
+  if (!muxWss) {
+    console.warn("[DirectTerminal] Mux WebSocket server not available — terminal relay disabled");
+    return;
+  }
+
+  server.on("upgrade", (request, socket, head) => {
+    const pathname = new URL(request.url ?? "/", "ws://localhost").pathname;
+    if (pathname === "/mux" || pathname === "/ao-terminal-mux") {
+      muxWss.handleUpgrade(request, socket, head, (ws) => {
+        muxWss.emit("connection", ws, request);
+      });
+    } else {
+      socket.destroy();
+    }
+  });
+}
+
 export interface DirectTerminalServer {
   server: Server;
   shutdown: () => void;
