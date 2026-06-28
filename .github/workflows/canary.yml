@@ -82,7 +82,7 @@ jobs:
       - uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d
         if: steps.check.outputs.skip != 'true'
         with:
-          version: 9
+          version: 9.15.4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         if: steps.check.outputs.skip != 'true'
         with:

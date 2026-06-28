@@ -38,5 +38,6 @@ export default defineConfig({
   clean: true,
   splitting: false,
   treeshake: true,
+  external: ["better-sqlite3"],
   esbuildPlugins: [rawMarkdown],
 });
