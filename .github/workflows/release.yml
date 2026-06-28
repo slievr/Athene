@@ -1,45 +1,43 @@
 name: Release
 
-# Release pipeline: version bumps + npm publish via changesets.
+# Release pipeline: auto-generate changeset → version bump → npm publish → tag → commit to main.
 #
-# Stable flow (two phases, triggered by CI completion on main):
+# Stable flow (triggered by CI completing on main):
+#   1. Compare HEAD to the last stable tag; if no new commits, exit.
+#   2. Auto-generate a changeset from conventional commits if none are pending.
+#   3. Run `changeset version` to bump all packages.
+#   4. Publish to npm via OIDC trusted publishing.
+#   5. Push the vX.Y.Z git tag.
+#   6. Commit the version bump (updated package.json / CHANGELOG / deleted changesets)
+#      directly to main using RELEASE_TOKEN (a fine-grained PAT with Contents: write
+#      that can bypass the branch-protection status-check requirement).
+#      The commit carries [skip ci] to prevent an infinite release loop.
+#   7. Create the GitHub release.
 #
-# Phase 1 — triggered by any feature commit landing on main:
-#   - Auto-generates a changeset from conventional commit messages if none exist
-#     (skipped if the current package version is not yet on npm — that means a
-#      version bump already happened and we're waiting for it to be published)
-#   - Runs `changeset version` to bump versions
-#   - Opens a "chore: version packages" PR and enables auto-merge; CI runs on
-#     the PR and it merges automatically when all checks pass
+# Canary flow (triggered when canary.yml pushes a v*-nightly-* tag):
+#   - Checks out the snapshot commit, builds, and publishes under --tag nightly.
+#   - GitHub prerelease is created by canary.yml, not here.
 #
-# Phase 2 — triggered by the version-bump PR merging to main:
-#   - npm check finds the new version is not yet published → publishes
-#   - Creates the vX.Y.Z git tag and GitHub release
-#
-# Canary flow — triggered when canary.yml pushes a v*-nightly-* tag:
-#   - Checks out the snapshot commit at that tag
-#   - Builds all packages and publishes to npm under --tag nightly
-#   - GitHub prerelease is created by canary.yml; this workflow only publishes
-#
-# All npm publishing uses npm Trusted Publishing (OIDC) via this workflow file
-# (release.yml) — only one file needs to be registered as a trusted publisher.
-# id-token: write lets GitHub Actions mint an OIDC token; the npm CLI exchanges
-# it automatically for a short-lived publish credential.
+# All npm publishing uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret required.
 # See: https://docs.npmjs.com/trusted-publishers
+#
+# RELEASE_TOKEN setup (one-time):
+#   1. Go to https://github.com/settings/tokens → Fine-grained tokens → Generate new token
+#   2. Repository access: Only slievr/Athene
+#   3. Permissions: Repository permissions → Contents → Read and write
+#   4. Add the token as a repository secret named RELEASE_TOKEN
 
 on:
-  workflow_dispatch: # allows manual triggering from the Actions UI or gh CLI
+  workflow_dispatch:
   workflow_run:
-    # Depends on the workflow named "CI" in .github/workflows/ci.yml — if
-    # you rename that file or change its `name:` field, update this string
-    # too. GitHub matches by name (not filename) and silently no-ops on
-    # mismatch — so a rename here will mean releases never trigger again.
+    # Depends on the workflow named "CI" in .github/workflows/ci.yml.
+    # GitHub matches by name (not filename) — if ci.yml is renamed, update here too.
     workflows: [CI]
     types: [completed]
     branches: [main]
   push:
     tags:
-      - 'v*-nightly-*' # canary.yml pushes these after creating snapshot versions
+      - 'v*-nightly-*' # canary.yml pushes these; this workflow handles npm publish
 
 concurrency:
   group: release
@@ -63,10 +61,13 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          # workflow_run events carry head_sha; tag-push events use github.sha
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # RELEASE_TOKEN is a fine-grained PAT (Contents: write) used to push
+          # the version-bump commit directly to main, bypassing required status
+          # checks. Falls back to GITHUB_TOKEN when the secret is absent (the
+          # git push step will then fail if branch protection is active).
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
       - uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d
         with:
           version: 9
@@ -77,10 +78,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: echo "HUSKY=0" >> $GITHUB_ENV
       - run: pnpm install --frozen-lockfile
-      # Pre-publish guard: catches the case where a publishable package has a
-      # workspace:* runtime dep on a `private: true` package — pnpm would
-      # rewrite the dep on publish to a version that doesn't exist on npm,
-      # breaking `npm install -g @made-by-moonlight/athene`.
+      # Pre-publish guard: catches workspace:* runtime deps on private packages.
       - run: node scripts/check-publishable-deps.mjs
 
       - name: Configure git
@@ -88,8 +86,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      # Detect whether this run was triggered by a canary nightly tag push
-      # (from canary.yml) or by the normal stable release flow.
+      # Detect whether this is a stable run (workflow_run / dispatch) or a
+      # canary run (triggered by canary.yml pushing a nightly tag).
       - name: Detect release type
         id: type
         run: |
@@ -99,39 +97,55 @@ jobs:
             echo "is_canary=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # Canary publish: build from the checked-out snapshot commit and publish
-      # under --tag nightly so the latest dist-tag is never overwritten.
-      # The GitHub prerelease is created by canary.yml, not here.
+      # ── Canary publish ──────────────────────────────────────────────────────
+      # Build from the snapshot commit and publish under --tag nightly.
+      # The GitHub prerelease is already created by canary.yml.
       - name: Publish canary packages
         if: steps.type.outputs.is_canary == 'true'
         run: pnpm -r build && node scripts/publish.mjs --tag nightly
 
-      # Auto-generate a changeset when none are present, derived from conventional
-      # commit prefixes since the last git tag: feat → minor, everything else → patch.
-      #
-      # Skipped when the current package version is not yet on npm — that means a
-      # version-bump PR already merged and we're in Phase 2 (publish, not bump again).
-      - name: Auto-generate changeset
+      # ── Stable: check for releasable commits ────────────────────────────────
+      # Compare HEAD to the last stable tag (nightly snapshots excluded).
+      # Version-bump commits are filtered out so they don't count as new work.
+      - name: Check for releasable commits
+        id: check
         if: steps.type.outputs.is_canary != 'true'
         run: |
-          current=$(node -p "require('./packages/athene/package.json').version")
-          if npm view "@made-by-moonlight/athene@${current}" version 2>/dev/null | grep -qF "$current"; then
-            echo "Version ${current} already on npm — skipping changeset generation (Phase 2)."
+          last_tag=$(git describe --tags --abbrev=0 --exclude='*-nightly-*' 2>/dev/null || echo "")
+          if [ -z "$last_tag" ]; then
+            echo "No previous tag — proceeding."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          new_commits=$(git log "${last_tag}..HEAD" --pretty=format:"%s" \
+            | grep -cvE "^chore: version packages" || true)
+          if [ "$new_commits" -eq 0 ]; then
+            echo "No new commits since ${last_tag} — nothing to release."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "${new_commits} new commit(s) since ${last_tag}."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
 
+      # ── Stable: auto-generate changeset ────────────────────────────────────
+      # Derives bump type from conventional commit prefixes (feat → minor, else → patch).
+      # Skipped when the developer already added a changeset manually.
+      - name: Auto-generate changeset
+        if: steps.type.outputs.is_canary != 'true' && steps.check.outputs.has_changes == 'true'
+        run: |
           pending=$(find .changeset -name '*.md' ! -name 'README.md' 2>/dev/null | wc -l)
           if [ "$pending" -gt 0 ]; then
-            echo "Existing changeset files found, skipping auto-generate."
+            echo "Existing changeset files found — skipping auto-generate."
             exit 0
           fi
 
-          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          last_tag=$(git describe --tags --abbrev=0 --exclude='*-nightly-*' 2>/dev/null || echo "")
           range="${last_tag:+${last_tag}..}HEAD"
-          commits=$(git log "$range" --pretty=format:"%s" 2>/dev/null | head -50)
+          commits=$(git log "$range" --pretty=format:"%s" \
+            | grep -vE "^chore: version packages" | head -50)
 
           if [ -z "$commits" ]; then
-            echo "No commits since last tag, nothing to release."
+            echo "No commits to summarise — nothing to auto-generate."
             exit 0
           fi
 
@@ -142,8 +156,8 @@ jobs:
 
           summary=$(echo "$commits" | sed 's/^/- /')
           sha=$(git rev-parse --short HEAD)
-          # List every package in the linked group explicitly so changeset version
-          # bumps all of them, even if they have drifted to different versions.
+          # List every package in the linked group so changeset version bumps
+          # them all, even if they have drifted to different versions.
           linked=$(node -e "
             const cfg = require('./.changeset/config.json');
             (cfg.linked[0] || []).forEach(p => console.log(p));
@@ -160,93 +174,39 @@ jobs:
 
           echo "Generated ${bump} changeset ($(echo "$commits" | wc -l | tr -d ' ') commits)."
 
-      # If changeset files exist, bump versions and open an auto-merge PR.
-      # Branch protection prevents direct pushes to main, so the version bump
-      # goes through a PR where CI runs; it merges automatically when checks pass,
-      # triggering Phase 2 (publish) on the next workflow_run event.
-      - name: Version packages
-        id: version
-        if: steps.type.outputs.is_canary != 'true'
+      # ── Stable: version, publish, tag, commit ───────────────────────────────
+      - name: Version, publish, and commit to main
+        if: steps.type.outputs.is_canary != 'true' && steps.check.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pending=$(find .changeset -name '*.md' ! -name 'README.md' 2>/dev/null | wc -l)
           if [ "$pending" -eq 0 ]; then
-            echo "did_bump=false" >> "$GITHUB_OUTPUT"
+            echo "No changesets to consume — nothing to release."
             exit 0
           fi
 
           pnpm changeset version
           new_version=$(node -p "require('./packages/athene/package.json').version")
-          echo "did_bump=true" >> "$GITHUB_OUTPUT"
-          branch="release/${new_version}"
+          echo "Releasing v${new_version}"
 
-          git checkout -b "$branch"
-          # Exclude workflow files — GITHUB_TOKEN cannot push commits that
-          # modify .github/workflows/ without the `workflows` permission.
-          git checkout HEAD -- .github/ 2>/dev/null || true
+          # Build and publish to npm. publish.mjs skips already-published versions.
+          pnpm release
+
+          # Push the version tag.
+          if ! git ls-remote --tags --exit-code origin "refs/tags/v${new_version}" >/dev/null 2>&1; then
+            git tag "v${new_version}"
+            git push origin "v${new_version}"
+          fi
+
+          # Commit the version bump directly to main.
+          # [skip ci] prevents this commit from triggering another release cycle.
+          # Requires RELEASE_TOKEN (a fine-grained PAT) to bypass branch protection.
           git add -A
-          git commit -m "chore: version packages"
-          # Force-push in case the branch exists from a prior failed run.
-          git push --force origin "$branch"
+          git commit -m "chore: version packages to ${new_version} [skip ci]"
+          git push origin HEAD:main
 
-          # Create PR and enable auto-merge. The version-bump-ci.yml workflow
-          # triggers on push to release/** and instantly passes all required
-          # check names, so auto-merge fires within ~30s of the branch push.
-          if ! gh pr list --head "$branch" --state open --json number 2>/dev/null | grep -q number; then
-            gh pr create \
-              --title "chore: version packages" \
-              --body "Automated version bump to ${new_version}." \
-              --head "$branch" \
-              --base main
+          # Create the GitHub release (idempotent).
+          if ! gh release view "v${new_version}" --json tagName >/dev/null 2>&1; then
+            gh release create "v${new_version}" --generate-notes
           fi
-          gh pr merge "$branch" --auto --merge
-
-      # Determine release state. `is_release_commit` is true if the version
-      # step just ran a bump (did_bump=true) — publish.mjs handles skipping
-      # packages already on npm, so running it is always safe. The npm check
-      # for athene alone is insufficient because prior runs may have published
-      # athene but not the rest of the linked package group.
-      - name: Determine release state
-        id: state
-        if: steps.type.outputs.is_canary != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          version=$(node -p "require('./packages/athene/package.json').version")
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "is_release_commit=${{ steps.version.outputs.did_bump }}" >> "$GITHUB_OUTPUT"
-
-          if git ls-remote --tags --exit-code origin "refs/tags/v$version" >/dev/null 2>&1; then
-            echo "tag_on_remote=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag_on_remote=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          if gh release view "v$version" --json tagName >/dev/null 2>&1; then
-            echo "release_exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "release_exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      # `pnpm release` = pnpm -r build && node scripts/publish.mjs.
-      # scripts/publish.mjs uses `pnpm pack` so workspace:* deps are rewritten
-      # to resolved semver before the tarball reaches npm. Skips already-published
-      # versions (idempotent).
-      - name: Publish packages
-        if: steps.type.outputs.is_canary != 'true' && steps.state.outputs.is_release_commit == 'true'
-        run: pnpm release
-
-      - name: Tag versioned packages
-        if: steps.type.outputs.is_canary != 'true' && steps.state.outputs.is_release_commit == 'true' && steps.state.outputs.tag_on_remote == 'false'
-        run: |
-          git tag "v${{ steps.state.outputs.version }}"
-          git push origin "v${{ steps.state.outputs.version }}"
-
-      - name: Create GitHub release
-        if: steps.type.outputs.is_canary != 'true' && steps.state.outputs.is_release_commit == 'true' && steps.state.outputs.release_exists == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create "v${{ steps.state.outputs.version }}" \
-            --generate-notes
