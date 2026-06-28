@@ -100,7 +100,7 @@ import {
   PREFERRED_GH_PATH,
 } from "./agent-workspace-hooks.js";
 import { ENV, getEnvString, withLegacyEnvAliases } from "./env.js";
-import { openDb } from "./db.js";
+import { openDb, closeDb } from "./db.js";
 import { createSessionStore, type SessionStore } from "./session-store.js";
 
 const execFileAsync = promisify(execFile);
@@ -508,7 +508,9 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
   // Writes mirror flat-file metadata so the Go engine can read from SQLite.
   // If better-sqlite3 is unavailable (optional dep) or the DB can't open,
   // the store is skipped silently — flat files remain authoritative.
-  const stores = new Map<string, SessionStore>();
+  const stores = new Map<string, SessionStore | null>();
+  const dbs = new Map<string, any>(); // Track DB instances for cleanup
+
   function getStore(projectId: string): SessionStore | null {
     if (stores.has(projectId)) return stores.get(projectId) ?? null;
     try {
@@ -517,12 +519,25 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
       const db = openDb(dbPath);
       const store = createSessionStore(db);
       stores.set(projectId, store);
+      dbs.set(projectId, db);
       return store;
     } catch {
-      stores.set(projectId, null as unknown as SessionStore);
+      stores.set(projectId, null);
       return null;
     }
   }
+
+  // Close all database connections on process exit
+  process.on("beforeExit", () => {
+    for (const db of dbs.values()) {
+      try {
+        closeDb(db);
+      } catch {
+        /* best-effort */
+      }
+    }
+    dbs.clear();
+  });
 
   interface LocatedSession {
     raw: Record<string, string>;
