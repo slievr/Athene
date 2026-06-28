@@ -2,7 +2,7 @@ name: Release
 
 # Release pipeline: version bumps + npm publish via changesets.
 #
-# Two-phase flow (branch protection prevents direct pushes to main):
+# Stable flow (two phases, triggered by CI completion on main):
 #
 # Phase 1 — triggered by any feature commit landing on main:
 #   - Auto-generates a changeset from conventional commit messages if none exist
@@ -16,7 +16,13 @@ name: Release
 #   - npm check finds the new version is not yet published → publishes
 #   - Creates the vX.Y.Z git tag and GitHub release
 #
-# Publishing uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret required.
+# Canary flow — triggered when canary.yml pushes a v*-nightly-* tag:
+#   - Checks out the snapshot commit at that tag
+#   - Builds all packages and publishes to npm under --tag nightly
+#   - GitHub prerelease is created by canary.yml; this workflow only publishes
+#
+# All npm publishing uses npm Trusted Publishing (OIDC) via this workflow file
+# (release.yml) — only one file needs to be registered as a trusted publisher.
 # id-token: write lets GitHub Actions mint an OIDC token; the npm CLI exchanges
 # it automatically for a short-lived publish credential.
 # See: https://docs.npmjs.com/trusted-publishers
@@ -31,6 +37,9 @@ on:
     workflows: [CI]
     types: [completed]
     branches: [main]
+  push:
+    tags:
+      - 'v*-nightly-*' # canary.yml pushes these after creating snapshot versions
 
 concurrency:
   group: release
@@ -47,13 +56,15 @@ jobs:
     runs-on: ubuntu-latest
     if: >-
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push' &&
        github.event.workflow_run.head_branch == 'main')
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          # workflow_run events carry head_sha; tag-push events use github.sha
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       - uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d
@@ -77,12 +88,31 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      # Detect whether this run was triggered by a canary nightly tag push
+      # (from canary.yml) or by the normal stable release flow.
+      - name: Detect release type
+        id: type
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/*-nightly-* ]]; then
+            echo "is_canary=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_canary=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Canary publish: build from the checked-out snapshot commit and publish
+      # under --tag nightly so the latest dist-tag is never overwritten.
+      # The GitHub prerelease is created by canary.yml, not here.
+      - name: Publish canary packages
+        if: steps.type.outputs.is_canary == 'true'
+        run: pnpm -r build && node scripts/publish.mjs --tag nightly
+
       # Auto-generate a changeset when none are present, derived from conventional
       # commit prefixes since the last git tag: feat → minor, everything else → patch.
       #
       # Skipped when the current package version is not yet on npm — that means a
       # version-bump PR already merged and we're in Phase 2 (publish, not bump again).
       - name: Auto-generate changeset
+        if: steps.type.outputs.is_canary != 'true'
         run: |
           current=$(node -p "require('./packages/athene/package.json').version")
           if npm view "@made-by-moonlight/athene@${current}" version 2>/dev/null | grep -qF "$current"; then
@@ -136,6 +166,7 @@ jobs:
       # triggering Phase 2 (publish) on the next workflow_run event.
       - name: Version packages
         id: version
+        if: steps.type.outputs.is_canary != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -178,6 +209,7 @@ jobs:
       # athene but not the rest of the linked package group.
       - name: Determine release state
         id: state
+        if: steps.type.outputs.is_canary != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -202,17 +234,17 @@ jobs:
       # to resolved semver before the tarball reaches npm. Skips already-published
       # versions (idempotent).
       - name: Publish packages
-        if: steps.state.outputs.is_release_commit == 'true'
+        if: steps.type.outputs.is_canary != 'true' && steps.state.outputs.is_release_commit == 'true'
         run: pnpm release
 
       - name: Tag versioned packages
-        if: steps.state.outputs.is_release_commit == 'true' && steps.state.outputs.tag_on_remote == 'false'
+        if: steps.type.outputs.is_canary != 'true' && steps.state.outputs.is_release_commit == 'true' && steps.state.outputs.tag_on_remote == 'false'
         run: |
           git tag "v${{ steps.state.outputs.version }}"
           git push origin "v${{ steps.state.outputs.version }}"
 
       - name: Create GitHub release
-        if: steps.state.outputs.is_release_commit == 'true' && steps.state.outputs.release_exists == 'false'
+        if: steps.type.outputs.is_canary != 'true' && steps.state.outputs.is_release_commit == 'true' && steps.state.outputs.release_exists == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
