@@ -10,6 +10,7 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { discoverPlugins, getBuiltinPluginPaths } from "./plugin-discovery.js";
 import type {
   ExternalPluginEntryRef,
   InstalledPluginConfig,
@@ -417,6 +418,25 @@ function resolvePluginSpecifier(
   }
 }
 
+/** Load built-in plugins using the static BUILTIN_PLUGINS list and a custom import function.
+ * Used when an importFn override is provided (e.g. in tests). */
+async function loadBuiltinsFromList(
+  importFn: (pkg: string) => Promise<unknown>,
+): Promise<PluginModule[]> {
+  const result: PluginModule[] = [];
+  for (const builtin of BUILTIN_PLUGINS) {
+    let mod;
+    try {
+      mod = normalizeImportedPluginModule(await importFn(builtin.pkg));
+    } catch {
+      // Plugin not installed — that's fine, only load what's available
+      continue;
+    }
+    if (mod) result.push(mod);
+  }
+  return result;
+}
+
 export function createPluginRegistry(): PluginRegistry {
   const plugins: PluginMap = new Map();
 
@@ -479,42 +499,36 @@ export function createPluginRegistry(): PluginRegistry {
       orchestratorConfig?: OrchestratorConfig,
       importFn?: (pkg: string) => Promise<unknown>,
     ): Promise<void> {
-      const doImport = importFn ?? ((pkg: string) => import(/* webpackIgnore: true */ pkg));
-      for (const builtin of BUILTIN_PLUGINS) {
-        let mod;
-        try {
-          mod = normalizeImportedPluginModule(await doImport(builtin.pkg));
-        } catch {
-          // Plugin not installed — that's fine, only load what's available
-          continue;
-        }
+      // When importFn is provided (e.g. in tests), fall back to BUILTIN_PLUGINS iteration
+      // so callers can inject mock modules. In production, use runtime discovery.
+      const modules: PluginModule[] = importFn
+        ? await loadBuiltinsFromList(importFn)
+        : await discoverPlugins(getBuiltinPluginPaths());
 
-        if (mod) {
-          try {
-            if (orchestratorConfig && mod.manifest.slot === "notifier") {
-              registerNotifier(mod, orchestratorConfig);
-            } else {
-              this.register(mod);
-            }
-          } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            process.stderr.write(
-              `[plugin-registry] Failed to load built-in plugin "${builtin.name}": ${error}\n`,
-            );
-            recordActivityEvent({
-              source: "plugin-registry",
-              kind: "plugin-registry.load_failed",
-              level: "error",
-              summary: `built-in plugin ${builtin.name} failed to load`,
-              data: {
-                plugin: builtin.name,
-                slot: builtin.slot,
-                pkg: builtin.pkg,
-                builtin: true,
-                error: message,
-              },
-            });
+      for (const mod of modules) {
+        try {
+          if (orchestratorConfig && mod.manifest.slot === "notifier") {
+            registerNotifier(mod, orchestratorConfig);
+          } else {
+            this.register(mod);
           }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          process.stderr.write(
+            `[plugin-registry] Failed to load built-in plugin "${mod.manifest.name}": ${error}\n`,
+          );
+          recordActivityEvent({
+            source: "plugin-registry",
+            kind: "plugin-registry.load_failed",
+            level: "error",
+            summary: `built-in plugin ${mod.manifest.name} failed to load`,
+            data: {
+              plugin: mod.manifest.name,
+              slot: mod.manifest.slot,
+              builtin: true,
+              error: message,
+            },
+          });
         }
       }
     },
