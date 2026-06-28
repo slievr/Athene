@@ -34,7 +34,13 @@ export async function GET(req: Request) {
   const activeOnly = searchParams.get("active") === "true";
   const orchestratorOnly = searchParams.get("orchestratorOnly") === "true";
 
-  const raw = (await listSessions(projectId)) as RawEngineSession[];
+  let raw: RawEngineSession[];
+  try {
+    raw = (await listSessions(projectId)) as RawEngineSession[];
+  } catch {
+    // Go engine not available (binary not built or not running) — return empty response
+    return Response.json({ sessions: [], stats: null, orchestratorId: null, orchestrators: [] });
+  }
 
   if (orchestratorOnly) {
     const orchSessions = raw.filter((s) => isOrchestratorSession(s));
