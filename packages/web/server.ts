@@ -7,6 +7,10 @@
  */
 
 import { createServer } from "node:http";
+import { spawn } from "child_process";
+import { existsSync } from "fs";
+import { homedir } from "os";
+import { join } from "path";
 import next from "next";
 import { attachDirectTerminalWS } from "./server/direct-terminal-ws.js";
 
@@ -15,6 +19,20 @@ import { attachDirectTerminalWS } from "./server/direct-terminal-ws.js";
 // instead of the direct port fallback (14801).
 if (!process.env.TERMINAL_WS_PATH) {
   process.env.TERMINAL_WS_PATH = "/ao-terminal-mux";
+}
+
+// Start Go engine
+const engineBin = join(__dirname, "../../engine/bin/athene-engine");
+if (existsSync(engineBin)) {
+  const dbPath =
+    process.env.DB_PATH ?? join(homedir(), ".agent-orchestrator/athene.db");
+  const engineProc = spawn(engineBin, ["-db", dbPath, "-port", "3030"], {
+    stdio: "inherit",
+  });
+  engineProc.on("error", (err) => console.error("Engine failed to start:", err));
+  process.on("exit", () => engineProc.kill());
+} else {
+  console.warn(`Engine binary not found at ${engineBin} — skipping engine start`);
 }
 
 const dev = process.env.NODE_ENV !== "production";
