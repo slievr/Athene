@@ -1,43 +1,122 @@
 # Athene Native App — Design Spec
 
-**Date:** 2026-06-28  
-**Status:** Approved  
-**Scope:** Native desktop client for Athene (macOS + Linux), replacing the Next.js web dashboard as the primary UI.
+**Date:** 2026-06-28 (revised 2026-06-28)
+**Status:** Approved
+**Scope:** Single Rust binary that embeds the Athene engine, always exposes an HTTP server, and optionally runs an Iced native UI. Replaces the TypeScript/Node.js backend and the Next.js web dashboard as the primary stack.
+
+> **Note on PR #74 (Go engine migration):** The Go engine phases 1–7 serve as a complete design spec for the Rust engine crates — plugin interface types, session store schema, lifecycle state machine, JSON-RPC adapter protocol. Port the design, not the code. PR #74 should be closed once this work begins.
 
 ---
 
 ## Overview
 
-A standalone Rust binary that connects to the Athene Go backend as a pure client. GPU-accelerated, no Electron, no bundled browser engine. Built with Iced (wgpu-backed Rust GUI framework). Terminal emulation via `alacritty_terminal`. Real-time updates via SSE and WebSocket from the Go backend.
+A single `athene` Rust binary that does three things simultaneously:
+
+1. **Runs the engine** — session management, lifecycle polling, plugin adapters, SQLite persistence
+2. **Serves an HTTP API** — axum server always listening (e.g. `:8080`), exposing REST, SSE, and WebSocket for the web dashboard and remote clients
+3. **Shows a native UI** — Iced window (GPU-accelerated, wgpu) that reads engine state via an in-process channel, with zero HTTP overhead for local use
+
+The native UI and the HTTP server subscribe to the **same internal broadcast channel**. Remote users get identical real-time fidelity to local users. The web dashboard continues to work unchanged — it connects to the axum server exactly as it would connect to any backend.
 
 ---
 
 ## Architecture
 
-The native app is a pure client — it speaks the same HTTP/SSE/WebSocket APIs the web dashboard uses today. The Go backend requires no changes beyond exposing a richer multiplexed SSE event stream (see Data Flow section).
+### Single binary, three crates
 
 ```
-athene-app (Rust binary)
-  │
-  ├── iced::Application
-  │     ├── Model          (all app state)
-  │     ├── Message        (all events)
-  │     ├── view()         (renders Element tree each frame)
-  │     └── update()       (single mutation point)
-  │
-  └── tokio async runtime
-        ├── SSE subscriber      ──SSE──▶  Go backend
-        ├── HTTP client         ──REST─▶  Go backend
-        └── WebSocket clients   ──WS───▶  Go backend (one per open terminal)
+athene/                          Cargo workspace
+├── crates/
+│   ├── athene-core/             Engine library: types, session store, lifecycle,
+│   │                            plugin protocol, event broadcast bus
+│   ├── athene-server/           axum HTTP server: REST, SSE, WebSocket terminal
+│   │                            (thin layer over athene-core)
+│   └── athene-app/              Iced binary: embeds athene-core + athene-server,
+│                                adds native UI on top
+└── Cargo.toml                   workspace root
 ```
 
-**First launch:** the app prompts for server URL (e.g. `http://localhost:8080`) and persists it to `~/.config/athene/config.toml`.
+### Runtime diagram
 
-**Crate location:** new top-level package `packages/app/` (or standalone repo). No dependency on existing TypeScript packages.
+```
+athene (single binary)
+│
+├── tokio runtime
+│   │
+│   ├── athene-core
+│   │     ├── SessionManager       CRUD, SQLite persistence
+│   │     ├── LifecyclePoller      goroutine-per-session polling loop
+│   │     ├── PluginRegistry       JSON-RPC subprocess adapters (TypeScript plugins)
+│   │     │                        + native Rust plugins over time
+│   │     └── broadcast::Sender<Event>   ← single event bus
+│   │              │
+│   │              ├──▶ axum SSE handler     (remote browser / web dashboard)
+│   │              └──▶ iced Subscription    (native UI — zero HTTP hop)
+│   │
+│   └── athene-server (axum, always on)
+│         ├── GET  /api/v1/events              SSE stream
+│         ├── GET  /api/v1/sessions            REST
+│         ├── GET  /api/v1/orchestrators       REST
+│         ├── POST /api/v1/orchestrators       REST
+│         └── WS   /api/v1/sessions/:id/terminal
+│
+└── Iced UI (main thread — skipped in headless mode)
+      └── iced::Subscription listens on broadcast::Receiver<Event>
+          writes via in-process Message channel → update() → SessionManager
+```
+
+### Headless mode
+
+When launched without a display (e.g. on a remote server), the binary starts the engine and HTTP server but skips the Iced window. The web dashboard is the UI. `--headless` flag forces this; absence of `$DISPLAY` / `$WAYLAND_DISPLAY` also triggers it on Linux.
+
+---
+
+## Crate Responsibilities
+
+### `athene-core`
+
+- `types.rs` — all shared domain types: `Session`, `Orchestrator`, `PR`, `CIStatus`, `Comment`, `Notification`, `SessionStatus`
+- `store.rs` — SQLite-backed session store (rusqlite), migration runner
+- `config.rs` — `agent-orchestrator.yaml` config loading + `~/.config/athene/config.toml` app config
+- `lifecycle/` — poller goroutine, probe logic, state machine transitions
+- `plugin/` — `PluginAdapter` trait, JSON-RPC subprocess adapter, plugin registry
+- `plugins/` — native Rust implementations: `runtime-tmux`, `workspace-worktree`
+- `events.rs` — `Event` enum + `broadcast::Sender<Event>` bus
+
+### `athene-server`
+
+- `server.rs` — axum router, bind, graceful shutdown
+- `routes/sessions.rs` — REST CRUD
+- `routes/orchestrators.rs` — REST CRUD
+- `routes/events.rs` — SSE handler (subscribes to broadcast receiver)
+- `routes/terminal.rs` — WebSocket handler (proxies PTY bytes)
+
+### `athene-app`
+
+- `main.rs` — starts engine + server in tokio, then launches Iced (or exits headless)
+- `app.rs` — Iced `Application`: `Model`, `Message`, `update()`, `view()`, `subscription()`
+- `theme.rs` — Athene warm-stone color palette
+- `components/` — `sidebar`, `fleet_board`, `session_detail`, `terminal`, `info_panel`
+
+---
+
+## Deployable Milestones
+
+Each milestone produces something you can run and use end-to-end.
+
+| # | Milestone | How to test |
+|---|---|---|
+| 1 | **Engine + REST API** | `athene-app --headless` runs; `curl /api/v1/sessions` returns sessions; lifecycle polling works |
+| 2 | **SSE + WebSocket** | Existing web dashboard connects; sessions update in real time; terminals open |
+| 3 | **Native app shell** | `athene-app` opens Iced window; sidebar shows orchestrators and workers; fleet board shows sessions |
+| 4 | **Native terminal** | Click a worker → terminal opens; type commands; full VT rendering |
+| 5 | **Full parity** | Info panel, OS notifications, CI badges, review comments — complete web dashboard feature set in native UI |
 
 ---
 
 ## UI Layout
+
+*(Unchanged from original design — approved in brainstorming.)*
 
 ### Overall Shell
 
@@ -54,9 +133,7 @@ athene-app (Rust binary)
 └───────────────────┴──────────────────────────────────────┘
 ```
 
-### Sidebar — Navigation Spine
-
-The sidebar is the primary navigation surface. Orchestrators are top-level items; workers are nested beneath their orchestrator. Users create orchestrators frequently as they take on new work.
+### Sidebar
 
 ```
 ┌─────────────────────────┐
@@ -67,176 +144,115 @@ The sidebar is the primary navigation surface. Orchestrators are top-level items
 │    ├ worker-2  /API     │  ● pr_open
 │    └ worker-3  /Backend │  ◐ ci_failed
 │                         │
-│  ▼ add-dark-mode        │  ← orchestrator
+│  ▼ add-dark-mode        │
 │    └ worker-4  /Athene  │  ● working
 │                         │
-│  ▶ refactor-billing     │  ← orchestrator (collapsed)
+│  ▶ refactor-billing     │  (collapsed)
 │                         │
-│  ─────────────────────  │
-│  Standalone             │
+│  ─── Standalone ──────  │
 │    worker-5  /Athene    │  ● working
 └─────────────────────────┘
 ```
 
-Each worker row shows: **session name**, **repo** (`/Athene`, `/API`, etc.), and a **status dot**. Repo is never truncated — it is the primary way a user knows what code is being changed. Orchestrators collapse/expand independently. The `[+ Spawn]` button opens a new orchestrator creation form.
+Each worker row: **name**, **repo** (never truncated), **status dot**.
+Clicking an orchestrator → scopes Fleet Board. Clicking a worker → Session Detail.
 
-- Clicking an **orchestrator** → scopes the Fleet Board to its workers
-- Clicking a **worker** → opens Session Detail
+### Fleet Board
 
-### Fleet Board (default / orchestrator selected)
+Horizontal scrollable kanban. Columns: `working`, `pr_open`, `ci_failed`, `review_pending`, `mergeable`, `done`. Cards show: name, repo, cost, CI badge.
 
-Horizontal scrollable kanban. One column per lifecycle status: `working`, `pr_open`, `ci_failed`, `review_pending`, `mergeable`, `done`. Each card shows: session name, repo, agent type, cost, elapsed time, CI badge.
-
-```
-┌──────────────────────────────────────────────────────┐
-│  fix-auth-flow  ·  3 workers  ·  2 repos             │
-├─────────────┬─────────────┬─────────────┬────────────┤
-│  working    │  pr_open    │  ci_failed  │  done      │
-│  ─────────  │  ─────────  │  ─────────  │  ───────── │
-│  worker-1   │  worker-2   │  worker-3   │            │
-│  /Athene    │  /API       │  /Athene    │            │
-└─────────────┴─────────────┴─────────────┴────────────┘
-```
-
-When no orchestrator is selected (top-level view), all workers across all orchestrators are shown.
-
-### Session Detail (worker selected)
+### Session Detail
 
 ```
 ┌──────────────────────────────────────────────────────┐
 │  worker-1  ·  slievr/Athene  ·  ● working  ·  $0.42  │
 ├───────────────────────────────┬──────────────────────┤
 │                               │  PR #74              │
-│  Terminal                     │  CI: 3/4 passing     │
-│  (Canvas widget)              │  2 review comments   │
-│                               │                      │
-│                               │  Activity timeline   │
-│                               │                      │
-│              ◀────── drag ────┤                      │
+│  Terminal (Canvas widget)     │  CI: 3/4 passing     │
+│                               │  2 review comments   │
+│              ◀── drag ────────┤                      │
 └───────────────────────────────┴──────────────────────┘
 ```
 
-- **Repo always visible** in the session header — context is never lost when deep in the terminal
-- `pane_grid` widget for the terminal/info split — user can drag to resize
-- Info panel toggleable: `Split` (default) | `Terminal` (full-width) | `Info` (full-width)
-- Both panes scroll independently
+`pane_grid` split, draggable. Toggle: `Split` (default) | `Terminal` | `Info`.
 
 ---
 
 ## Real-time Data Flow
 
-The Go backend exposes a **single multiplexed SSE stream** with typed event envelopes. The Rust SSE subscription demuxes by event type and routes to the correct model field.
+### Event bus (in-process)
 
-### Event types
+```rust
+// athene-core/src/events.rs
+#[derive(Debug, Clone)]
+pub enum Event {
+    SessionUpdated(Session),
+    SessionSpawned(Session),
+    SessionDone(SessionId),
+    CiUpdated { pr_id: PrId, status: CIStatus },
+    PrOpened { session_id: SessionId, pr: PR },
+    ReviewComment { pr_id: PrId, comment: Comment },
+    Notification(Notification),
+}
 
-```
-{ type: "session_updated",  payload: Session      }
-{ type: "ci_update",        payload: CIStatus     }
-{ type: "pr_event",         payload: PREvent      }
-{ type: "review_comment",   payload: Comment      }
-{ type: "notification",     payload: Notification }
-{ type: "worker_spawned",   payload: Session      }
-{ type: "worker_done",      payload: SessionId    }
-```
-
-### Routing
-
-```
-SSE subscription
-  ├── SessionUpdated   → Model.sessions.update(session)
-  ├── CIUpdate         → Model.ci_status[pr_id] = status
-  ├── PREvent          → Model.prs[session_id] = pr
-  ├── ReviewComment    → Model.review_threads[pr_id].push(comment)
-  ├── Notification     → Model.notifications.push(n) + OS native alert
-  ├── WorkerSpawned    → Model.sessions.insert + sidebar re-renders
-  └── WorkerDone       → Model.sessions.update + badge on card
-
-WebSocket (one per open terminal)
-  └── bytes → TerminalOutput(SessionId, Vec<u8>) → Term.process(bytes)
-
-Keyboard input
-  └── TerminalInput(SessionId, Vec<u8>) → WebSocket.send(bytes)
+// broadcast channel created at engine startup:
+// let (tx, _) = tokio::sync::broadcast::channel::<Event>(256);
 ```
 
-**OS notifications** — `notify-rust` crate. Triggers: CI failure, stuck agent, PR needs attention, merge conflict. Uses macOS `NSUserNotification` and Linux `libnotify` natively.
+### Native UI subscription (zero HTTP)
 
-**Reconnection** — the SSE subscription reconnects automatically on drop. WebSocket subscriptions reconnect on session detail view re-entry.
+The Iced `subscription()` wraps a `broadcast::Receiver<Event>` in a `Subscription::channel`. No serialization, no network — events land in `update()` directly from the engine.
+
+### Remote clients (SSE)
+
+The axum SSE handler calls `tx.subscribe()` to get a receiver, serializes each `Event` to JSON, and streams it as `data: {...}\n\n`. The web dashboard receives the same events over the network.
+
+### WebSocket terminal
+
+For the native UI: the terminal Canvas widget holds a `tokio::sync::mpsc::Sender` that writes directly to the PTY subprocess (no network hop).
+For remote clients: the axum WebSocket handler proxies between the browser WebSocket and the same PTY sender.
 
 ---
 
 ## Terminal Rendering
 
-### Stack
+*(Unchanged from original design.)*
 
 | Layer | Implementation |
 |---|---|
-| VT emulation | `alacritty_terminal` — parses ANSI/VT100/xterm, maintains cell grid |
-| Input source | WebSocket byte stream (not a local PTY) |
+| VT emulation | `alacritty_terminal` — ANSI/VT100/xterm, cell grid |
+| Input source | Direct PTY channel (native UI) or WebSocket proxy (remote) |
 | Rendering | Custom Iced `Canvas` widget (~300 lines, based on `iced_term`) |
-| GPU backend | Iced's wgpu (same as Alacritty's cross-platform renderer) |
+| GPU backend | Iced's wgpu |
 
-### How it works
-
-1. WebSocket subscription emits `TerminalOutput(SessionId, Vec<u8>)`
-2. `update()` calls `term.process(bytes)` on the session's `alacritty_terminal::Term`
-3. Canvas widget reads the updated cell grid each frame
-4. Contiguous same-color background cells are batched into single rect draws
-5. Text rendered per-cell with `Shaping::Advanced` (handles wide chars, complex scripts)
-
-### Features
-
-- Full 256-color + truecolor palette
-- Scrollback buffer
-- Text selection
-- Mouse support (SGR + normal modes)
-- Configurable monospace font
-- Wide character support
-
-### Known limitation
-
-Ligatures are not supported — Iced's canvas text rendering does not implement them. This is acceptable for a tmux supervision dashboard.
-
-### Terminal lifecycle
-
-Terminals are created lazily when a session detail view opens and kept alive while the session remains active. One `TerminalState` (wrapping `Term` + WebSocket sender) per active worker session.
+Known limitation: no ligature support. Acceptable for a supervision dashboard.
 
 ---
 
 ## State Model
 
 ```rust
+// athene-app/src/app.rs
 struct Model {
-    // Connection
-    server_url: String,
-    connection: ConnectionState,       // Connected | Reconnecting | Disconnected
+    // Engine handle (in-process, not a URL)
+    engine: Arc<athene_core::Engine>,
 
-    // Core data
+    // Core data (kept in sync via broadcast events)
     orchestrators: Vec<Orchestrator>,
     sessions: HashMap<SessionId, Session>,
     prs: HashMap<SessionId, PR>,
-    ci_status: HashMap<PRId, CIStatus>,
-    review_threads: HashMap<PRId, Vec<Comment>>,
+    ci_status: HashMap<PrId, CIStatus>,
+    review_threads: HashMap<PrId, Vec<Comment>>,
     notifications: VecDeque<Notification>,  // capped at 50
 
     // UI state
-    sidebar: SidebarState,             // expanded/collapsed per orchestrator, selected session
+    sidebar: SidebarState,
     view: View,
-    terminals: HashMap<SessionId, TerminalState>,  // lazily populated
-}
-
-enum View {
-    FleetBoard { scope: Option<OrchestratorId> },
-    SessionDetail { session_id: SessionId, panel: DetailPanel },
-}
-
-enum DetailPanel {
-    Split,      // terminal + info panel (default)
-    Terminal,   // terminal full-width
-    Info,       // info panel full-width
+    terminals: HashMap<SessionId, TerminalState>,
 }
 ```
 
-`TerminalState` wraps `alacritty_terminal::Term` plus the WebSocket sender handle. `SidebarState` tracks which orchestrators are expanded and which session is selected. All app state lives in `Model` — no shared mutable state, no external stores. `update()` is the single mutation point.
+`Engine` is an `Arc`-wrapped handle to the running athene-core instance. `update()` calls engine methods directly (e.g. `engine.spawn_orchestrator(...)`) rather than making HTTP requests.
 
 ---
 
@@ -244,21 +260,23 @@ enum DetailPanel {
 
 | Crate | Purpose |
 |---|---|
-| `iced` | GUI framework (wgpu-backed) |
-| `alacritty_terminal` | VT100/xterm emulation |
-| `tokio` | Async runtime |
-| `reqwest` | HTTP client (REST + SSE) |
-| `tokio-tungstenite` | WebSocket client |
-| `notify-rust` | OS native notifications |
-| `serde` / `serde_json` | SSE event deserialization |
-| `toml` | Config file (server URL, font, theme) |
+| `iced` 0.13 | GPU-accelerated GUI (wgpu backend) |
+| `alacritty_terminal` 0.24 | VT100/xterm emulation |
+| `tokio` 1 | Async runtime |
+| `axum` 0.7 | HTTP server (REST + SSE + WebSocket) |
+| `rusqlite` | SQLite session persistence |
+| `notify-rust` 4 | OS native notifications |
+| `serde` / `serde_json` | Event serialization (for SSE to remote clients) |
+| `toml` | App config |
+| `dirs` 5 | Config directory resolution |
+| `portable-pty` | PTY spawning for terminal sessions |
 
 ---
 
 ## Out of Scope
 
-- Web dashboard — continues to exist and is served by the Go backend unchanged
-- Agent spawning / orchestrator management (beyond the `[+ Spawn]` button invoking the existing API)
 - Windows support (macOS + Linux only)
 - Ligature rendering
 - Offline mode
+- Multi-user auth (single-user tool)
+- The Go engine (PR #74) — close it; its design is the spec for the Rust crates
