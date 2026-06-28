@@ -26,7 +26,8 @@
     "version-packages": "changeset version",
     "release": "pnpm -r build && node scripts/publish.mjs",
     "prepare": "husky",
-    "postinstall": "node scripts/rebuild-node-pty.js"
+    "postinstall": "node scripts/rebuild-node-pty.js",
+    "engine:build": "cd engine && make build"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
