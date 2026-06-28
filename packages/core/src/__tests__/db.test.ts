@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { openDb, closeDb } from "../db";
+import { openDb, closeDb } from "../db.js";
 
 describe("openDb", () => {
   let dir: string;

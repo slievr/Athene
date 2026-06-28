@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { openDb, closeDb } from "../db";
-import { createSessionStore } from "../session-store";
+import { openDb, closeDb } from "../db.js";
+import { createSessionStore } from "../session-store.js";
 import type { Database as DB } from "better-sqlite3";
-import type { Session, CanonicalSessionLifecycle, ActivitySignal } from "../types";
+import type { Session, CanonicalSessionLifecycle, ActivitySignal } from "../types.js";
 
 function makeLifecycle(): CanonicalSessionLifecycle {
   const now = new Date().toISOString();
@@ -95,7 +95,7 @@ describe("SessionStore", () => {
 
     const projA = store.list("proj-a");
     expect(projA).toHaveLength(2);
-    expect(projA.map((s) => s.id)).toEqual(expect.arrayContaining(["s1", "s3"]));
+    expect(projA.map((s: Session) => s.id)).toEqual(expect.arrayContaining(["s1", "s3"]));
   });
 
   it("updates a session field", () => {
