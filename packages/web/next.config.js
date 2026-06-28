@@ -1,12 +1,17 @@
 import os from "os";
 import path from "path";
+import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const { version: appVersion } = JSON.parse(readFileSync(path.join(__dirname, "package.json"), "utf-8"));
 
 /** @type {import('next').NextConfig} */
 const homeDir = os.homedir().replace(/\\/g, "/");
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_APP_VERSION: appVersion,
+  },
   outputFileTracingRoot: path.join(__dirname, "../.."),
   transpilePackages: [
     "@made-by-moonlight/athene-plugin-agent-claude-code",

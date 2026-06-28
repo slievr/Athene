@@ -39,7 +39,7 @@ function resolveChannel(): UpdateChannel {
 }
 
 export async function GET() {
-  const current = getInstalledAoVersion();
+  const current = process.env.NEXT_PUBLIC_APP_VERSION ?? getInstalledAoVersion();
   const channel = resolveChannel();
   const cache = readUpdateCheckCacheRaw();
 
