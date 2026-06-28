@@ -281,19 +281,27 @@ function MobileSessionRow({
  * crash, steering the operator toward PR review instead of restart.
  */
 export function getActionChipLabel(session: DashboardSession): string {
-  // Respond-class: status (authoritative, can't be masked by stale activity)
+  // Respond-class: legacy status takes precedence for specific labels, then
+  // canonical lifecycle state adds coverage for sessions that have lifecycle
+  // data but whose legacy status was "working".
   if (session.status === "needs_input") return "needs input";
   if (session.status === "stuck") return "stuck";
   if (session.status === "errored") return "errored";
+  // Canonical session state check for sessions where legacy status is generic
+  // but the lifecycle reveals a more specific condition.
+  const sessionState = session.lifecycle?.sessionState;
+  if (sessionState === "needs_input") return "needs input";
+  if (sessionState === "stuck") return "stuck";
   // Respond-class: activity — check before review-class status so a crashed
   // agent with a non-terminal status (e.g. changes_requested) still reads
   // as "crashed" and not "changes".
   if (session.activity === "waiting_input") return "waiting";
   if (session.activity === "exited") return "crashed";
   if (session.activity === "blocked") return "blocked";
-  // Review-class: status
-  if (session.status === "ci_failed") return "ci failed";
-  if (session.status === "changes_requested") return "changes";
+  // Review-class: canonical PR reason takes precedence; fall back to legacy status.
+  const prReason = session.lifecycle?.prReason;
+  if (prReason === "ci_failing" || session.status === "ci_failed") return "ci failed";
+  if (prReason === "changes_requested" || session.status === "changes_requested") return "changes";
   // Review-class: PR signals — aggregate across all PRs
   const prs = session.prs.length > 0 ? session.prs : (session.pr ? [session.pr] : []);
   if (prs.some((p) => p.ciStatus === "failing")) return "ci failed";

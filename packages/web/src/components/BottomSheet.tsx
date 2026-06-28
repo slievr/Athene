@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import {
   getAttentionLevel,
+  getSessionTruthLabel,
   isDashboardSessionTerminated,
   isDashboardSessionTerminal,
   isPRRateLimited,
@@ -135,7 +136,7 @@ export function BottomSheet({
   const showTerminalStatePills = attention === "done" || isDashboardSessionTerminal(session);
   const tags = [
     { label: formatTagLabel(attention), tone: "accent" as const },
-    { label: formatTagLabel(session.status), tone: "neutral" as const },
+    { label: getSessionTruthLabel(session), tone: "neutral" as const },
     session.activity ? { label: formatTagLabel(session.activity), tone: "neutral" as const } : null,
     session.branch ? { label: session.branch, tone: "mono" as const } : null,
     session.pr ? { label: `PR #${session.pr.number}`, tone: "neutral" as const } : null,
@@ -233,7 +234,7 @@ export function BottomSheet({
                     </span>
                     {showTerminalStatePills ? (
                       <span className="bottom-sheet__tag bottom-sheet__tag--accent">
-                        {formatTagLabel(session.status)}
+                        {getSessionTruthLabel(session)}
                       </span>
                     ) : null}
                     {showTerminalStatePills && session.activity ? (
@@ -245,7 +246,7 @@ export function BottomSheet({
                 ) : (
                   <div className="bottom-sheet__preview-pills">
                     <span className="bottom-sheet__tag bottom-sheet__tag--accent">
-                      {formatTagLabel(session.status)}
+                      {getSessionTruthLabel(session)}
                     </span>
                     {session.activity ? (
                       <span className="bottom-sheet__tag bottom-sheet__tag--neutral">

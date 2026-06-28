@@ -114,8 +114,8 @@ export function getSessionTitle(session: DashboardSession): string {
   // 8. Any summary — even fallback excerpts beat raw status text
   if (session.summary) return session.summary;
 
-  // 9. Status
-  return session.status;
+  // 9. Lifecycle label (canonical) or legacy status as absolute fallback
+  return session.lifecycle?.session?.label ?? session.status;
 }
 
 export function formatRelativeTime(input: number): string {

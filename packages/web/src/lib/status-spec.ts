@@ -50,7 +50,11 @@ export function getStatusSpec(session: DashboardSession): StatusSpec {
   const level = getAttentionLevel(session, "detailed");
 
   if (level === "done") {
-    if (session.pr?.state === "merged" || session.status === "merged") {
+    if (
+      session.lifecycle?.prState === "merged" ||
+      session.pr?.state === "merged" ||
+      session.status === "merged"
+    ) {
       return spec("merged", "Merged");
     }
     if (isDashboardSessionTerminated(session)) return spec("neutral", "Terminated");
