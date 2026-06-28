@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -12,6 +13,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/slievr/athene/engine/internal/api"
+	"github.com/slievr/athene/engine/internal/lifecycle"
+	"github.com/slievr/athene/engine/internal/plugin"
 	"github.com/slievr/athene/engine/internal/store"
 )
 
@@ -37,6 +40,12 @@ func main() {
 		log.Fatal().Err(err).Msg("open store")
 	}
 	defer st.Close()
+
+	ctx := context.Background()
+
+	prober := lifecycle.NewProber(map[string]*plugin.Adapter{})
+	poller := lifecycle.NewPoller(st, prober, 0)
+	go poller.Start(ctx)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
