@@ -14,75 +14,132 @@ concurrency:
 # None of them push code, comment on PRs, or call mutating GitHub APIs.
 permissions:
   contents: read
+  pull-requests: read # needed by dorny/paths-filter for PR change detection
 
 jobs:
-  lint:
-    name: Lint
+  changes:
+    name: Detect changes
     runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'packages/**'
+              - 'pnpm-lock.yaml'
+              - 'package.json'
+              - 'tsconfig*.json'
+              - 'eslint.config.js'
+
+  lint:
+    name: Lint
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set run flag
+        run: echo "RUN_CI=${{ github.event_name == 'push' || needs.changes.outputs.src == 'true' }}" >> "$GITHUB_ENV"
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        if: env.RUN_CI == 'true'
       - uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d
+        if: env.RUN_CI == 'true'
         with:
           version: 9
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: env.RUN_CI == 'true'
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        if: env.RUN_CI == 'true'
       - run: pnpm lint
+        if: env.RUN_CI == 'true'
 
   typecheck:
     name: Typecheck
+    needs: changes
     runs-on: ubuntu-latest
     steps:
+      - name: Set run flag
+        run: echo "RUN_CI=${{ github.event_name == 'push' || needs.changes.outputs.src == 'true' }}" >> "$GITHUB_ENV"
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        if: env.RUN_CI == 'true'
       - uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d
+        if: env.RUN_CI == 'true'
         with:
           version: 9
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: env.RUN_CI == 'true'
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        if: env.RUN_CI == 'true'
       # Build all non-web packages
       - run: pnpm -r --filter "!@made-by-moonlight/athene-web" build
+        if: env.RUN_CI == 'true'
       # Typecheck all non-web packages
       - run: pnpm -r --filter "!@made-by-moonlight/athene-web" typecheck
+        if: env.RUN_CI == 'true'
       # Build web (Next.js build includes its own typecheck)
       - run: pnpm --filter @made-by-moonlight/athene-web build
+        if: env.RUN_CI == 'true'
 
   test:
     name: Test
+    needs: changes
     runs-on: ubuntu-latest
     steps:
+      - name: Set run flag
+        run: echo "RUN_CI=${{ github.event_name == 'push' || needs.changes.outputs.src == 'true' }}" >> "$GITHUB_ENV"
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        if: env.RUN_CI == 'true'
       - uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d
+        if: env.RUN_CI == 'true'
         with:
           version: 9
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: env.RUN_CI == 'true'
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        if: env.RUN_CI == 'true'
       - run: pnpm -r --filter "!@made-by-moonlight/athene-web" build
+        if: env.RUN_CI == 'true'
       - run: pnpm test
+        if: env.RUN_CI == 'true'
 
   test-web:
     name: Test Web
+    needs: changes
     runs-on: ubuntu-latest
     steps:
+      - name: Set run flag
+        run: echo "RUN_CI=${{ github.event_name == 'push' || needs.changes.outputs.src == 'true' }}" >> "$GITHUB_ENV"
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        if: env.RUN_CI == 'true'
       - uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d
+        if: env.RUN_CI == 'true'
         with:
           version: 9
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: env.RUN_CI == 'true'
         with:
           node-version: 24
           cache: pnpm
       - name: Install tmux
+        if: env.RUN_CI == 'true'
         run: sudo apt-get update && sudo apt-get install -y tmux
       - name: Start tmux server
+        if: env.RUN_CI == 'true'
         run: tmux start-server
       - run: pnpm install --frozen-lockfile
+        if: env.RUN_CI == 'true'
       - run: pnpm -r --filter "!@made-by-moonlight/athene-web" build
+        if: env.RUN_CI == 'true'
       - run: pnpm --filter @made-by-moonlight/athene-web test
+        if: env.RUN_CI == 'true'
