@@ -8,6 +8,7 @@ use std::{path::PathBuf, sync::Arc};
 use tokio_util::sync::CancellationToken;
 
 #[derive(Parser)]
+#[command(version)]
 struct Args {
     #[arg(long)]
     headless: bool,

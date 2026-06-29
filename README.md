@@ -186,26 +186,42 @@ Alongside the web dashboard, Athene ships a native desktop app (`athene-app`) bu
 
 The app and the existing Node.js stack **work in tandem**. Running `athene-app` starts a fresh engine with its own SQLite store and HTTP server; the web dashboard continues to work against either backend unchanged.
 
-### Prerequisites
+### Install
 
-- Rust toolchain: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-- macOS or Linux (Windows not yet supported)
-
-### Build and run
+**Shell script (macOS + Linux):**
 
 ```bash
-# From the repo root
-cd athene
-cargo build --release -p athene-app
+curl -fsSL https://raw.githubusercontent.com/slievr/Athene/main/scripts/install-native-app.sh | sh
+```
 
-# Run with native UI (requires display)
-./target/release/athene-app
+Detects your platform, downloads the right pre-built binary from GitHub Releases, and installs to `/usr/local/bin` (or `~/.local/bin` if not writable).
 
-# Run headless (engine + HTTP API only, no window)
-./target/release/athene-app --headless
+**Homebrew (macOS + Linux):**
+
+```bash
+brew install slievr/tap/athene-app
+```
+
+Requires a one-time tap: `brew tap slievr/tap` (or use the single command above).
+
+**Build from source** (requires Rust toolchain):
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh  # install Rust
+cd athene && cargo build --release -p athene-app
+```
+
+### Run
+
+```bash
+# Native UI (requires display)
+athene-app
+
+# Headless — engine + HTTP API only, no window
+athene-app --headless
 
 # Custom port and database path
-./target/release/athene-app --port 9090 --db ~/.local/share/athene/athene.db
+athene-app --port 9090 --db ~/.local/share/athene/athene.db
 ```
 
 The HTTP server always starts on `127.0.0.1:8080` (or `--port`). The web dashboard can connect to it at that address exactly as it connects to the Node.js backend.
