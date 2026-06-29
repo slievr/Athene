@@ -1,6 +1,6 @@
 {
   "name": "@made-by-moonlight/athene-plugin-notifier-slack",
-  "version": "0.13.0",
+  "version": "0.13.1-nightly-226cb936785780d2e2b6437da518d3ab2ead7e6a",
   "description": "Notifier plugin: Slack",
   "license": "MIT",
   "type": "module",
