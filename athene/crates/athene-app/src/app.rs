@@ -74,6 +74,7 @@ pub struct App {
     pub info_width:      f32,
     pub drag:            Option<DragTarget>,
     pub fleet_filter:    FleetFilter,
+    pub caffeinate_pid:  Option<u32>,
 }
 
 // ---------------------------------------------------------------------------
@@ -119,6 +120,8 @@ pub enum Message {
     FleetFilterQuery(String),
     ClearFleetFilter,
     Noop,
+    ToggleAmbientMode,
+    AmbientStopped,
 }
 
 // ---------------------------------------------------------------------------
@@ -267,6 +270,7 @@ impl App {
             info_width:     300.0,
             drag:           None,
             fleet_filter:   FleetFilter::default(),
+            caffeinate_pid: None,
         };
 
         // Asynchronously mark dead sessions as Terminated.
@@ -755,6 +759,44 @@ impl App {
                 Task::none()
             }
 
+            Message::ToggleAmbientMode => {
+                if let Some(pid) = state.caffeinate_pid.take() {
+                    // Kill the running caffeinate process.
+                    #[cfg(unix)]
+                    unsafe { libc::kill(pid as libc::pid_t, libc::SIGTERM); }
+                    let _ = pid; // suppress unused warning on non-unix
+                    Task::none()
+                } else {
+                    // Spawn caffeinate -s (system sleep) -i (idle sleep) on macOS.
+                    #[cfg(target_os = "macos")]
+                    {
+                        match tokio::process::Command::new("caffeinate")
+                            .args(["-s", "-i"])
+                            .spawn()
+                        {
+                            Ok(mut child) => {
+                                state.caffeinate_pid = child.id();
+                                Task::future(async move {
+                                    let _ = child.wait().await;
+                                    Message::AmbientStopped
+                                })
+                            }
+                            Err(e) => {
+                                tracing::error!("failed to spawn caffeinate: {e}");
+                                Task::none()
+                            }
+                        }
+                    }
+                    #[cfg(not(target_os = "macos"))]
+                    Task::none()
+                }
+            }
+
+            Message::AmbientStopped => {
+                state.caffeinate_pid = None;
+                Task::none()
+            }
+
             Message::Noop => Task::none(),
         }
     }
@@ -868,6 +910,7 @@ impl App {
             View::PrList => pr_list(state),
         };
 
+        let ambient = state.caffeinate_pid.is_some();
         let base: Element<Message> = container(
             row![
                 sidebar(state),
@@ -879,6 +922,15 @@ impl App {
         .height(Length::Fill)
         .style(move |_theme| container::Style {
             background: Some(Background::Color(bg)),
+            border: if ambient {
+                iced::Border {
+                    color: iced::Color::from_rgb(1.0, 0.55, 0.0),
+                    width: 3.0,
+                    radius: 0.0.into(),
+                }
+            } else {
+                iced::Border::default()
+            },
             ..Default::default()
         })
         .into();
@@ -1142,7 +1194,27 @@ mod tests {
             info_width:     0.0,
             drag:           None,
             fleet_filter:   FleetFilter::default(),
+            caffeinate_pid: None,
         }
+    }
+
+    #[test]
+    fn ambient_stopped_clears_pid() {
+        let e = test_engine();
+        let mut m = base(e);
+        m.caffeinate_pid = Some(12345);
+        let (next, _) = m.update(Message::AmbientStopped);
+        assert!(next.caffeinate_pid.is_none());
+    }
+
+    #[test]
+    fn toggle_ambient_when_active_clears_pid() {
+        let e = test_engine();
+        let mut m = base(e);
+        // Use a PID that almost certainly doesn't exist — SIGTERM to a dead PID is harmless.
+        m.caffeinate_pid = Some(99999);
+        let (next, _) = m.update(Message::ToggleAmbientMode);
+        assert!(next.caffeinate_pid.is_none());
     }
 
     #[test]
