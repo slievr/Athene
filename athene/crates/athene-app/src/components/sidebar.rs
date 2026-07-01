@@ -303,7 +303,38 @@ fn standalone_row<'a>(app: &'a App, session: &'a athene_core::types::Session) ->
 }
 
 fn theme_footer<'a>(app: &'a App, s: &'a ColorScheme) -> Element<'a, Message> {
+    let is_ambient = app.caffeinate_pid.is_some();
+    let orange = iced::Color::from_rgb(1.0, 0.55, 0.0);
+
     let mut col_items: Vec<Element<'a, Message>> = Vec::new();
+
+    let ambient_row: Element<Message> = button(
+        container(
+            text("Ambient")
+                .size(11)
+                .color(if is_ambient { orange } else { s.text_muted }),
+        )
+        .style(move |_theme| container::Style {
+            shadow: iced::Shadow {
+                color: iced::Color { r: 1.0, g: 0.55, b: 0.0, a: if is_ambient { 0.6 } else { 0.0 } },
+                offset: iced::Vector::ZERO,
+                blur_radius: if is_ambient { 8.0 } else { 0.0 },
+            },
+            ..Default::default()
+        }),
+    )
+    .on_press(Message::ToggleAmbientMode)
+    .style(|_theme, _status| button::Style {
+        background: None,
+        border: Border::default(),
+        text_color: s.text_muted,
+        ..Default::default()
+    })
+    .padding([4, 0])
+    .width(Length::Fill)
+    .into();
+
+    col_items.push(ambient_row);
 
     if app.sidebar.show_theme_popout {
         for variant in [ThemeVariant::Light, ThemeVariant::Dark] {
