@@ -560,7 +560,8 @@ impl App {
             Message::RawKey { key, modifiers, text } => {
                 if let View::SessionDetail {
                     session_id,
-                    panel: crate::components::session_detail::DetailPanel::Terminal,
+                    panel: crate::components::session_detail::DetailPanel::Terminal
+                        | crate::components::session_detail::DetailPanel::Split,
                 } = &state.view {
                     let app_cursor = state.terminals.get(session_id)
                         .map(|t| t.term.mode().contains(
