@@ -151,9 +151,6 @@ jobs:
     name: Native (Rust)
     needs: changes
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: athene
     steps:
       - name: Set run flag
         run: echo "RUN_CI=${{ github.event_name == 'push' || needs.changes.outputs.native == 'true' }}" >> "$GITHUB_ENV"
@@ -181,7 +178,9 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-
       - name: Clippy
         if: env.RUN_CI == 'true'
+        working-directory: athene
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Test
         if: env.RUN_CI == 'true'
+        working-directory: athene
         run: tmux start-server && cargo test --workspace
