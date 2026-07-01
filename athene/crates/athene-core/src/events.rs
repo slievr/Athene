@@ -186,7 +186,7 @@ mod tests {
 
     #[tokio::test]
     async fn emit_received_by_subscriber() {
-        let store = Arc::new(Store::open(tempdir().unwrap().into_path().join("t.db")).unwrap());
+        let store = Arc::new(Store::open(tempdir().unwrap().keep().join("t.db")).unwrap());
         let engine = Engine::new(store);
         let mut rx = engine.subscribe();
         engine.emit(Event::SessionDone("s1".into()));

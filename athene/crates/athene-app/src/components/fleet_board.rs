@@ -38,7 +38,8 @@ const COLUMNS: &[Column] = &[
     Column { label: "Terminated", status: SessionStatus::Terminated },
 ];
 
-pub fn filtered_sessions<'a>(app: &'a App) -> Vec<&'a Session> {
+#[cfg(test)]
+pub fn filtered_sessions(app: &App) -> Vec<&Session> {
     let q = app.fleet_filter.query.to_lowercase();
     app.sessions.values().filter(|s| {
         q.is_empty()
@@ -58,7 +59,7 @@ pub fn board_sessions<'a>(
     let mut sessions: Vec<&Session> = app.sessions.values().filter(|s| {
         &s.status == status
             && !orch_ids.contains(s.id.as_str())
-            && scope.map_or(true, |oid| s.orchestrator_id.as_deref() == Some(oid))
+            && scope.is_none_or(|oid| s.orchestrator_id.as_deref() == Some(oid))
             && (q.is_empty()
                 || s.name.to_lowercase().contains(&q)
                 || s.repo.to_lowercase().contains(&q))
@@ -155,6 +156,9 @@ pub fn attention_count(app: &App) -> usize {
 }
 
 fn attention_banner<'a>(app: &'a App) -> Option<Element<'a, Message>> {
+    if attention_count(app) == 0 {
+        return None;
+    }
     let s = &app.scheme;
     let ci_count = app.sessions.values()
         .filter(|s| matches!(s.status, SessionStatus::CiFailed))
@@ -162,10 +166,6 @@ fn attention_banner<'a>(app: &'a App) -> Option<Element<'a, Message>> {
     let review_count = app.sessions.values()
         .filter(|s| matches!(s.status, SessionStatus::ReviewPending))
         .count();
-
-    if ci_count == 0 && review_count == 0 {
-        return None;
-    }
 
     let mut parts: Vec<String> = Vec::new();
     if ci_count > 0 {
