@@ -596,6 +596,11 @@ export {
   type RuntimeResourceUsage,
 } from "./runtime-orphans.js";
 
+// SQLite session store — Go engine data layer
+export { openDb, closeDb as closeSessionDb } from "./db.js";
+export { createSessionStore } from "./session-store.js";
+export type { SessionStore } from "./session-store.js";
+
 // Activity event logging — structured diagnostic event trail
 export { recordActivityEvent, droppedEventCount } from "./activity-events.js";
 export { isActivityEventsFtsEnabled, closeDb } from "./events-db.js";

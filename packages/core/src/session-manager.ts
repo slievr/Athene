@@ -100,6 +100,9 @@ import {
   PREFERRED_GH_PATH,
 } from "./agent-workspace-hooks.js";
 import { ENV, getEnvString, withLegacyEnvAliases } from "./env.js";
+import { openDb, closeDb } from "./db.js";
+import { createSessionStore, type SessionStore } from "./session-store.js";
+import type { Database as BetterSQLite3DB } from "better-sqlite3";
 
 const execFileAsync = promisify(execFile);
 const OPENCODE_DISCOVERY_TIMEOUT_MS = 10_000;
@@ -501,6 +504,41 @@ export interface SessionManagerDeps {
 /** Create a SessionManager instance. */
 export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionManager {
   const { config, registry } = deps;
+
+  // Per-project SQLite store map — opened lazily, best-effort.
+  // Writes mirror flat-file metadata so the Go engine can read from SQLite.
+  // If better-sqlite3 is unavailable (optional dep) or the DB can't open,
+  // the store is skipped silently — flat files remain authoritative.
+  const stores = new Map<string, SessionStore | null>();
+  const dbs = new Map<string, BetterSQLite3DB>(); // Track DB instances for cleanup
+
+  function getStore(projectId: string): SessionStore | null {
+    if (stores.has(projectId)) return stores.get(projectId) ?? null;
+    try {
+      const dbPath = join(getProjectDir(projectId), "athene.db");
+      mkdirSync(getProjectDir(projectId), { recursive: true });
+      const db = openDb(dbPath);
+      const store = createSessionStore(db);
+      stores.set(projectId, store);
+      dbs.set(projectId, db);
+      return store;
+    } catch {
+      stores.set(projectId, null);
+      return null;
+    }
+  }
+
+  // Close all database connections on process exit
+  process.on("beforeExit", () => {
+    for (const db of dbs.values()) {
+      try {
+        closeDb(db);
+      } catch {
+        /* best-effort */
+      }
+    }
+    dbs.clear();
+  });
 
   interface LocatedSession {
     raw: Record<string, string>;
@@ -1879,6 +1917,19 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
       }
       invalidateCache();
 
+      // Shadow-write to SQLite store (best-effort — flat files remain authoritative).
+      try {
+        const store = getStore(spawnConfig.projectId);
+        if (store) {
+          store.create(session);
+          for (const [k, v] of Object.entries(session.metadata ?? {})) {
+            store.setKV(sessionId, k, v);
+          }
+        }
+      } catch {
+        /* best effort */
+      }
+
       // Past this point every resource that needed an undo is on disk in its
       // final form. Dismiss the stack so nothing below can trigger a rollback.
       cleanupStack.dismiss();
@@ -2342,6 +2393,11 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
           updateMetadata(sessionsDir, sessionName, lifecycleMetadataUpdates(raw, persisted));
           session.lifecycle = persisted;
           session.status = deriveLegacyStatus(persisted);
+          // Shadow-write detecting state to SQLite store (best-effort).
+          try {
+            const store = getStore(sessionProjectId);
+            if (store) store.update(sessionName, { lifecycle: persisted });
+          } catch { /* best effort */ }
           recordActivityEvent({
             projectId: sessionProjectId,
             sessionId: sessionName,
@@ -2601,6 +2657,16 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
         opencodeCleanedAt: new Date().toISOString(),
       }),
     });
+
+    // Shadow-write lifecycle update to SQLite store (best-effort).
+    try {
+      const store = getStore(projectId);
+      if (store) {
+        store.update(sessionId, { lifecycle: terminatedLifecycle });
+      }
+    } catch {
+      /* best effort */
+    }
 
     invalidateCache();
     recordActivityEvent({
@@ -3621,6 +3687,17 @@ export function createSessionManager(deps: SessionManagerDeps): OpenCodeSessionM
       restoredAt: now,
       mergedPendingCleanupSince: "",
     });
+
+    // Shadow-write restored lifecycle to SQLite store (best-effort).
+    try {
+      const store = getStore(projectId);
+      if (store) {
+        store.update(sessionId, { lifecycle: restoredLifecycle, runtimeHandle: handle });
+      }
+    } catch {
+      /* best effort */
+    }
+
     invalidateCache();
 
     // 10. Run postLaunchSetup (non-fatal)

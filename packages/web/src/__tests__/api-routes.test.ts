@@ -12,8 +12,7 @@ import {
   type PluginRegistry,
   type SCM,
 } from "@made-by-moonlight/athene-core";
-import * as serialize from "@/lib/serialize";
-import { getSCM } from "@/lib/services";
+
 
 // ── Mock Data ─────────────────────────────────────────────────────────
 // Provides test sessions covering the key states the dashboard needs.
@@ -77,7 +76,7 @@ const testSessions: Session[] = [
   }),
 ];
 
-const multiProjectSessions: Session[] = [
+const _multiProjectSessions: Session[] = [
   makeSession({
     id: "app-orchestrator",
     projectId: "my-app",
@@ -213,6 +212,11 @@ vi.mock("@/lib/services", () => ({
   invalidatePortfolioServicesCache: vi.fn(),
 }));
 
+vi.mock("@/lib/engine-client", () => ({
+  listSessions: vi.fn(async () => testSessions),
+  getSession: vi.fn(async (id: string) => testSessions.find((s) => s.id === id) ?? null),
+}));
+
 // Mock filesystem-touching core helpers so PATCH /api/sessions/:id doesn't
 // write to the user's actual ~/.agent-orchestrator dir during tests. Spread
 // the real module first so the rest of the test file (types, errors, etc.)
@@ -232,6 +236,7 @@ vi.mock("@made-by-moonlight/athene-core", async (importOriginal) => {
 
 // ── Import routes after mocking ───────────────────────────────────────
 
+import * as engineClient from "@/lib/engine-client";
 import { GET as sessionsGET } from "@/app/api/sessions/route";
 import {
   GET as sessionDetailGET,
@@ -271,510 +276,46 @@ describe("API Routes", () => {
   // ── GET /api/sessions ──────────────────────────────────────────────
 
   describe("GET /api/sessions", () => {
-    it("returns sessions array and stats", async () => {
+    it("returns sessions array from engine", async () => {
       const res = await sessionsGET(makeRequest("http://localhost:3000/api/sessions"));
       expect(res.status).toBe(200);
       const data = await res.json();
-      expect(data.sessions).toBeDefined();
       expect(Array.isArray(data.sessions)).toBe(true);
       expect(data.sessions.length).toBe(testSessions.length);
-      expect(data.stats).toBeDefined();
-      expect(data.stats.totalSessions).toBe(data.sessions.length);
     });
 
-    it("stats include expected fields", async () => {
-      const res = await sessionsGET(makeRequest("http://localhost:3000/api/sessions"));
-      const data = await res.json();
-      expect(data.stats).toHaveProperty("totalSessions");
-      expect(data.stats).toHaveProperty("workingSessions");
-      expect(data.stats).toHaveProperty("openPRs");
-      expect(data.stats).toHaveProperty("needsReview");
+    it("passes projectId query param to engine client", async () => {
+      const listSessionsSpy = vi.spyOn(engineClient, "listSessions");
+      await sessionsGET(makeRequest("http://localhost:3000/api/sessions?project=my-app"));
+      expect(listSessionsSpy).toHaveBeenCalledWith("my-app");
     });
 
-    it("sessions have expected shape", async () => {
-      const res = await sessionsGET(makeRequest("http://localhost:3000/api/sessions"));
-      const data = await res.json();
-      const session = data.sessions[0];
-      expect(session).toHaveProperty("id");
-      expect(session).toHaveProperty("projectId");
-      expect(session).toHaveProperty("status");
-      expect(session).toHaveProperty("activity");
-      expect(session).toHaveProperty("createdAt");
-    });
-
-    it("skips PR enrichment when metadata enrichment hits timeout", async () => {
-      vi.useFakeTimers();
-
-      const metadataSpy = vi
-        .spyOn(serialize, "enrichSessionsMetadata")
-        .mockImplementation(() => new Promise<void>(() => {}));
-
-      const responsePromise = sessionsGET(makeRequest("http://localhost:3000/api/sessions"));
-      await vi.advanceTimersByTimeAsync(3_000);
-      const res = await responsePromise;
-
-      expect(res.status).toBe(200);
-      expect(getSCM).not.toHaveBeenCalled();
-
-      metadataSpy.mockRestore();
-      vi.useRealTimers();
-    });
-
-    it("activeOnly keeps working sessions with stale terminatedAt annotations", async () => {
-      const staleLifecycle = createInitialCanonicalLifecycle(
-        "worker",
-        new Date("2026-05-13T19:13:20.146Z"),
-      );
-      staleLifecycle.session.state = "working";
-      staleLifecycle.session.reason = "task_in_progress";
-      staleLifecycle.session.terminatedAt = "2026-05-13T19:13:20.146Z";
-      staleLifecycle.runtime.state = "alive";
-      staleLifecycle.runtime.reason = "process_running";
-
-      (mockSessionManager.listCached as ReturnType<typeof vi.fn>).mockResolvedValueOnce([
-        makeSession({
-          id: "worker-restored-stale-terminal-marker",
-          status: "terminated",
-          activity: "exited",
-          lifecycle: staleLifecycle,
-        }),
-      ]);
-
-      const res = await sessionsGET(makeRequest("http://localhost:3000/api/sessions?active=true"));
-      expect(res.status).toBe(200);
-      const data = await res.json();
-
-      expect(data.sessions.map((session: { id: string }) => session.id)).toEqual([
-        "worker-restored-stale-terminal-marker",
-      ]);
-      expect(data.sessions[0].lifecycle.sessionState).toBe("working");
-      expect(data.sessions[0].lifecycle.session.terminatedAt).toBe("2026-05-13T19:13:20.146Z");
-    });
-
-    it("returns per-project orchestrators and excludes them from worker sessions", async () => {
-      (mockSessionManager.listCached as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-        multiProjectSessions,
-      );
-
-      const res = await sessionsGET(makeRequest("http://localhost:3000/api/sessions"));
-      expect(res.status).toBe(200);
-      const data = await res.json();
-
-      expect(data.orchestratorId).toBeNull();
-      expect(data.orchestrators).toEqual([
-        { id: "docs-orchestrator", projectId: "docs-app", projectName: "Docs App" },
-        { id: "app-orchestrator", projectId: "my-app", projectName: "My App" },
-      ]);
-      expect(data.sessions.map((session: { id: string }) => session.id)).toEqual([
-        "backend-3",
-        "docs-2",
-      ]);
-      expect(data.stats.totalSessions).toBe(2);
-    });
-
-    it("supports project-scoped session queries for orchestrator detail views", async () => {
-      (mockSessionManager.listCached as ReturnType<typeof vi.fn>).mockImplementationOnce(
-        async (projectId?: string) =>
-          multiProjectSessions.filter((session) => !projectId || session.projectId === projectId),
-      );
-
-      const res = await sessionsGET(
-        makeRequest("http://localhost:3000/api/sessions?project=docs-app"),
-      );
-      expect(res.status).toBe(200);
-      const data = await res.json();
-
-      expect(data.orchestratorId).toBe("docs-orchestrator");
-      expect(data.orchestrators).toEqual([
-        { id: "docs-orchestrator", projectId: "docs-app", projectName: "Docs App" },
-      ]);
-      expect(data.sessions.map((session: { id: string }) => session.id)).toEqual(["docs-2"]);
-      expect(mockSessionManager.listCached).toHaveBeenCalledWith("docs-app");
-    });
-
-    it("uses the live session list when fresh=true is requested", async () => {
-      (mockSessionManager.list as ReturnType<typeof vi.fn>).mockImplementationOnce(
-        async (projectId?: string) =>
-          multiProjectSessions.filter((session) => !projectId || session.projectId === projectId),
-      );
-
-      const res = await sessionsGET(
-        makeRequest("http://localhost:3000/api/sessions?project=docs-app&fresh=true"),
-      );
-      expect(res.status).toBe(200);
-      const data = await res.json();
-
-      expect(data.orchestratorId).toBe("docs-orchestrator");
-      expect(data.sessions.map((session: { id: string }) => session.id)).toEqual(["docs-2"]);
-      expect(mockSessionManager.list).toHaveBeenCalledWith("docs-app");
-      expect(mockSessionManager.listCached).not.toHaveBeenCalledWith("docs-app");
-    });
-
-    it("prefers the most recently active live orchestrator for project-scoped worker navigation", async () => {
-      const deadLifecycle = createInitialCanonicalLifecycle(
-        "orchestrator",
-        new Date("2026-04-19T11:00:00.000Z"),
-      );
-      deadLifecycle.session.state = "terminated";
-      deadLifecycle.session.reason = "runtime_missing";
-      deadLifecycle.session.terminatedAt = "2026-04-19T11:00:00.000Z";
-      deadLifecycle.session.lastTransitionAt = "2026-04-19T11:00:00.000Z";
-      deadLifecycle.runtime.state = "missing";
-      deadLifecycle.runtime.reason = "process_missing";
-      deadLifecycle.runtime.lastObservedAt = "2026-04-19T11:00:00.000Z";
-
-      const olderLive = makeSession({
-        id: "my-app-orchestrator-1",
-        projectId: "my-app",
-        metadata: { role: "orchestrator" },
-        lastActivityAt: new Date("2026-04-19T09:00:00.000Z"),
-      });
-      const newerLive = makeSession({
-        id: "my-app-orchestrator",
-        projectId: "my-app",
-        metadata: { role: "orchestrator" },
-        lastActivityAt: new Date("2026-04-19T10:00:00.000Z"),
-      });
-      const deadOlder = makeSession({
-        id: "my-app-orchestrator-0",
-        projectId: "my-app",
-        metadata: { role: "orchestrator" },
-        status: "killed",
-        activity: "exited",
-        lastActivityAt: new Date("2026-04-19T11:00:00.000Z"),
-        lifecycle: deadLifecycle,
-      });
-      (mockSessionManager.listCached as ReturnType<typeof vi.fn>).mockResolvedValueOnce([
-        deadOlder,
-        olderLive,
-        newerLive,
-        makeSession({
-          id: "backend-3",
-          projectId: "my-app",
-          status: "working",
-          activity: "active",
-        }),
-      ]);
-
-      const res = await sessionsGET(
-        makeRequest("http://localhost:3000/api/sessions?project=my-app&orchestratorOnly=true"),
-      );
-      expect(res.status).toBe(200);
-      const data = await res.json();
-
-      expect(data.orchestratorId).toBe("my-app-orchestrator");
-      expect(data.orchestrators.map((session: { id: string }) => session.id)).toEqual([
-        "my-app-orchestrator",
-        "my-app-orchestrator-1",
-      ]);
-      expect(data.sessions).toEqual([]);
-      expect(mockSessionManager.listCached).toHaveBeenCalledWith("my-app");
-    });
-
-    it("keeps dead orchestrators as the fallback project-scoped payload when none are live", async () => {
-      const deadLifecycle = createInitialCanonicalLifecycle(
-        "orchestrator",
-        new Date("2026-04-19T11:00:00.000Z"),
-      );
-      deadLifecycle.session.state = "terminated";
-      deadLifecycle.session.reason = "runtime_missing";
-      deadLifecycle.session.terminatedAt = "2026-04-19T11:00:00.000Z";
-      deadLifecycle.session.lastTransitionAt = "2026-04-19T11:00:00.000Z";
-      deadLifecycle.runtime.state = "missing";
-      deadLifecycle.runtime.reason = "process_missing";
-      deadLifecycle.runtime.lastObservedAt = "2026-04-19T11:00:00.000Z";
-
-      (mockSessionManager.listCached as ReturnType<typeof vi.fn>).mockResolvedValueOnce([
-        makeSession({
-          id: "my-app-orchestrator-0",
-          projectId: "my-app",
-          metadata: { role: "orchestrator" },
-          status: "killed",
-          activity: "exited",
-          lastActivityAt: new Date("2026-04-19T11:00:00.000Z"),
-          lifecycle: deadLifecycle,
-        }),
-      ]);
-
-      const res = await sessionsGET(
-        makeRequest("http://localhost:3000/api/sessions?project=my-app&orchestratorOnly=true"),
-      );
-      expect(res.status).toBe(200);
-      const data = await res.json();
-
-      expect(data.orchestratorId).toBe("my-app-orchestrator-0");
-      expect(data.orchestrators).toEqual([
-        { id: "my-app-orchestrator-0", projectId: "my-app", projectName: "My App" },
-      ]);
-      expect(data.sessions).toEqual([]);
-    });
-
-    it("prefers the most recently active dead orchestrator when no live project orchestrator exists", async () => {
-      const olderDeadLifecycle = createInitialCanonicalLifecycle(
-        "orchestrator",
-        new Date("2026-04-19T10:00:00.000Z"),
-      );
-      olderDeadLifecycle.session.state = "terminated";
-      olderDeadLifecycle.session.reason = "runtime_missing";
-      olderDeadLifecycle.session.terminatedAt = "2026-04-19T10:00:00.000Z";
-      olderDeadLifecycle.session.lastTransitionAt = "2026-04-19T10:00:00.000Z";
-      olderDeadLifecycle.runtime.state = "missing";
-      olderDeadLifecycle.runtime.reason = "process_missing";
-      olderDeadLifecycle.runtime.lastObservedAt = "2026-04-19T10:00:00.000Z";
-
-      const newerDeadLifecycle = createInitialCanonicalLifecycle(
-        "orchestrator",
-        new Date("2026-04-19T11:00:00.000Z"),
-      );
-      newerDeadLifecycle.session.state = "terminated";
-      newerDeadLifecycle.session.reason = "runtime_missing";
-      newerDeadLifecycle.session.terminatedAt = "2026-04-19T11:00:00.000Z";
-      newerDeadLifecycle.session.lastTransitionAt = "2026-04-19T11:00:00.000Z";
-      newerDeadLifecycle.runtime.state = "missing";
-      newerDeadLifecycle.runtime.reason = "process_missing";
-      newerDeadLifecycle.runtime.lastObservedAt = "2026-04-19T11:00:00.000Z";
-
-      (mockSessionManager.listCached as ReturnType<typeof vi.fn>).mockResolvedValueOnce([
-        makeSession({
-          id: "my-app-orchestrator-0",
-          projectId: "my-app",
-          metadata: { role: "orchestrator" },
-          status: "killed",
-          activity: "exited",
-          lastActivityAt: new Date("2026-04-19T10:00:00.000Z"),
-          lifecycle: olderDeadLifecycle,
-        }),
-        makeSession({
-          id: "my-app-orchestrator-9",
-          projectId: "my-app",
-          metadata: { role: "orchestrator" },
-          status: "killed",
-          activity: "exited",
-          lastActivityAt: new Date("2026-04-19T11:00:00.000Z"),
-          lifecycle: newerDeadLifecycle,
-        }),
-      ]);
-
-      const res = await sessionsGET(
-        makeRequest("http://localhost:3000/api/sessions?project=my-app&orchestratorOnly=true"),
-      );
-      expect(res.status).toBe(200);
-      const data = await res.json();
-
-      expect(data.orchestratorId).toBe("my-app-orchestrator-9");
-      expect(data.orchestrators).toEqual([
-        { id: "my-app-orchestrator-0", projectId: "my-app", projectName: "My App" },
-        { id: "my-app-orchestrator-9", projectId: "my-app", projectName: "My App" },
-      ]);
-      expect(data.sessions).toEqual([]);
-    });
-
-    it("enriches all PRs concurrently, not sequentially", async () => {
-      vi.useFakeTimers();
-
-      const sessionsWithPRs = Array.from({ length: 6 }, (_, i) =>
-        makeSession({
-          id: `worker-${i}`,
-          status: "pr_open",
-          activity: "idle",
-          pr: {
-            number: 100 + i,
-            url: `https://github.com/acme/my-app/pull/${100 + i}`,
-            title: `PR ${i}`,
-            owner: "acme",
-            repo: "my-app",
-            branch: `feat/pr-${i}`,
-            baseBranch: "main",
-            isDraft: false,
-          },
-        }),
-      );
-      (mockSessionManager.listCached as ReturnType<typeof vi.fn>).mockResolvedValue(
-        sessionsWithPRs,
-      );
-
-      const metadataSpy = vi
-        .spyOn(serialize, "enrichSessionsMetadata")
-        .mockResolvedValue(undefined);
-
-      const enrichSpy = vi.spyOn(serialize, "enrichSessionPR").mockImplementation(
-        () =>
-          new Promise<void>((resolve) => {
-            setTimeout(resolve, 1_000);
-          }),
-      );
-
-      const responsePromise = sessionsGET(makeRequest("http://localhost:3000/api/sessions"));
-
-      // Flush microtasks so the handler reaches the PR enrichment loop
-      await vi.advanceTimersByTimeAsync(0);
-
-      // Sequential would only have 1 call pending; parallel fires all 6 immediately
-      expect(enrichSpy.mock.calls.length).toBe(6);
-
-      await vi.advanceTimersByTimeAsync(5_000);
-      const res = await responsePromise;
-      expect(res.status).toBe(200);
-
-      metadataSpy.mockRestore();
-      enrichSpy.mockRestore();
-      vi.useRealTimers();
-    });
-
-    // Pre-existing failure on main: a8bc7469 simplified enrichSessionPR to a
-    // synchronous, single-arg metadata read, but this test still asserts the
-    // older async (dashboard, scm, pr, opts) signature with cacheOnly. Skip
-    // until the test is rewritten against the current implementation.
-    it.skip("uses cache-first PR enrichment with live fallback for terminal PR states", async () => {
-      const terminalLifecycle = createInitialCanonicalLifecycle("worker", new Date());
-      terminalLifecycle.session.state = "terminated";
-      terminalLifecycle.session.reason = "user_killed";
-      terminalLifecycle.session.terminatedAt = terminalLifecycle.session.lastTransitionAt;
-      terminalLifecycle.runtime.state = "exited";
-      terminalLifecycle.runtime.reason = "process_exited";
-      terminalLifecycle.pr.state = "merged";
-      terminalLifecycle.pr.reason = "merged";
-
-      const sessionsWithPRs = [
-        makeSession({
-          id: "worker-live",
-          status: "pr_open",
-          activity: "idle",
-          pr: {
-            number: 201,
-            url: "https://github.com/acme/my-app/pull/201",
-            title: "Live PR",
-            owner: "acme",
-            repo: "my-app",
-            branch: "feat/live-pr",
-            baseBranch: "main",
-            isDraft: false,
-          },
-        }),
-        makeSession({
-          id: "worker-killed",
-          status: "killed",
-          activity: "exited",
-          lifecycle: terminalLifecycle,
-          pr: {
-            number: 202,
-            url: "https://github.com/acme/my-app/pull/202",
-            title: "Terminal PR",
-            owner: "acme",
-            repo: "my-app",
-            branch: "feat/terminal-pr",
-            baseBranch: "main",
-            isDraft: false,
-          },
-        }),
-      ];
-      (mockSessionManager.listCached as ReturnType<typeof vi.fn>).mockResolvedValue(
-        sessionsWithPRs,
-      );
-
-      const metadataSpy = vi
-        .spyOn(serialize, "enrichSessionsMetadata")
-        .mockResolvedValue(undefined);
-
-      const enrichSpy = vi
-        .spyOn(serialize, "enrichSessionPR")
-        .mockReturnValueOnce(true)
-        .mockReturnValueOnce(false);
-
-      const res = await sessionsGET(makeRequest("http://localhost:3000/api/sessions"));
-
-      expect(res.status).toBe(200);
-      expect(enrichSpy).toHaveBeenCalledTimes(2);
-      expect(enrichSpy.mock.calls[0]).toEqual([
-        expect.objectContaining({ id: "worker-live" }),
-      ]);
-      expect(enrichSpy.mock.calls[1]).toEqual([
-        expect.objectContaining({ id: "worker-killed" }),
-      ]);
-
-      metadataSpy.mockRestore();
-      enrichSpy.mockRestore();
-    });
-
-    // Pre-existing failure on main: same root cause as the test above — the
-    // route now calls a single-arg synchronous enrichSessionPR; this test
-    // asserts the legacy async cacheOnly contract.
-    it.skip("keeps live PR refreshes for killed sessions whose PR is still open", async () => {
-      const runtimeTerminalLifecycle = createInitialCanonicalLifecycle("worker", new Date());
-      runtimeTerminalLifecycle.session.state = "terminated";
-      runtimeTerminalLifecycle.session.reason = "user_killed";
-      runtimeTerminalLifecycle.session.terminatedAt =
-        runtimeTerminalLifecycle.session.lastTransitionAt;
-      runtimeTerminalLifecycle.runtime.state = "missing";
-      runtimeTerminalLifecycle.runtime.reason = "process_missing";
-      runtimeTerminalLifecycle.pr.state = "open";
-      runtimeTerminalLifecycle.pr.reason = "in_progress";
-
-      const sessionWithOpenPR = [
-        makeSession({
-          id: "worker-open-pr",
-          status: "killed",
-          activity: "exited",
-          lifecycle: runtimeTerminalLifecycle,
-          pr: {
-            number: 203,
-            url: "https://github.com/acme/my-app/pull/203",
-            title: "Open PR on killed runtime",
-            owner: "acme",
-            repo: "my-app",
-            branch: "feat/open-pr-runtime-dead",
-            baseBranch: "main",
-            isDraft: false,
-          },
-        }),
-      ];
-      (mockSessionManager.listCached as ReturnType<typeof vi.fn>).mockResolvedValue(
-        sessionWithOpenPR,
-      );
-
-      const metadataSpy = vi
-        .spyOn(serialize, "enrichSessionsMetadata")
-        .mockResolvedValue(undefined);
-
-      const enrichSpy = vi.spyOn(serialize, "enrichSessionPR").mockResolvedValue(true);
-
-      const res = await sessionsGET(makeRequest("http://localhost:3000/api/sessions"));
-
-      expect(res.status).toBe(200);
-      expect(enrichSpy).toHaveBeenCalledTimes(1);
-      expect(enrichSpy.mock.calls[0]).toEqual([
-        expect.objectContaining({ id: "worker-open-pr" }),
-      ]);
-
-      metadataSpy.mockRestore();
-      enrichSpy.mockRestore();
+    it("passes undefined projectId when query param is absent", async () => {
+      const listSessionsSpy = vi.spyOn(engineClient, "listSessions");
+      await sessionsGET(makeRequest("http://localhost:3000/api/sessions"));
+      expect(listSessionsSpy).toHaveBeenCalledWith(undefined);
     });
   });
 
   describe("GET /api/sessions/[id]", () => {
-    it("returns partial session data when metadata and PR enrichment stall", async () => {
-      const metadataSpy = vi
-        .spyOn(serialize, "enrichSessionsMetadata")
-        .mockImplementation(() => new Promise<void>(() => {}));
-      const prSpy = vi
-        .spyOn(serialize, "enrichSessionPR")
-        .mockImplementation(() => new Promise<boolean>(() => {}));
-
-      const responsePromise = sessionDetailGET(
+    it("returns session data from engine", async () => {
+      const res = await sessionDetailGET(
         makeRequest("http://localhost:3000/api/sessions/backend-7"),
         { params: Promise.resolve({ id: "backend-7" }) },
       );
-
-      const res = await responsePromise;
-      const data = await res.json();
-
       expect(res.status).toBe(200);
+      const data = await res.json();
       expect(data.id).toBe("backend-7");
-      expect(data.projectId).toBe("my-app");
+    });
 
-      metadataSpy.mockRestore();
-      prSpy.mockRestore();
-    }, 10_000);
+    it("returns 404 when engine returns null", async () => {
+      vi.spyOn(engineClient, "getSession").mockResolvedValueOnce(null);
+      const res = await sessionDetailGET(
+        makeRequest("http://localhost:3000/api/sessions/does-not-exist"),
+        { params: Promise.resolve({ id: "does-not-exist" }) },
+      );
+      expect(res.status).toBe(404);
+    });
   });
 
   // ── PATCH /api/sessions/[id] ───────────────────────────────────────

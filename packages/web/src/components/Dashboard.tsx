@@ -105,7 +105,10 @@ function DoneCard({
     session.issueTitle ||
     session.summary ||
     session.id;
-  const isMerged = session.pr?.state === "merged" || session.status === "merged";
+  const isMerged =
+    session.lifecycle?.prState === "merged" ||
+    session.pr?.state === "merged" ||
+    session.status === "merged";
   const isTerminated = isDashboardSessionTerminated(session);
   const canRestore = isDashboardSessionRestorable(session);
   const badgeLabel = isMerged ? "merged" : isTerminated ? "terminated" : "done";

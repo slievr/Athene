@@ -499,8 +499,7 @@ function getFooterDetail(
 
   if (
     pr.ciStatus === CI_STATUS.FAILING ||
-    session.lifecycle?.prReason === "ci_failing" ||
-    session.status === "ci_failed"
+    (session.status === "ci_failed" || session.lifecycle?.prReason === "ci_failing")
   ) {
     const failed = pr.ciChecks.filter((c) => c.status === "failed").length;
     return {

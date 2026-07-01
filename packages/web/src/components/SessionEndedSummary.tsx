@@ -23,6 +23,16 @@ function getEndedSessionReason(session: DashboardSession): string {
   if (session.lifecycle?.runtime.reasonLabel) {
     return session.lifecycle.runtime.reasonLabel;
   }
+  // Canonical session state fallback
+  const sessionState = session.lifecycle?.sessionState;
+  if (sessionState === "terminated") {
+    const reason = session.lifecycle?.session.reason;
+    if (reason === "manually_killed") return "Manually stopped";
+    if (reason === "runtime_lost") return "Runtime unavailable";
+    return "Terminated";
+  }
+  if (sessionState === "done") return "Work completed";
+  // Legacy status fallback for sessions without lifecycle data
   if (session.status === "killed") return "Manually stopped";
   if (session.status === "terminated") return "Runtime unavailable";
   if (session.status === "done" || session.status === "merged") return "Work completed";

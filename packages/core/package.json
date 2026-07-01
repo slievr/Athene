@@ -4,63 +4,78 @@
   "description": "Core library — types, config, session manager, lifecycle manager, event bus",
   "license": "MIT",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
       "import": "./dist/index.js"
     },
     "./activity-log": {
       "types": "./dist/activity-log.d.ts",
+      "require": "./dist/activity-log.cjs",
       "import": "./dist/activity-log.js"
     },
     "./config": {
       "types": "./dist/config.d.ts",
+      "require": "./dist/config.cjs",
       "import": "./dist/config.js"
     },
     "./lifecycle-manager": {
       "types": "./dist/lifecycle-manager.d.ts",
+      "require": "./dist/lifecycle-manager.cjs",
       "import": "./dist/lifecycle-manager.js"
     },
     "./metadata": {
       "types": "./dist/metadata.d.ts",
+      "require": "./dist/metadata.cjs",
       "import": "./dist/metadata.js"
     },
     "./observability": {
       "types": "./dist/observability.d.ts",
+      "require": "./dist/observability.cjs",
       "import": "./dist/observability.js"
     },
     "./orchestrator-prompt": {
       "types": "./dist/orchestrator-prompt.d.ts",
+      "require": "./dist/orchestrator-prompt.cjs",
       "import": "./dist/orchestrator-prompt.js"
     },
     "./paths": {
       "types": "./dist/paths.d.ts",
+      "require": "./dist/paths.cjs",
       "import": "./dist/paths.js"
     },
     "./plugin-registry": {
       "types": "./dist/plugin-registry.d.ts",
+      "require": "./dist/plugin-registry.cjs",
       "import": "./dist/plugin-registry.js"
     },
     "./types": {
       "types": "./dist/types.d.ts",
+      "require": "./dist/types.cjs",
       "import": "./dist/types.js"
     },
     "./utils": {
       "types": "./dist/utils.d.ts",
+      "require": "./dist/utils.cjs",
       "import": "./dist/utils.js"
     },
     "./scm-webhook-utils": {
       "types": "./dist/scm-webhook-utils.d.ts",
+      "require": "./dist/scm-webhook-utils.cjs",
       "import": "./dist/scm-webhook-utils.js"
     },
     "./session-manager": {
       "types": "./dist/session-manager.d.ts",
+      "require": "./dist/session-manager.cjs",
       "import": "./dist/session-manager.js"
     },
     "./migration": {
       "types": "./dist/migration/storage-v2.d.ts",
+      "require": "./dist/migration/storage-v2.cjs",
       "import": "./dist/migration/storage-v2.js"
     }
   },
@@ -80,12 +95,13 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "tsx ./node_modules/rollup/dist/bin/rollup -c rollup.config.ts",
-    "dev": "tsx ./node_modules/rollup/dist/bin/rollup -c rollup.config.ts --watch",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "migrate": "tsx src/cli/migrate-metadata.ts"
   },
   "dependencies": {
     "yaml": "^2.7.0",
@@ -96,7 +112,7 @@
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^12.3.0",
-    "@types/better-sqlite3": "^7.6.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.2.3",
     "@vitest/coverage-v8": "^4.0.18",
     "rollup": "^4.60.1",

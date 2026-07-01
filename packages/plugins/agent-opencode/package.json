@@ -4,11 +4,13 @@
   "description": "Agent plugin: OpenCode",
   "license": "MIT",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
       "import": "./dist/index.js"
     }
   },
@@ -28,7 +30,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

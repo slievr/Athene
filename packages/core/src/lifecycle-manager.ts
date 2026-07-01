@@ -49,14 +49,24 @@ import {
   type PRInfo,
   type ReviewComment,
   type ReviewSummary,
-  type ProcessProbeResult,
-  isProcessProbeIndeterminate,
 } from "./types.js";
 import {
   buildLifecycleMetadataPatch,
   cloneLifecycle,
   deriveLegacyStatus,
 } from "./lifecycle-state.js";
+import {
+  buildTransitionObservabilityData,
+  eventToReactionKey,
+  inferPriority,
+  prStateToEventType,
+  primaryLifecycleReason,
+  processProbeResultToProbeResult,
+  splitEvidenceSignals,
+  statusToEventType,
+  transitionLogLevel,
+  type ProbeResult,
+} from "./lifecycle-state-machine.js";
 import { updateMetadata } from "./metadata.js";
 import { getProjectSessionsDir } from "./paths.js";
 import { applyDecisionToLifecycle as commitLifecycleDecisionInPlace } from "./lifecycle-transition.js";
@@ -88,6 +98,7 @@ import {
   type LifecycleDecision,
 } from "./lifecycle-status-decisions.js";
 import { dedupePrInfos } from "./utils/pr.js";
+import { createPRTracker, type PRTracker } from "./pr-tracker.js";
 import {
   buildCIFailureNotificationData,
   buildPRStateNotificationData,
@@ -211,28 +222,6 @@ async function readWorkspaceBranch(workspacePath: string): Promise<WorkspaceBran
   }
 }
 
-/** Infer a reasonable priority from event type. */
-function inferPriority(type: EventType): EventPriority {
-  if (type.includes("stuck") || type.includes("needs_input") || type.includes("errored")) {
-    return "urgent";
-  }
-  if (type.startsWith("summary.")) {
-    return "info";
-  }
-  if (
-    type.includes("approved") ||
-    type.includes("ready") ||
-    type.includes("merged") ||
-    type.includes("completed")
-  ) {
-    return "action";
-  }
-  if (type.includes("fail") || type.includes("changes_requested") || type.includes("conflicts")) {
-    return "warning";
-  }
-  return "info";
-}
-
 /** Create an OrchestratorEvent with defaults filled in. */
 function createEvent(
   type: EventType,
@@ -254,51 +243,6 @@ function createEvent(
     message: opts.message,
     data: opts.data ?? {},
   };
-}
-
-/** Determine which event type corresponds to a status transition. */
-function statusToEventType(_from: SessionStatus | undefined, to: SessionStatus): EventType | null {
-  switch (to) {
-    case "working":
-      return "session.working";
-    case "pr_open":
-      return "pr.created";
-    case "ci_failed":
-      return "ci.failing";
-    case "review_pending":
-      return "review.pending";
-    case "changes_requested":
-      return "review.changes_requested";
-    case "approved":
-      return "review.approved";
-    case "mergeable":
-      return "merge.ready";
-    case "merged":
-      return "merge.completed";
-    case "needs_input":
-      return "session.needs_input";
-    case "stuck":
-      return "session.stuck";
-    case "errored":
-      return "session.errored";
-    case "killed":
-      return "session.killed";
-    default:
-      return null;
-  }
-}
-
-function prStateToEventType(
-  from: Session["lifecycle"]["pr"]["state"],
-  to: Session["lifecycle"]["pr"]["state"],
-): EventType | null {
-  if (from === to) return null;
-  switch (to) {
-    case "closed":
-      return "pr.closed";
-    default:
-      return null;
-  }
 }
 
 /** PR context for event enrichment. */
@@ -325,7 +269,7 @@ interface ReactionSessionContext {
  */
 function buildEventContext(
   session: Session | ReactionSessionContext,
-  prEnrichmentCache: Map<string, PREnrichmentData>,
+  prEnrichmentCache: ReadonlyMap<string, PREnrichmentData>,
 ): EventContext {
   const sessionPRs = dedupePrInfos(
     "prs" in session && Array.isArray(session.prs) ? session.prs : session.pr ? [session.pr] : [],
@@ -357,49 +301,6 @@ function buildEventContext(
   };
 }
 
-/** Map event type to reaction config key. */
-function eventToReactionKey(eventType: EventType): string | null {
-  switch (eventType) {
-    case "pr.closed":
-      return "pr-closed";
-    case "ci.failing":
-      return "ci-failed";
-    case "review.changes_requested":
-      return "changes-requested";
-    case "automated_review.found":
-      return "bugbot-comments";
-    case "merge.conflicts":
-      return "merge-conflicts";
-    case "merge.ready":
-      return "approved-and-green";
-    case "session.stuck":
-      return "agent-stuck";
-    case "session.needs_input":
-      return "agent-needs-input";
-    case "session.killed":
-      return "agent-exited";
-    case "summary.all_complete":
-      return "all-complete";
-    default:
-      return null;
-  }
-}
-
-function transitionLogLevel(status: SessionStatus): "info" | "warn" | "error" {
-  const eventType = statusToEventType(undefined, status);
-  if (!eventType) {
-    return "info";
-  }
-  const priority = inferPriority(eventType);
-  if (priority === "urgent") {
-    return "error";
-  }
-  if (priority === "warning") {
-    return "warn";
-  }
-  return "info";
-}
-
 interface DeterminedStatus {
   status: SessionStatus;
   evidence: string;
@@ -410,74 +311,6 @@ interface DeterminedStatus {
   detectingStartedAt?: string;
   /** Hash of evidence for unchanged-evidence detection. */
   detectingEvidenceHash?: string;
-}
-
-interface ProbeResult {
-  state: "alive" | "dead" | "unknown";
-  failed: boolean;
-  indeterminate?: boolean;
-}
-
-function processProbeResultToProbeResult(result: ProcessProbeResult): ProbeResult {
-  if (isProcessProbeIndeterminate(result)) {
-    return { state: "unknown", failed: false, indeterminate: true };
-  }
-  return { state: result ? "alive" : "dead", failed: false };
-}
-
-function splitEvidenceSignals(evidence: string): string[] {
-  return evidence
-    .split(/\s+/)
-    .map((signal) => signal.trim())
-    .filter((signal) => signal.length > 0);
-}
-
-function primaryLifecycleReason(lifecycle: CanonicalSessionLifecycle): string {
-  if (lifecycle.session.state === "detecting") return lifecycle.session.reason;
-  if (lifecycle.pr.reason !== "not_created" && lifecycle.pr.reason !== "in_progress") {
-    return lifecycle.pr.reason;
-  }
-  if (lifecycle.runtime.reason !== "process_running") {
-    return lifecycle.runtime.reason;
-  }
-  return lifecycle.session.reason;
-}
-
-function buildTransitionObservabilityData(
-  previous: CanonicalSessionLifecycle,
-  next: CanonicalSessionLifecycle,
-  oldStatus: SessionStatus,
-  newStatus: SessionStatus,
-  evidence: string,
-  detectingAttempts: number,
-  statusTransition: boolean,
-  reaction?: { key: string; result: ReactionResult | null },
-): Record<string, unknown> {
-  return {
-    oldStatus,
-    newStatus,
-    statusTransition,
-    previousSessionState: previous.session.state,
-    newSessionState: next.session.state,
-    previousSessionReason: previous.session.reason,
-    newSessionReason: next.session.reason,
-    previousPRState: previous.pr.state,
-    newPRState: next.pr.state,
-    previousPRReason: previous.pr.reason,
-    newPRReason: next.pr.reason,
-    previousRuntimeState: previous.runtime.state,
-    newRuntimeState: next.runtime.state,
-    previousRuntimeReason: previous.runtime.reason,
-    newRuntimeReason: next.runtime.reason,
-    primaryReason: primaryLifecycleReason(next),
-    evidence,
-    signalsConsulted: splitEvidenceSignals(evidence),
-    detectingAttempts,
-    recoveryAction: reaction?.result?.action ?? null,
-    reactionKey: reaction?.key ?? null,
-    reactionSuccess: reaction?.result?.success ?? null,
-    escalated: reaction?.result?.escalated ?? null,
-  };
 }
 
 export interface LifecycleManagerDeps {
@@ -511,13 +344,6 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
   let lastOrphanReapAt = 0; // throttle runtime-orphan reconciliation
   const branchAdoptionReservations = new Map<string, SessionId>();
 
-  /**
-   * Cache for PR enrichment data within a single poll cycle.
-   * Cleared at the start of each pollAll() call.
-   * Key format: "${owner}/${repo}#${number}"
-   */
-  const prEnrichmentCache = new Map<string, PREnrichmentData>();
-
   function normalizeSessionPRs(session: Session): PRInfo[] {
     const candidatePRs = session.prs.length > 0 ? session.prs : session.pr ? [session.pr] : [];
     const uniquePRs = dedupePrInfos(candidatePRs);
@@ -548,11 +374,10 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
     session: Session | ReactionSessionContext,
   ): PREnrichmentData | undefined {
     if (!session.pr) return undefined;
-    return prEnrichmentCache.get(`${session.pr.owner}/${session.pr.repo}#${session.pr.number}`);
+    return prTracker.getCacheEntry(
+      `${session.pr.owner}/${session.pr.repo}#${session.pr.number}`,
+    );
   }
-
-  /** Repos where Guard 1 returned 304 in the current poll — safe to skip detectPR. */
-  let prListUnchangedRepos = new Set<string>();
 
   /**
    * Per-session timestamp of last review backlog API check.
@@ -564,361 +389,14 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
   /** Throttle interval for review backlog API calls (2 minutes). */
   const REVIEW_BACKLOG_THROTTLE_MS = 2 * 60 * 1000;
 
-  /**
-   * Populate the PR enrichment cache using batch GraphQL queries.
-   * This is called once per poll cycle to fetch data for all PRs efficiently.
-   */
-  async function populatePREnrichmentCache(sessions: Session[]): Promise<void> {
-    // Clear previous cache
-    prEnrichmentCache.clear();
-    prListUnchangedRepos = new Set();
-
-    // Collect all unique PRs and repos keyed by their owning session's project/plugin.
-    // Repos are collected from ALL sessions (not just ones with PRs) so Guard 1 runs
-    // for every active repo — enabling detectPR gating even when no PRs exist yet.
-    const prsByPlugin = new Map<string, Array<NonNullable<Session["pr"]>>>();
-    const reposByPlugin = new Map<string, Set<string>>();
-    const seenPRKeys = new Set<string>();
-    for (const session of sessions) {
-      const project = config.projects[session.projectId];
-      if (!project?.scm?.plugin || !project.repo) continue;
-
-      const pluginKey = project.scm.plugin;
-      if (!prsByPlugin.has(pluginKey)) {
-        prsByPlugin.set(pluginKey, []);
-      }
-      if (!reposByPlugin.has(pluginKey)) {
-        reposByPlugin.set(pluginKey, new Set());
-      }
-      reposByPlugin.get(pluginKey)!.add(project.repo);
-      const sessionPRs = normalizeSessionPRs(session);
-      if (sessionPRs.length === 0) continue;
-      // Loop over all PRs in the session — supports multi-repo sessions
-      // where an agent opened PRs on multiple repos.
-      for (const pr of sessionPRs) {
-        const actualPRRepo = `${pr.owner}/${pr.repo}`;
-        if (actualPRRepo !== project.repo) {
-          reposByPlugin.get(pluginKey)!.add(actualPRRepo);
-        }
-        const prKey = `${pr.owner}/${pr.repo}#${pr.number}`;
-        if (seenPRKeys.has(prKey)) continue;
-        seenPRKeys.add(prKey);
-        const pluginPRs = prsByPlugin.get(pluginKey);
-        if (pluginPRs) {
-          pluginPRs.push(pr);
-        }
-      }
-    }
-
-    // Fetch enrichment data and run Guard 1 for all active repos
-    for (const [pluginKey, pluginPRs] of prsByPlugin) {
-      const scm = registry.get<SCM>("scm", pluginKey);
-      if (!scm?.enrichSessionsPRBatch) continue;
-
-      const pluginRepos = [...(reposByPlugin.get(pluginKey) ?? [])];
-      const batchStartTime = Date.now();
-      try {
-        const enrichmentData = await scm.enrichSessionsPRBatch(
-          pluginPRs,
-          {
-            recordSuccess(_data) {
-              const batchDuration = Date.now() - batchStartTime;
-              observer?.recordOperation({
-                metric: "graphql_batch",
-                operation: "batch_enrichment",
-                correlationId: createCorrelationId("graphql-batch"),
-                outcome: "success",
-                projectId: scopedProjectId,
-                durationMs: batchDuration,
-                data: {
-                  plugin: pluginKey,
-                  prCount: pluginPRs.length,
-                  prKeys: pluginPRs.map((pr) => `${pr.owner}/${pr.repo}#${pr.number}`),
-                },
-                level: "info",
-              });
-            },
-            recordFailure(data) {
-              const batchDuration = Date.now() - batchStartTime;
-              observer?.recordOperation({
-                metric: "graphql_batch",
-                operation: "batch_enrichment",
-                correlationId: createCorrelationId("graphql-batch"),
-                outcome: "failure",
-                reason: data.error,
-                level: "warn",
-                data: {
-                  plugin: pluginKey,
-                  prCount: pluginPRs.length,
-                  error: data.error,
-                  durationMs: batchDuration,
-                },
-              });
-            },
-            log(level, message) {
-              observer?.recordDiagnostic?.({
-                operation: "batch_enrichment.log",
-                correlationId: createCorrelationId("graphql-batch"),
-                projectId: scopedProjectId,
-                message,
-                level,
-                data: {
-                  plugin: pluginKey,
-                  source: "ao-graphql-batch",
-                },
-              });
-            },
-            reportPRListUnchangedRepos(repos) {
-              for (const repo of repos) {
-                prListUnchangedRepos.add(repo);
-              }
-            },
-          },
-          pluginRepos,
-        );
-
-        // Merge into cache
-        for (const [key, data] of enrichmentData) {
-          prEnrichmentCache.set(key, data);
-        }
-      } catch (err) {
-        // Batch fetch failed - individual calls will still work
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        const batchCorrelationId = createCorrelationId("batch-enrichment");
-        observer?.recordOperation?.({
-          metric: "lifecycle_poll",
-          operation: "batch_enrichment",
-          correlationId: batchCorrelationId,
-          outcome: "failure",
-          reason: errorMsg,
-          level: "warn",
-          data: { plugin: pluginKey, prCount: pluginPRs.length },
-        });
-        recordActivityEvent({
-          // Tag with scopedProjectId when the lifecycle worker is project-scoped
-          // so `athene events list --project <id>` surfaces this failure. Unscoped
-          // (multi-project) supervisors leave projectId null because the batch
-          // crosses project boundaries — RCA there should query without --project.
-          projectId: scopedProjectId,
-          source: "scm",
-          kind: "scm.batch_enrich_failed",
-          level: "warn",
-          summary: `batch_enrich failed for ${pluginPRs.length} PR(s)`,
-          data: {
-            plugin: pluginKey,
-            prCount: pluginPRs.length,
-            errorMessage: errorMsg,
-          },
-        });
-      }
-    }
-
-    // Discover PRs for sessions that don't have one yet.
-    // Only run detectPR when Guard 1 returned 200 (repo's PR list changed).
-    // When Guard 1 returned 304, the repo is in prListUnchangedRepos — no new PRs exist.
-    for (const session of sessions) {
-      if (!session.branch) continue;
-      if (
-        session.metadata["prAutoDetect"] === "off" ||
-        session.metadata["prAutoDetect"] === "false"
-      )
-        continue;
-      if (session.metadata["role"] === "orchestrator" || session.id.endsWith("-orchestrator"))
-        continue;
-      // Skip detectPR only if we already have a PR on the configured project repo.
-      // This allows detecting additional PRs on different repos (multi-repo support).
-      const sessionPRs = normalizeSessionPRs(session);
-      const trackedRepos = new Set(sessionPRs.map((p) => `${p.owner}/${p.repo}`));
-      const projectRepoForDetect = config.projects[session.projectId]?.repo;
-      // primaryPR.branch is always the session branch (metadata doesn't store per-PR branches),
-      // so use the lifecycle closed-state alone to allow re-detection after a PR is rejected.
-      const primaryPRIsClosed = session.lifecycle.pr.state === "closed";
-      if (
-        sessionPRs.length > 0 &&
-        projectRepoForDetect &&
-        trackedRepos.has(projectRepoForDetect) &&
-        !primaryPRIsClosed
-      ) {
-        continue;
-      }
-
-      const project = config.projects[session.projectId];
-      if (!project?.repo || !project.scm?.plugin) continue;
-
-      // Skip if Guard 1 confirmed no PR list changes for this repo
-      if (prListUnchangedRepos.has(project.repo)) continue;
-
-      const scm = registry.get<SCM>("scm", project.scm.plugin);
-      if (!scm?.detectPR) continue;
-
-      try {
-        const detectedPR = await scm.detectPR(session, project);
-        if (detectedPR) {
-          // Track by owner/repo/number — allows multiple PRs on the same repo
-          // in the same session (e.g. agent opens PR #10 and PR #11 both on acme/main-app).
-          // Only skip if we already have this exact PR number on this exact repo.
-          // If the existing PR on the same repo is closed, replace it with the new one.
-          const alreadyTracked = sessionPRs.some(
-            (p) =>
-              p.owner === detectedPR.owner &&
-              p.repo === detectedPR.repo &&
-              p.number === detectedPR.number
-          );
-          if (!alreadyTracked) {
-            // Remove any closed PRs on the same repo before adding the new one.
-            // Open PRs on the same repo are kept — multiple open PRs per repo are valid.
-            session.prs = session.prs
-              .filter(
-                (p) =>
-                  !(
-                    p.owner === detectedPR.owner &&
-                    p.repo === detectedPR.repo &&
-                    p.number !== detectedPR.number &&
-                    prEnrichmentCache.get(`${p.owner}/${p.repo}#${p.number}`)?.state === "closed"
-                  )
-              )
-              .concat(detectedPR);
-          }
-          session.prs = dedupePrInfos(session.prs);
-          // pr is always the primary (first) PR
-          session.pr = session.prs[0] ?? detectedPR;
-          const sessionsDir = getProjectSessionsDir(session.projectId);
-          const allPrUrls = [...new Set(session.prs.map((p) => p.url))].join(",");
-          updateMetadata(sessionsDir, session.id, {
-            pr: session.pr.url,
-            prs: allPrUrls,
-          });
-          recordActivityEvent({
-            projectId: session.projectId,
-            sessionId: session.id,
-            source: "scm",
-            kind: "scm.detect_pr_succeeded",
-            summary: `PR #${detectedPR.number} detected`,
-            data: {
-              plugin: project.scm.plugin,
-              prNumber: detectedPR.number,
-              prUrl: detectedPR.url,
-              prOwner: detectedPR.owner,
-              prRepo: detectedPR.repo,
-            },
-          });
-        }
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        observer?.recordOperation?.({
-          metric: "lifecycle_poll",
-          operation: "scm.detect_pr",
-          outcome: "failure",
-          correlationId: createCorrelationId("detect-pr"),
-          projectId: session.projectId,
-          sessionId: session.id,
-          reason: errorMsg,
-          level: "warn",
-        });
-        recordActivityEvent({
-          projectId: session.projectId,
-          sessionId: session.id,
-          source: "scm",
-          kind: "scm.detect_pr_failed",
-          level: "warn",
-          summary: `detect_pr failed for ${session.id}`,
-          data: {
-            plugin: project.scm.plugin,
-            errorMessage: errorMsg,
-          },
-        });
-      }
-    }
-  }
-
-  /**
-   * Persist batch enrichment data to session metadata files.
-   * The web dashboard reads this instead of calling GitHub API.
-   */
-  function persistPREnrichmentToMetadata(sessions: Session[]): void {
-    for (const session of sessions) {
-      const sessionPRs = normalizeSessionPRs(session);
-      if (!session.pr) continue;
-      const project = config.projects[session.projectId];
-      if (!project) continue;
-      const sessionsDir = getProjectSessionsDir(session.projectId);
-      const cleanupUpdates = indexedPRMetadataCleanup(session, sessionPRs.length);
-      if (Object.keys(cleanupUpdates).length > 0) {
-        updateMetadata(sessionsDir, session.id, cleanupUpdates);
-        session.metadata = Object.fromEntries(
-          Object.entries(session.metadata).filter(([key]) => cleanupUpdates[key] === undefined),
-        );
-      }
-
-      const prKey = `${session.pr.owner}/${session.pr.repo}#${session.pr.number}`;
-      const cached = prEnrichmentCache.get(prKey);
-      if (cached) {
-        const blob = JSON.stringify({
-          state: cached.state,
-          ciStatus: cached.ciStatus,
-          reviewDecision: cached.reviewDecision,
-          mergeable: cached.mergeable,
-          title: cached.title,
-          additions: cached.additions,
-          deletions: cached.deletions,
-          isDraft: cached.isDraft,
-          hasConflicts: cached.hasConflicts,
-          isBehind: cached.isBehind,
-          blockers: cached.blockers,
-          ciChecks: cached.ciChecks?.map((c) => ({
-            name: c.name,
-            status: c.status,
-            url: c.url,
-          })),
-          enrichedAt: new Date().toISOString(),
-        });
-        if (session.metadata["prEnrichment"] !== blob) {
-          updateMetadata(sessionsDir, session.id, { prEnrichment: blob });
-          session.metadata["prEnrichment"] = blob;
-        }
-        // Keep in-memory isDraft in sync with enrichment data
-        if (cached.isDraft !== undefined && session.pr) {
-          session.pr.isDraft = cached.isDraft;
-        }
-      }
-
-      for (let i = 1; i < sessionPRs.length; i++) {
-        const secondaryPR = sessionPRs[i];
-        if (!secondaryPR) continue;
-        const secondaryKey = `${secondaryPR.owner}/${secondaryPR.repo}#${secondaryPR.number}`;
-        const secondaryCached = prEnrichmentCache.get(secondaryKey);
-        if (!secondaryCached) continue;
-        const secondaryBlob = JSON.stringify({
-          state: secondaryCached.state,
-          ciStatus: secondaryCached.ciStatus,
-          reviewDecision: secondaryCached.reviewDecision,
-          mergeable: secondaryCached.mergeable,
-          title: secondaryCached.title,
-          additions: secondaryCached.additions,
-          deletions: secondaryCached.deletions,
-          isDraft: secondaryCached.isDraft,
-          hasConflicts: secondaryCached.hasConflicts,
-          isBehind: secondaryCached.isBehind,
-          blockers: secondaryCached.blockers,
-          ciChecks: secondaryCached.ciChecks?.map((c) => ({
-            name: c.name,
-            status: c.status,
-            url: c.url,
-          })),
-          enrichedAt: new Date().toISOString(),
-        });
-        const metaKey = `prEnrichment_${i}`;
-        if (session.metadata[metaKey] !== secondaryBlob) {
-          updateMetadata(sessionsDir, session.id, { [metaKey]: secondaryBlob });
-          session.metadata[metaKey] = secondaryBlob;
-        }
-        // Keep in-memory isDraft in sync with enrichment data
-        if (secondaryCached.isDraft !== undefined) {
-          secondaryPR.isDraft = secondaryCached.isDraft;
-        }
-      }
-    }
-  }
+  const prTracker: PRTracker = createPRTracker({
+    config,
+    registry,
+    observer,
+    scopedProjectId,
+    normalizeSessionPRs,
+    indexedPRMetadataCleanup,
+  });
 
   /** Check if idle time exceeds the agent-stuck threshold. */
   function isIdleBeyondThreshold(session: Session, idleTimestamp: Date): boolean {
@@ -1345,13 +823,13 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
       return commit(probeDecision);
     }
 
-    // detectPR is handled in populatePREnrichmentCache (gated by Guard 1 ETag).
+    // detectPR is handled in prTracker.enrichSessions (gated by Guard 1 ETag).
     // By this point, session.pr is already set if a PR was discovered.
 
     if (session.pr && scm) {
       try {
         const prKey = `${session.pr.owner}/${session.pr.repo}#${session.pr.number}`;
-        const cachedData = prEnrichmentCache.get(prKey);
+        const cachedData = prTracker.getCacheEntry(prKey);
         if (lifecycle.pr.state === "none") {
           lifecycle.pr.state = "open";
         }
@@ -1371,7 +849,7 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
           // ci_failed if ANY fails; approved/merged only when ALL pass.
           if (session.prs.length > 1) {
             const allEnrichments = session.prs
-              .map((p) => prEnrichmentCache.get(`${p.owner}/${p.repo}#${p.number}`))
+              .map((p) => prTracker.getCacheEntry(`${p.owner}/${p.repo}#${p.number}`))
               .filter((e): e is PREnrichmentData => e !== undefined);
 
             if (allEnrichments.length === session.prs.length) {
@@ -1666,7 +1144,7 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
         },
       });
       // Escalate to human
-      const context = buildEventContext(session, prEnrichmentCache);
+      const context = buildEventContext(session, prTracker.getCache());
       const event = createEvent("reaction.escalated", {
         sessionId,
         projectId,
@@ -1748,7 +1226,7 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
       }
 
       case "notify": {
-        const context = buildEventContext(session, prEnrichmentCache);
+        const context = buildEventContext(session, prTracker.getCache());
         const event = createEvent("reaction.triggered", {
           sessionId,
           projectId,
@@ -1783,7 +1261,7 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
       case "auto-merge": {
         // Auto-merge is handled by the SCM plugin
         // For now, just notify
-        const context = buildEventContext(session, prEnrichmentCache);
+        const context = buildEventContext(session, prTracker.getCache());
         const event = createEvent("reaction.triggered", {
           sessionId,
           projectId,
@@ -2268,7 +1746,7 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
     options: { allowFetch: boolean },
   ): Promise<CICheck[] | null> {
     const prKey = `${pr.owner}/${pr.repo}#${pr.number}`;
-    const cachedEnrichment = prEnrichmentCache.get(prKey);
+    const cachedEnrichment = prTracker.getCacheEntry(prKey);
 
     let checks: CICheck[] | undefined = cachedEnrichment?.ciChecks;
     if (checks === undefined && options.allowFetch) {
@@ -2379,7 +1857,7 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
           await sessionManager.send(session.id, detailedMessage);
         } else {
           // For "notify" action, send to human notifiers instead
-          const context = buildEventContext(session, prEnrichmentCache);
+          const context = buildEventContext(session, prTracker.getCache());
           const event = createEvent("ci.failing", {
             sessionId: session.id,
             projectId: session.projectId,
@@ -2448,7 +1926,7 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
     // to avoid 3 redundant REST calls from getMergeability() — the batch already
     // fetched the mergeable/mergeStateStatus fields via GraphQL.
     const prKey = `${session.pr.owner}/${session.pr.repo}#${session.pr.number}`;
-    const cachedData = prEnrichmentCache.get(prKey);
+    const cachedData = prTracker.getCacheEntry(prKey);
 
     if (!cachedData) {
       // No batch data — skip this cycle, batch will populate on next cycle (30s)
@@ -2761,7 +2239,7 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
     // This lets the next real CI failure start with a fresh budget.
     if (session.pr) {
       const prKey = `${session.pr.owner}/${session.pr.repo}#${session.pr.number}`;
-      const cachedData = prEnrichmentCache.get(prKey);
+      const cachedData = prTracker.getCacheEntry(prKey);
       if (cachedData) {
         if (cachedData.ciStatus === "passing") {
           const stableCount = Number(session.metadata["ciPassingStableCount"] ?? "0") + 1;
@@ -2901,7 +2379,7 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
         // so the config controls which notifiers receive each priority level.
         if (!reactionHandledNotify) {
           const priority = inferPriority(eventType);
-          const context = buildEventContext(session, prEnrichmentCache);
+          const context = buildEventContext(session, prTracker.getCache());
           const event = createEvent(eventType, {
             sessionId: session.id,
             projectId: session.projectId,
@@ -2962,7 +2440,7 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
       }
 
       if (!reactionHandledNotify) {
-        const context = buildEventContext(session, prEnrichmentCache);
+        const context = buildEventContext(session, prTracker.getCache());
         const prEvent = createEvent(prEventType, {
           sessionId: session.id,
           projectId: session.projectId,
@@ -3234,14 +2712,14 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
 
       // Prime the per-poll PR enrichment cache before session checks so
       // downstream status/reaction logic can reuse batch GraphQL data.
-      await populatePREnrichmentCache(sessionsToCheck);
+      await prTracker.enrichSessions(sessionsToCheck);
 
       // Poll all sessions concurrently
       await Promise.allSettled(sessionsToCheck.map((s) => checkSession(s)));
 
       // Persist batch enrichment data to session metadata files so the
       // web dashboard can read it without calling GitHub API.
-      persistPREnrichmentToMetadata(sessionsToCheck);
+      prTracker.persistToMetadata(sessionsToCheck);
 
       // Prune stale entries from states, reactionTrackers, and lastReviewBacklogCheckAt
       // for sessions that no longer appear in the session list (e.g., after kill/cleanup)
@@ -3387,7 +2865,7 @@ export function createLifecycleManager(deps: LifecycleManagerDeps): LifecycleMan
       await refreshTrackedBranch(session);
       // Populate batch enrichment cache for this session's PR so
       // checkSession can read from cache (no individual REST fallback).
-      await populatePREnrichmentCache([session]);
+      await prTracker.enrichSessions([session]);
       await checkSession(session);
     },
   };

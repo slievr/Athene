@@ -1,184 +1,82 @@
-import { isOrchestratorSession, isTerminalSession } from "@made-by-moonlight/athene-core";
-import { getServices } from "@/lib/services";
-import {
-  sessionToDashboard,
-  enrichSessionPR,
-  enrichSessionsMetadata,
-  computeStats,
-  listDashboardOrchestrators,
-} from "@/lib/serialize";
-import { getCorrelationId, jsonWithCorrelation, recordApiObservation } from "@/lib/observability";
-import { filterProjectSessions } from "@/lib/project-utils";
-import { settlesWithin } from "@/lib/async-utils";
-import { type DashboardOrchestratorLink } from "@/lib/types";
+import { listSessions } from "@/lib/engine-client";
+import { isOrchestratorSession } from "@made-by-moonlight/athene-core";
 
-const METADATA_ENRICH_TIMEOUT_MS = 3_000;
+interface RawEngineSession {
+  id: string;
+  projectId: string;
+  lifecycle?: {
+    session?: { state?: string };
+    pr?: { state?: string };
+    runtime?: { state?: string };
+  };
+  metadata?: Record<string, string>;
+  lastActivityAt?: number | null;
+  createdAt?: number;
+}
 
-function compareOrchestratorRecency(
-  a: { lastActivityAt?: Date | null; createdAt?: Date | null; id: string },
-  b: { lastActivityAt?: Date | null; createdAt?: Date | null; id: string },
-): number {
+const TERMINAL_SESSION_STATES = new Set(["done", "terminated"]);
+const TERMINAL_PR_STATES = new Set(["merged"]);
+const TERMINAL_RUNTIME_STATES = new Set(["missing", "exited"]);
+
+function isTerminalEngineSession(session: RawEngineSession): boolean {
+  const lc = session.lifecycle;
+  if (!lc) return false;
   return (
-    (b.lastActivityAt?.getTime() ?? 0) - (a.lastActivityAt?.getTime() ?? 0) ||
-    (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0) ||
-    a.id.localeCompare(b.id)
+    TERMINAL_SESSION_STATES.has(lc.session?.state ?? "") ||
+    TERMINAL_PR_STATES.has(lc.pr?.state ?? "") ||
+    TERMINAL_RUNTIME_STATES.has(lc.runtime?.state ?? "")
   );
 }
 
-function listProjectOrchestratorSessions(
-  sessions: Parameters<typeof listDashboardOrchestrators>[0],
-  _projects: Parameters<typeof listDashboardOrchestrators>[1],
-): Parameters<typeof listDashboardOrchestrators>[0] {
-  const projectOrchestrators = sessions
-    .filter((session) => isOrchestratorSession(session))
-    .sort(compareOrchestratorRecency);
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const projectId = searchParams.get("project") ?? undefined;
+  const activeOnly = searchParams.get("active") === "true";
+  const orchestratorOnly = searchParams.get("orchestratorOnly") === "true";
 
-  const liveOrchestrators = projectOrchestrators.filter((session) => !isTerminalSession(session));
-  return liveOrchestrators.length > 0 ? liveOrchestrators : projectOrchestrators;
-}
-
-function selectPreferredOrchestratorId(
-  sessions: Parameters<typeof listDashboardOrchestrators>[0],
-  projects: Parameters<typeof listDashboardOrchestrators>[1],
-): string | null {
-  return listProjectOrchestratorSessions(sessions, projects)[0]?.id ?? null;
-}
-
-function listPreferredProjectOrchestrators(
-  sessions: Parameters<typeof listDashboardOrchestrators>[0],
-  projects: Parameters<typeof listDashboardOrchestrators>[1],
-): DashboardOrchestratorLink[] {
-  const preferredOrchestrators = listProjectOrchestratorSessions(sessions, projects);
-
-  return preferredOrchestrators
-    .map((session) => ({
-      id: session.id,
-      projectId: session.projectId,
-      projectName: projects[session.projectId]?.name ?? session.projectId,
-    }))
-    .sort((a, b) => a.projectName.localeCompare(b.projectName) || a.id.localeCompare(b.id));
-}
-
-export async function GET(request: Request) {
-  const correlationId = getCorrelationId(request);
-  const startedAt = Date.now();
+  let raw: RawEngineSession[];
   try {
-    const { searchParams } = new URL(request.url);
-    const projectFilter = searchParams.get("project");
-    const activeOnly = searchParams.get("active") === "true";
-    const orchestratorOnly = searchParams.get("orchestratorOnly") === "true";
-    const fresh = searchParams.get("fresh") === "true";
-
-    const { config, registry, sessionManager } = await getServices();
-    const requestedProjectId =
-      projectFilter && projectFilter !== "all" && config.projects[projectFilter]
-        ? projectFilter
-        : undefined;
-    const coreSessions = fresh
-      ? await sessionManager.list(requestedProjectId)
-      : await sessionManager.listCached(requestedProjectId);
-    const visibleSessions = filterProjectSessions(coreSessions, projectFilter, config.projects);
-    const orchestrators = requestedProjectId
-      ? listPreferredProjectOrchestrators(visibleSessions, config.projects)
-      : listDashboardOrchestrators(visibleSessions, config.projects);
-    const orchestratorId = requestedProjectId
-      ? selectPreferredOrchestratorId(visibleSessions, config.projects)
-      : orchestrators.length === 1
-        ? (orchestrators[0]?.id ?? null)
-        : null;
-
-    if (orchestratorOnly) {
-      recordApiObservation({
-        config,
-        method: "GET",
-        path: "/api/sessions",
-        correlationId,
-        startedAt,
-        outcome: "success",
-        statusCode: 200,
-        data: { orchestratorOnly: true, orchestratorCount: orchestrators.length, fresh },
-      });
-
-      return jsonWithCorrelation(
-        {
-          orchestratorId,
-          orchestrators,
-          sessions: [],
-        },
-        { status: 200 },
-        correlationId,
-      );
-    }
-
-    let workerSessions = visibleSessions.filter(
-      (session) => !isOrchestratorSession(session),
-    );
-
-    // Convert to dashboard format
-    let dashboardSessions = workerSessions.map(sessionToDashboard);
-
-    if (activeOnly) {
-      const activeIndices = workerSessions
-        .map((session, index) => (!isTerminalSession(session) ? index : -1))
-        .filter((index) => index !== -1);
-      workerSessions = activeIndices.map((index) => workerSessions[index]);
-      dashboardSessions = activeIndices.map((index) => dashboardSessions[index]);
-    }
-
-    const metadataSettled = await settlesWithin(
-      enrichSessionsMetadata(workerSessions, dashboardSessions, config, registry),
-      METADATA_ENRICH_TIMEOUT_MS,
-    );
-
-    if (metadataSettled) {
-      // PR enrichment: read from session metadata (written by CLI lifecycle).
-      // No GitHub API calls — synchronous metadata read.
-      for (let i = 0; i < workerSessions.length; i++) {
-        const ws = workerSessions[i];
-        if (!ws?.pr && (!ws?.prs || ws.prs.length === 0)) continue;
-        enrichSessionPR(dashboardSessions[i]);
-      }
-    }
-
-    recordApiObservation({
-      config,
-      method: "GET",
-      path: "/api/sessions",
-      correlationId,
-      startedAt,
-      outcome: "success",
-      statusCode: 200,
-      data: { sessionCount: dashboardSessions.length, activeOnly, fresh },
-    });
-
-    return jsonWithCorrelation(
-      {
-        sessions: dashboardSessions,
-        stats: computeStats(dashboardSessions),
-        orchestratorId,
-        orchestrators,
-      },
-      { status: 200 },
-      correlationId,
-    );
-  } catch (err) {
-    const { config } = await getServices().catch(() => ({ config: undefined }));
-    if (config) {
-      recordApiObservation({
-        config,
-        method: "GET",
-        path: "/api/sessions",
-        correlationId,
-        startedAt,
-        outcome: "failure",
-        statusCode: 500,
-        reason: err instanceof Error ? err.message : "Failed to list sessions",
-      });
-    }
-    return jsonWithCorrelation(
-      { error: err instanceof Error ? err.message : "Failed to list sessions" },
-      { status: 500 },
-      correlationId,
-    );
+    raw = (await listSessions(projectId)) as RawEngineSession[];
+  } catch {
+    // Go engine not available (binary not built or not running) — return empty response
+    return Response.json({ sessions: [], stats: null, orchestratorId: null, orchestrators: [] });
   }
+
+  if (orchestratorOnly) {
+    const orchSessions = raw.filter((s) => isOrchestratorSession(s));
+    const orchestratorId = orchSessions[0]?.id ?? null;
+    const orchestrators = orchSessions.map((s) => ({
+      id: s.id,
+      projectId: s.projectId,
+      projectName: s.metadata?.["projectName"] ?? s.projectId,
+    }));
+    return Response.json({ sessions: [], orchestratorId, orchestrators });
+  }
+
+  let sessions = raw.filter((s) => !isOrchestratorSession(s));
+
+  if (activeOnly) {
+    sessions = sessions.filter((s) => !isTerminalEngineSession(s));
+  }
+
+  // Compute orchestrator info from the full session list
+  const orchSessions = raw
+    .filter((s) => isOrchestratorSession(s))
+    .sort((a, b) => {
+      const aTime = a.lastActivityAt ?? a.createdAt ?? 0;
+      const bTime = b.lastActivityAt ?? b.createdAt ?? 0;
+      return bTime - aTime || a.id.localeCompare(b.id);
+    });
+  const liveOrch = orchSessions.filter((s) => !isTerminalEngineSession(s));
+  const preferredOrch = liveOrch.length > 0 ? liveOrch : orchSessions;
+  const orchestratorId = projectId
+    ? (preferredOrch.find((s) => s.projectId === projectId)?.id ?? null)
+    : (preferredOrch[0]?.id ?? null);
+  const orchestrators = preferredOrch.map((s) => ({
+    id: s.id,
+    projectId: s.projectId,
+    projectName: s.metadata?.["projectName"] ?? s.projectId,
+  }));
+
+  return Response.json({ sessions, stats: null, orchestratorId, orchestrators });
 }

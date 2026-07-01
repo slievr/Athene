@@ -518,7 +518,7 @@ function ProjectSidebarInner({
       // their runtime has ended.
       const level = getAttentionLevel(s);
       if (level === "done") {
-        if (s.status === "killed" ? !showKilled && !showDone : !showDone) continue;
+        if ((s.status === "killed" || s.lifecycle?.sessionState === "terminated") ? !showKilled && !showDone : !showDone) continue;
       }
       const list = map.get(s.projectId) ?? [];
       list.push(s);
