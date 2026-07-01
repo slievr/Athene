@@ -1,0 +1,235 @@
+name: Release Native App
+
+# Runs after the npm Release workflow completes on main.
+# Builds athene-app binaries for 4 targets, uploads them to the GitHub release,
+# then updates the Homebrew formula in Made-by-Moonlight/homebrew-tap.
+
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build for (e.g. v0.14.0) — defaults to latest stable tag"
+        required: false
+
+concurrency:
+  group: release-native-app
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  # ── Build matrix ────────────────────────────────────────────────────────────
+  build:
+    name: Build ${{ matrix.target }}
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-apple-darwin
+            os: macos-13
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            echo "value=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            # Latest stable tag (excluding nightly)
+            TAG=$(gh release list --repo ${{ github.repository }} --exclude-pre-releases \
+                  --json tagName --jq '.[0].tagName')
+            echo "value=${TAG}" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ steps.tag.outputs.value }}
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install Linux system deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libxcb-shape0-dev libxcb-xfixes0-dev \
+            libxkbcommon-dev libwayland-dev
+
+      - name: Cache Cargo registry
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            athene/target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('athene/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.target }}-cargo-
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }} -p athene-app
+        working-directory: athene
+
+      - name: Package tarball
+        id: package
+        run: |
+          BINARY="athene/target/${{ matrix.target }}/release/athene-app"
+          TARBALL="athene-app-${{ matrix.target }}.tar.gz"
+          tar -czf "$TARBALL" -C "$(dirname $BINARY)" "$(basename $BINARY)"
+          SHA=$(shasum -a 256 "$TARBALL" | awk '{ print $1 }')
+          echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA"       >> "$GITHUB_OUTPUT"
+
+      - name: Upload to GitHub Release
+        run: |
+          gh release upload "${{ steps.tag.outputs.value }}" \
+            "${{ steps.package.outputs.tarball }}" --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Export SHA for formula update
+        run: |
+          echo "${{ matrix.target }}=${{ steps.package.outputs.sha256 }}" \
+            >> sha256s.txt
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sha256-${{ matrix.target }}
+          path: sha256s.txt
+
+  # ── Update Homebrew formula ─────────────────────────────────────────────────
+  homebrew:
+    name: Update Homebrew formula
+    needs: build
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            echo "value=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            TAG=$(gh release list --repo ${{ github.repository }} --exclude-pre-releases \
+                  --json tagName --jq '.[0].tagName')
+            echo "value=${TAG}" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ steps.tag.outputs.value }}
+
+      - name: Download all SHA256 artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: sha256-*
+          merge-multiple: true
+
+      - name: Parse SHA256s
+        id: shas
+        run: |
+          sha_macos_arm64=$(grep "aarch64-apple-darwin"           sha256s.txt | cut -d= -f2)
+          sha_macos_x86=$(grep   "x86_64-apple-darwin"            sha256s.txt | cut -d= -f2)
+          sha_linux_x86=$(grep   "x86_64-unknown-linux-gnu"       sha256s.txt | cut -d= -f2)
+          sha_linux_arm64=$(grep "aarch64-unknown-linux-gnu"      sha256s.txt | cut -d= -f2)
+          echo "macos_arm64=$sha_macos_arm64"   >> "$GITHUB_OUTPUT"
+          echo "macos_x86=$sha_macos_x86"       >> "$GITHUB_OUTPUT"
+          echo "linux_x86=$sha_linux_x86"       >> "$GITHUB_OUTPUT"
+          echo "linux_arm64=$sha_linux_arm64"   >> "$GITHUB_OUTPUT"
+
+      - name: Generate formula
+        env:
+          TAG:           ${{ steps.tag.outputs.value }}
+          SHA_MACOS_ARM: ${{ steps.shas.outputs.macos_arm64 }}
+          SHA_MACOS_X86: ${{ steps.shas.outputs.macos_x86 }}
+          SHA_LINUX_X86: ${{ steps.shas.outputs.linux_x86 }}
+          SHA_LINUX_ARM: ${{ steps.shas.outputs.linux_arm64 }}
+        run: |
+          VERSION="${TAG#v}"  # strip leading 'v'
+          cat > Formula/athene-app.rb << EOF
+          class AtheneApp < Formula
+            desc "Native desktop app for Athene — GPU-accelerated agent supervision"
+            homepage "https://github.com/Made-by-Moonlight/Athene"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.arm?
+                url "https://github.com/Made-by-Moonlight/Athene/releases/download/${TAG}/athene-app-aarch64-apple-darwin.tar.gz"
+                sha256 "${SHA_MACOS_ARM}"
+              else
+                url "https://github.com/Made-by-Moonlight/Athene/releases/download/${TAG}/athene-app-x86_64-apple-darwin.tar.gz"
+                sha256 "${SHA_MACOS_X86}"
+              end
+            end
+
+            on_linux do
+              if Hardware::CPU.arm?
+                url "https://github.com/Made-by-Moonlight/Athene/releases/download/${TAG}/athene-app-aarch64-unknown-linux-gnu.tar.gz"
+                sha256 "${SHA_LINUX_ARM}"
+              else
+                url "https://github.com/Made-by-Moonlight/Athene/releases/download/${TAG}/athene-app-x86_64-unknown-linux-gnu.tar.gz"
+                sha256 "${SHA_LINUX_X86}"
+              end
+            end
+
+            def install
+              bin.install "athene-app"
+            end
+
+            test do
+              assert_match version.to_s, shell_output("#{bin}/athene-app --version")
+            end
+          end
+          EOF
+
+      - name: Push formula to homebrew-tap
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          TAG:      ${{ steps.tag.outputs.value }}
+        run: |
+          TAP_REPO="Made-by-Moonlight/homebrew-tap"
+          FORMULA_PATH="Formula/athene-app.rb"
+          CONTENT=$(base64 -w0 < Formula/athene-app.rb)
+
+          # Get current SHA of the file in tap repo (needed for update)
+          EXISTING=$(gh api "repos/${TAP_REPO}/contents/${FORMULA_PATH}" \
+            --jq '.sha' 2>/dev/null || echo "")
+
+          if [ -n "$EXISTING" ]; then
+            gh api "repos/${TAP_REPO}/contents/${FORMULA_PATH}" \
+              -X PUT \
+              -f message="chore: update athene-app formula to ${TAG}" \
+              -f content="${CONTENT}" \
+              -f sha="${EXISTING}"
+          else
+            gh api "repos/${TAP_REPO}/contents/${FORMULA_PATH}" \
+              -X PUT \
+              -f message="chore: add athene-app formula for ${TAG}" \
+              -f content="${CONTENT}"
+          fi
