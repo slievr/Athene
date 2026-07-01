@@ -80,8 +80,9 @@ pub fn session_detail<'a>(
             ..Default::default()
         });
 
+    let back_scope = app.last_fleet_scope.clone();
     let back_btn = button(text("← Fleet").size(12).color(s.text_secondary))
-        .on_press(Message::NavigateFleet { scope: None })
+        .on_press(Message::NavigateFleet { scope: back_scope })
         .style(|_theme, _status| button::Style {
             background: None,
             text_color: s.text_secondary,

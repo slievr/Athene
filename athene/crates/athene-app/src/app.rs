@@ -3,6 +3,7 @@ use std::{collections::{HashMap, VecDeque}, sync::Arc, time::{SystemTime, UNIX_E
 use athene_core::{
     config::{AppConfig, ThemeVariant},
     events::{Engine, Event},
+    slugify,
     types::*,
 };
 use iced::{Element, Subscription, Task, Theme};
@@ -74,6 +75,7 @@ pub struct App {
     pub info_width:      f32,
     pub drag:            Option<DragTarget>,
     pub fleet_filter:    FleetFilter,
+    pub last_fleet_scope: Option<OrchestratorId>,
 }
 
 // ---------------------------------------------------------------------------
@@ -119,6 +121,7 @@ pub enum Message {
     FleetFilterQuery(String),
     ClearFleetFilter,
     ScrollTerminal { session_id: SessionId, delta: i32 },
+    OpenUrl(String),
     Noop,
 }
 
@@ -266,8 +269,9 @@ impl App {
             window_width:   1200.0,
             sidebar_width:  220.0,
             info_width:     300.0,
-            drag:           None,
-            fleet_filter:   FleetFilter::default(),
+            drag:            None,
+            fleet_filter:    FleetFilter::default(),
+            last_fleet_scope: None,
         };
 
         // Asynchronously mark dead sessions as Terminated.
@@ -320,6 +324,7 @@ impl App {
             Message::EngineEvent(event) => Self::handle_engine_event(state, event),
 
             Message::NavigateFleet { scope } => {
+                state.last_fleet_scope = scope.clone();
                 state.view = View::FleetBoard { scope };
                 Task::none()
             }
@@ -397,8 +402,10 @@ impl App {
                         .unwrap_or_default()
                         .as_millis();
 
+                    let slug = slugify(&name);
+                    let orch_id = if slug.is_empty() { format!("orch-{ts}") } else { slug };
                     let orch = Orchestrator {
-                        id:         format!("orch-{ts}"),
+                        id:         orch_id,
                         name:       name.clone(),
                         created_at: ts as i64,
                     };
@@ -764,6 +771,11 @@ impl App {
                 Task::none()
             }
 
+            Message::OpenUrl(url) => {
+                let _ = std::process::Command::new("open").arg(&url).spawn();
+                Task::none()
+            }
+
             Message::Noop => Task::none(),
         }
     }
@@ -1001,18 +1013,33 @@ You are an **Athene orchestrator agent**. You coordinate — you do not implemen
 ## Your Role
 
 - Spawn worker sessions for all implementation tasks
-- Monitor worker progress; direct workers when they are stuck
+- Monitor worker progress; direct workers when they get stuck
 - Never implement code, run tests, or create PRs yourself
 
 ## Spawning Workers
 
+Name workers after the ticket or task so they are easy to reference:
+
 ```bash
 {athene_bin} spawn \
+  --name "ath-123-auth-fix" \
   --prompt "Complete task description with acceptance criteria, repo path, and branch" \
   --workspace /absolute/path/to/repo
 ```
 
+`--name` becomes the session ID. Names are slugified automatically (`"ATH-123 auth"` → `"ath-123-auth"`).
+Omitting `--name` generates a timestamp ID (`worker-…`).
+
 `ATHENE_ORCHESTRATOR_ID` is set in your environment and picked up automatically.
+Each spawn prints the session ID (`spawned ath-123-auth-fix`) — use it to send follow-ups.
+
+## Messaging Workers (Orchestrator → Worker)
+
+Send instructions or follow-ups to a worker using its session ID:
+
+```bash
+{athene_bin} send ath-123-auth-fix "Focus on the token refresh path first"
+```
 
 ## The Rule
 
@@ -1149,8 +1176,9 @@ mod tests {
             window_width:   0.0,
             sidebar_width:  0.0,
             info_width:     0.0,
-            drag:           None,
-            fleet_filter:   FleetFilter::default(),
+            drag:            None,
+            fleet_filter:    FleetFilter::default(),
+            last_fleet_scope: None,
         }
     }
 

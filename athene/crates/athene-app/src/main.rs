@@ -7,6 +7,7 @@ use athene_core::{
     events::Engine,
     github::resolve_token,
     lifecycle::poller::Poller,
+    slugify,
     store::Store,
     tmux,
     types::{Session, SessionStatus},
@@ -44,6 +45,13 @@ enum Command {
         /// Orchestrator session ID (read from ATHENE_ORCHESTRATOR_ID if not supplied)
         #[arg(long)]
         orchestrator_id: Option<String>,
+    },
+    /// Send a text message to a session's terminal (injected as keyboard input)
+    Send {
+        /// Target session ID
+        session_id: String,
+        /// Message text to inject (Enter is sent automatically)
+        message: String,
     },
     /// Knowledge base operations
     Brain {
@@ -92,6 +100,9 @@ async fn main() -> anyhow::Result<()> {
             let config = AppConfig::load().unwrap_or_default();
             run_spawn(store, config.worker, prompt, workspace, name, orchestrator_id).await
         }
+        Some(Command::Send { session_id, message }) => {
+            athene_core::tmux::send_keys(&session_id, &message).await
+        }
         Some(Command::Brain { action }) => {
             run_brain(action).await
         }
@@ -112,8 +123,14 @@ async fn run_spawn(
         .unwrap_or_default()
         .as_millis() as i64;
 
-    let id = format!("worker-{ts}");
-    let name = name.unwrap_or_else(|| first_words(&prompt, 4));
+    // Use the supplied name (slugified) as the session ID so orchestrators can
+    // address workers directly by a human-readable name (e.g. "ath-123-auth").
+    // Falls back to a timestamp-based ID when no name is provided.
+    let id = name.as_deref()
+        .map(slugify)
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| format!("worker-{ts}"));
+    let display_name = name.unwrap_or_else(|| first_words(&prompt, 4));
     let orchestrator_id = orchestrator_id
         .or_else(|| std::env::var("ATHENE_ORCHESTRATOR_ID").ok());
 
@@ -121,10 +138,38 @@ async fn run_spawn(
     // poll_github can call the GitHub API with the correct owner/repo.
     let repo = repo_from_workspace(&workspace).unwrap_or_default();
 
+    let sessions_dir = athene_core::config::AppConfig::sessions_dir();
+    std::fs::create_dir_all(&sessions_dir).ok();
+    let sessions_dir_str = sessions_dir.to_string_lossy().to_string();
+
+    let athene_bin = athene_core::config::AppConfig::athene_bin_dir();
+    let athene_bin_str = athene_bin.display().to_string();
+
+    let orch_id_env = orchestrator_id.as_deref().unwrap_or("").to_string();
+
+    // Append worker context so every agent knows its session ID, its
+    // orchestrator's ID, and how to communicate back when done or stuck.
+    let mut effective_prompt = prompt;
+    if !orch_id_env.is_empty() {
+        effective_prompt.push_str(&format!(
+            "\n\n---\n\
+             Athene session `{id}` · orchestrator `{orch_id}`\n\n\
+             **Goal:** complete the task and open a pull request.\n\n\
+             To message the orchestrator (e.g. when stuck or when the PR is open):\n\
+             ```bash\n\
+             {bin} send {orch_id} \"<your message>\"\n\
+             ```\n\
+             Report back when: (a) you are blocked and need a decision, \
+             or (b) the PR is open and the task is done.",
+            orch_id = orch_id_env,
+            bin = athene_bin_str,
+        ));
+    }
+
     let session = Session {
         id:              id.clone(),
         orchestrator_id,
-        name,
+        name:            display_name,
         repo,
         status:          SessionStatus::Working,
         agent_type:      agent.harness.clone(),
@@ -139,28 +184,25 @@ async fn run_spawn(
     store.upsert_session(&session)?;
     println!("spawned {}", session.id);
 
-    let sessions_dir = athene_core::config::AppConfig::sessions_dir();
-    std::fs::create_dir_all(&sessions_dir).ok();
-    let sessions_dir_str = sessions_dir.to_string_lossy().to_string();
-
-    let athene_bin = athene_core::config::AppConfig::athene_bin_dir();
-    let athene_bin_str = athene_bin.display().to_string();
-
     // Prepend the athene bin dir inside the shell command rather than via tmux
     // -e PATH=..., because the login shell (-l) sources rc files that may
     // re-prepend Homebrew or nvm directories, pushing our wrapper behind the
     // real `gh`. By exporting PATH here we win the race after rc files run.
-    let cmd_base = agent.worker_cmd(&prompt);
+    let cmd_base = agent.worker_cmd(&effective_prompt);
     let cmd = format!(
         "export PATH='{}':\"$PATH\"; {}",
         athene_bin_str.replace('\'', "'\\''"),
         cmd_base,
     );
 
-    tmux::create_session(&id, &workspace, &cmd, &[
+    let mut env_vec: Vec<(&str, &str)> = vec![
         ("ATHENE_SESSION",  &id),
         ("ATHENE_DATA_DIR", &sessions_dir_str),
-    ]).await?;
+    ];
+    if !orch_id_env.is_empty() {
+        env_vec.push(("ATHENE_ORCHESTRATOR_ID", &orch_id_env));
+    }
+    tmux::create_session(&id, &workspace, &cmd, &env_vec).await?;
 
     Ok(())
 }
