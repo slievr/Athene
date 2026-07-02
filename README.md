@@ -180,54 +180,9 @@ Set to `false` if you want to allow idle sleep while Athene runs.
 
 **Linux / Windows:** Athene does not currently hold a wake assertion on these platforms. On Linux, idle-sleep behaviour is governed by your desktop environment / `systemd-logind`; configure that directly. On Windows, set the OS power plan if remote access matters while idle.
 
-## Native App (Preview)
+## Native App
 
-Alongside the web dashboard, Athene ships a native desktop app (`athene-app`) built in Rust with [Iced](https://github.com/iced-rs/iced). It embeds the Athene engine directly and runs a GPU-accelerated UI — no Electron, no bundled browser.
-
-The app and the existing Node.js stack **work in tandem**. Running `athene-app` starts a fresh engine with its own SQLite store and HTTP server; the web dashboard continues to work against either backend unchanged.
-
-### Prerequisites
-
-- Rust toolchain: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-- macOS or Linux (Windows not yet supported)
-
-### Build and run
-
-```bash
-# From the repo root
-cd athene
-cargo build --release -p athene-app
-
-# Run with native UI (requires display)
-./target/release/athene-app
-
-# Run headless (engine + HTTP API only, no window)
-./target/release/athene-app --headless
-
-# Custom port and database path
-./target/release/athene-app --port 9090 --db ~/.local/share/athene/athene.db
-```
-
-The HTTP server always starts on `127.0.0.1:8080` (or `--port`). The web dashboard can connect to it at that address exactly as it connects to the Node.js backend.
-
-### Milestones
-
-| Milestone | How to verify |
-|---|---|
-| **M1** Engine + REST | `--headless` then `curl localhost:8080/api/v1/sessions` returns `[]` |
-| **M2** SSE + WebSocket | Open the web dashboard; sessions update in real time |
-| **M3** Native shell | Sidebar and fleet board render with orchestrators and workers |
-| **M4** Terminal | Click a worker session to open an interactive VTE terminal |
-| **M5** Full parity | Info panel, CI badges, review comments, OS notifications |
-
-### Configuration
-
-App config is stored at `~/.config/athene/config.toml`:
-
-```toml
-port = 8080
-font_size = 13.0
-```
+Alongside the web dashboard, Athene has a native desktop app built in Rust with [Iced](https://github.com/iced-rs/iced) — GPU-accelerated, no Electron, no bundled browser. It lives in its own repo: [Made-by-Moonlight/ninox](https://github.com/Made-by-Moonlight/ninox).
 
 ## Plugin Architecture
 
@@ -276,13 +231,7 @@ pnpm dev:cli                   # Watch-rebuild CLI + auto-restart athene start
 
 ### Rust native app
 
-```bash
-cd athene
-cargo build                    # Debug build (all crates)
-cargo test                     # Run all crate tests
-cargo run -p athene-app        # Run with native UI
-cargo run -p athene-app -- --headless  # Run headless (engine + HTTP only)
-```
+The native app moved to [Made-by-Moonlight/ninox](https://github.com/Made-by-Moonlight/ninox) — see that repo for build/dev instructions.
 
 **Dev vs. globally installed `athene`:** the dev version runs directly from `packages/cli/dist/index.js` — it does not replace your globally installed binary. `pnpm dev:cli` calls `node --watch packages/cli/dist/index.js start`, so it's isolated from any `athene` on your PATH. If you also have a global install and want to avoid confusion, either uninstall it first (`npm uninstall -g @made-by-moonlight/athene`) or always invoke the dev version explicitly:
 
